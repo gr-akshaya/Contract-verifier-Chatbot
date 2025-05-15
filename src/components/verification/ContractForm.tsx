@@ -19,7 +19,7 @@ const ContractForm: React.FC<ContractFormProps> = ({
   onChange,
   currentStep,
 }) => {
-  const networks: Network[] = ["testnet1", "testnet2", "mainnet"];
+  const networks: Network[] = ["testnet2", "mainnet"];
 
   const compilerTypes: { value: CompilerType; label: string }[] = [
     { value: "solidity-single", label: "Solidity (Single file)" },

@@ -2,21 +2,21 @@ import { Network, VerificationDetails, VerificationResult } from "../types";
 
 // Network-specific API endpoints
 const API_ENDPOINTS = {
-  testnet1: "https://api.test.btcs.network/api",
+  // testnet1: "https://api.test.btcs.network/api",
   testnet2: "https://api.test2.btcs.network/api",
   mainnet: "https://api.btcs.network/api",
 };
 
 // Network-specific browser URLs
 const BROWSER_URLS = {
-  testnet1: "https://scan.test.btcs.network/",
+  // testnet1: "https://scan.test.btcs.network/",
   testnet2: "https://scan.test2.btcs.network/",
   mainnet: "https://scan.btcs.network/",
 };
 
 // API keys
 const API_KEYS = {
-  testnet1: import.meta.env.VITE_TESTNET1_API_KEY || "",
+  // testnet1: import.meta.env.VITE_TESTNET1_API_KEY || "",
   testnet2: import.meta.env.VITE_TESTNET2_API_KEY || "",
   mainnet: import.meta.env.VITE_MAINNET_API_KEY || "",
 };
@@ -106,7 +106,7 @@ export class BlockExplorer {
   }
 
   getBrowserUrl(address: string): string {
-    return `${this.browserUrl}/address/${address}`;
+    return `${this.browserUrl}address/${address}`;
   }
 }
 

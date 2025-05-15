@@ -34,7 +34,7 @@ const Chat: React.FC = () => {
       id: "welcome",
       type: "bot",
       content:
-        "👋 Hi there! I'm your AI assistant for smart contract verification. I'll help you verify your contract source code on the blockchain. To get started, please enter your contract address.",
+        "👋 Hi there! I'm your AI assistant for smart contract verification. I'll help you verify your contract source code on the Core blockchain. To get started, please enter your contract address.\n\nEnsure your contract was deployed using the Shanghai version.\n\nLet's begin!",
       timestamp: new Date(),
     };
 
