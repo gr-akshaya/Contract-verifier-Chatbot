@@ -1,9 +1,9 @@
 import React, { useEffect } from "react";
-import Chat from "./components/chat/Chat";
-import { Code } from "lucide-react";
+import Chat from "@/components/chat/Chat";
 import coreLogo from "./public/dark.png";
+import Image from "next/image";
 
-function App() {
+function Home() {
   useEffect(() => {
     document.title = "Smart Contract Verifier";
 
@@ -27,10 +27,12 @@ function App() {
           <div className="flex justify-between items-center">
             <div className="flex items-center">
               <div className="flex-shrink-0 text-white ">
-                <img
+                <Image
                   src={coreLogo}
                   alt="Core Logo"
                   className="w-30 h-12 color-orange"
+                  width={120}
+                  height={48}
                 />
               </div>
             </div>
@@ -47,7 +49,8 @@ function App() {
               Contract Verification Assistant
             </h2>
             <p className="text-sm text-white-600 dark:text-white-400">
-              I'll guide you through verifying your smart contract's source code
+              I&apos;ll guide you through verifying your smart contract&apos;s
+              source code
             </p>
           </div>
 
@@ -69,4 +72,4 @@ function App() {
   );
 }
 
-export default App;
+export default Home;

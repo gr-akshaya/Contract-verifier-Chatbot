@@ -1,12 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import {
-  Message,
-  VerificationDetails,
-  VerificationResult,
-  Network,
-  CompilerType,
-  LicenseType,
-} from "../../types";
+import { Message, VerificationDetails, VerificationResult } from "../../types";
 import ChatMessage from "./ChatMessage";
 import ChatInput from "./ChatInput";
 import ContractForm from "../verification/ContractForm";
@@ -23,6 +16,7 @@ const Chat: React.FC = () => {
   );
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [isVerifying, setIsVerifying] = useState(false);
+  // eslint-disable-next-line
   const [verificationResult, setVerificationResult] =
     useState<VerificationResult | null>(null);
   const [explorerUrl, setExplorerUrl] = useState<string>("");

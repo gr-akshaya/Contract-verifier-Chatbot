@@ -4,7 +4,7 @@ import { Network, VerificationDetails, VerificationResult } from "../types";
 const API_ENDPOINTS = {
   // testnet1: "https://api.test.btcs.network/api",
   testnet2: "https://api.test2.btcs.network/api",
-  mainnet: "https://api.btcs.network/api",
+  mainnet: "https://openapi.coredao.org/api",
 };
 
 // Network-specific browser URLs
@@ -15,11 +15,7 @@ const BROWSER_URLS = {
 };
 
 // API keys
-const API_KEYS = {
-  // testnet1: import.meta.env.VITE_TESTNET1_API_KEY || "",
-  testnet2: import.meta.env.VITE_TESTNET2_API_KEY || "",
-  mainnet: import.meta.env.VITE_MAINNET_API_KEY || "",
-};
+const API_KEYS = process.env.NEXT_PUBLIC_CORE_API_KEY || "";
 
 export class BlockExplorer {
   private apiKey: string;
@@ -27,7 +23,7 @@ export class BlockExplorer {
   private browserUrl: string;
 
   constructor(network: Network = "testnet2") {
-    this.apiKey = API_KEYS[network];
+    this.apiKey = API_KEYS;
     this.apiUrl = API_ENDPOINTS[network];
     this.browserUrl = BROWSER_URLS[network];
   }
