@@ -16,6 +16,7 @@ const Chat: React.FC = () => {
   );
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isProxyContract, setIsProxyContract] = useState<boolean>(false);
   // eslint-disable-next-line
   const [verificationResult, setVerificationResult] =
     useState<VerificationResult | null>(null);
@@ -78,8 +79,11 @@ const Chat: React.FC = () => {
   const checkContractVerification = async (address: string) => {
     if (!blockExplorer) return false;
     try {
-      const isVerified = await blockExplorer.isVerified(address);
-      if (isVerified) {
+      addMessage("🔍 Checking contract verification status...", "bot");
+      
+      const contractInfo = await blockExplorer.getContractInfo(address);
+      
+      if (contractInfo.isVerified) {
         addMessage(
           <div className="flex items-center text-yellow-500">
             <AlertTriangle size={20} className="mr-2" />
@@ -88,11 +92,49 @@ const Chat: React.FC = () => {
           </div>,
           "bot"
         );
+
+        if (contractInfo.sourceCode) {
+          addMessage(
+            <div className="bg-gray-800 p-4 rounded-lg">
+              <h4 className="font-semibold mb-2">📋 Contract Information:</h4>
+              <p className="text-sm text-gray-300">
+                <strong>Contract Name:</strong> {contractInfo.sourceCode.ContractName || "Unknown"}
+              </p>
+              <p className="text-sm text-gray-300">
+                <strong>Compiler Version:</strong> {contractInfo.sourceCode.CompilerVersion || "Unknown"}
+              </p>
+              <p className="text-sm text-gray-300">
+                <strong>License:</strong> {contractInfo.sourceCode.LicenseType || "Unknown"}
+              </p>
+              <p className="text-sm text-gray-300">
+                <strong>Optimization:</strong> {contractInfo.sourceCode.OptimizationUsed === "1" ? "Enabled" : "Disabled"}
+              </p>
+              {contractInfo.sourceCode.Runs && (
+                <p className="text-sm text-gray-300">
+                  <strong>Optimization Runs:</strong> {contractInfo.sourceCode.Runs}
+                </p>
+              )}
+              {contractInfo.isProxy && (
+                <p className="text-sm text-yellow-400">
+                  <strong>⚠️ This appears to be a proxy contract</strong>
+                </p>
+              )}
+            </div>,
+            "bot"
+          );
+        }
+
         return true;
       }
+      
+      addMessage("✅ Contract is not yet verified. Let's proceed with verification!", "bot");
       return false;
     } catch (error) {
       console.error("Error checking contract verification:", error);
+      addMessage(
+        `❌ Error checking contract: ${error instanceof Error ? error.message : "Unknown error"}`,
+        "bot"
+      );
       return false;
     }
   };
@@ -100,7 +142,7 @@ const Chat: React.FC = () => {
   const handleUserSend = async (content: string) => {
     if (currentStep === 1) {
       const address = content.trim();
-      if (address.startsWith("0x") && address.length === 42) {
+      if (BlockExplorer.isValidAddress(address)) {
         addMessage(address, "user");
         handleUpdateVerificationDetails({ address });
         addMessage(
@@ -111,7 +153,7 @@ const Chat: React.FC = () => {
       } else {
         addMessage(content, "user");
         addMessage(
-          "That doesn't look like a valid contract address. Please enter a valid address starting with '0x'.",
+          "That doesn't look like a valid contract address. Please enter a valid Ethereum-style address starting with '0x' and exactly 42 characters long.",
           "bot"
         );
       }
@@ -130,11 +172,53 @@ const Chat: React.FC = () => {
             verificationDetails.address!
           );
           if (!isVerified) {
+            // Check if it might be a proxy contract
+            addMessage("Checking if this is a proxy contract...", "bot");
+
+            // Add a simple heuristic to detect potential proxy contracts
+            // This is a basic check - in production you might want more sophisticated detection
             addMessage(
-              "Please select the compiler type for your contract:",
+              <div className="bg-blue-900/20 p-4 rounded-lg border border-blue-500/30">
+                <h4 className="font-semibold mb-2 text-blue-400">
+                  📋 Contract Type Detection
+                </h4>
+                <p className="text-sm text-gray-300 mb-3">
+                  Is this a proxy contract? Proxy contracts delegate calls to
+                  implementation contracts.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setIsProxyContract(true);
+                      addMessage("Yes, this is a proxy contract", "user");
+                      addMessage(
+                        "Great! For proxy contracts, I'll help you verify the proxy itself. The implementation contract should be verified separately. Please select the compiler type:",
+                        "bot"
+                      );
+                      setCurrentStep(3);
+                    }}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                  >
+                    Yes, Proxy Contract
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsProxyContract(false);
+                      addMessage("No, regular contract", "user");
+                      addMessage(
+                        "Perfect! Please select the compiler type for your contract:",
+                        "bot"
+                      );
+                      setCurrentStep(3);
+                    }}
+                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm"
+                  >
+                    No, Regular Contract
+                  </button>
+                </div>
+              </div>,
               "bot"
             );
-            setCurrentStep(3);
           }
         }
         break;
@@ -228,9 +312,37 @@ const Chat: React.FC = () => {
 
     try {
       setIsVerifying(true);
-      addMessage("Starting verification process...", "bot");
+      
+      // Validate verification details first
+      const validation = blockExplorer.validateVerificationDetails(verificationDetails);
+      if (!validation.isValid) {
+        addMessage(
+          <div className="bg-red-900/20 p-4 rounded-lg border border-red-500/30">
+            <h4 className="font-semibold mb-2 text-red-400">❌ Validation Failed</h4>
+            <p className="text-sm text-gray-300 mb-2">Please fix the following issues:</p>
+            <ul className="list-disc pl-5 space-y-1 text-sm text-gray-300">
+              {validation.errors.map((error, index) => (
+                <li key={index}>{error}</li>
+              ))}
+            </ul>
+          </div>,
+          "bot"
+        );
+        return;
+      }
+      
+      addMessage("🚀 Starting verification process...", "bot");
 
-      const result = await blockExplorer.verifyContract(verificationDetails);
+      let result: VerificationResult;
+
+      if (isProxyContract) {
+        addMessage("🔧 Verifying as proxy contract...", "bot");
+        result = await blockExplorer.verifyProxyContract(verificationDetails);
+      } else {
+        addMessage("📝 Verifying source code...", "bot");
+        result = await blockExplorer.verifyContract(verificationDetails);
+      }
+
       setVerificationResult(result);
 
       addMessage(
@@ -244,22 +356,84 @@ const Chat: React.FC = () => {
 
       if (result.status === "1") {
         addMessage(
-          "Verification successful! You can view your verified contract on the block explorer. Would you like to verify another contract?",
+          <div className="bg-green-900/20 p-4 rounded-lg border border-green-500/30">
+            <h4 className="font-semibold mb-2 text-green-400">
+              🎉 Verification Successful!
+            </h4>
+            <p className="text-sm text-gray-300 mb-3">
+              Your contract has been successfully verified on the Core
+              blockchain. You can now:
+            </p>
+            <ul className="list-disc pl-5 space-y-1 text-sm text-gray-300 mb-3">
+              <li>View your contract on the block explorer</li>
+              <li>Interact with it through the explorer interface</li>
+              <li>
+                Others can now read and verify your contract&apos;s source code
+              </li>
+            </ul>
+            <div className="flex gap-2 mt-3">
+              <a
+                href={explorerUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                View on Explorer
+              </a>
+              <button
+                onClick={resetVerification}
+                className="px-3 py-2 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                Verify Another Contract
+              </button>
+            </div>
+          </div>,
           "bot"
         );
-        resetVerification();
       } else {
         addMessage(
-          "Verification failed. Please check the error message and try again with the correct details.",
+          <div className="bg-red-900/20 p-4 rounded-lg border border-red-500/30">
+            <h4 className="font-semibold mb-2 text-red-400">
+              ❌ Verification Failed
+            </h4>
+            <p className="text-sm text-gray-300 mb-3">
+              The verification process failed. Common issues include:
+            </p>
+            <ul className="list-disc pl-5 space-y-1 text-sm text-gray-300 mb-3">
+              <li>Incorrect compiler version</li>
+              <li>Missing constructor arguments</li>
+              <li>Wrong optimization settings</li>
+              <li>Source code doesn&apos;t match deployed bytecode</li>
+              <li>Wrong EVM version selected</li>
+            </ul>
+            <p className="text-sm text-gray-400 mb-3">
+              Error details: {result.message}
+            </p>
+            <button
+              onClick={() => setCurrentStep(3)}
+              className="px-3 py-2 bg-orange-600 text-white text-sm rounded-lg hover:bg-orange-700 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>,
           "bot"
         );
       }
     } catch (error) {
       console.error("Error during verification:", error);
       addMessage(
-        `Verification error: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`,
+        <div className="bg-red-900/20 p-4 rounded-lg border border-red-500/30">
+          <h4 className="font-semibold mb-2 text-red-400">❌ Verification Error</h4>
+          <p className="text-sm text-gray-300 mb-3">
+            An unexpected error occurred: {error instanceof Error ? error.message : "Unknown error"}
+          </p>
+          <button
+            onClick={() => setCurrentStep(3)}
+            className="px-3 py-2 bg-orange-600 text-white text-sm rounded-lg hover:bg-orange-700 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>,
         "bot"
       );
     } finally {
@@ -270,8 +444,12 @@ const Chat: React.FC = () => {
   const resetVerification = () => {
     setVerificationDetails({});
     setVerificationResult(null);
+    setIsProxyContract(false);
     setCurrentStep(1);
-    addMessage("Let's start again. Please enter your contract address.", "bot");
+    addMessage(
+      "Let&apos;s start again. Please enter your contract address.",
+      "bot"
+    );
   };
 
   const isFormComplete = () => {

@@ -5,6 +5,7 @@ import {
   CompilerType,
   LicenseType,
 } from "../../types";
+import { BlockExplorer } from "../../services/blockExplorer";
 import CodeEditor from "./CodeEditor";
 import { CheckCircle2 } from "lucide-react";
 
@@ -64,29 +65,8 @@ const ContractForm: React.FC<ContractFormProps> = ({
     },
   ];
 
-  const compilerVersions = [
-    "v0.8.24+commit.e11b9ed9",
-    "v0.8.23+commit.f704f362",
-    "v0.8.22+commit.4fc1097e",
-    "v0.8.21+commit.d9974bed",
-    "v0.8.20+commit.a1b79de6",
-    "v0.8.19+commit.7dd6d404",
-    "v0.8.18+commit.87f61d96",
-    "v0.8.17+commit.8df45f5f",
-    "v0.7.6+commit.7338295f",
-    "v0.6.12+commit.27d51765",
-  ];
-
-  const evmVersions = [
-    "shanghai",
-    "paris",
-    "london",
-    "berlin",
-    "istanbul",
-    "petersburg",
-    "constantinople",
-    "byzantium",
-  ];
+  const compilerVersions = BlockExplorer.getCompilerVersions();
+  const evmVersions = BlockExplorer.getEvmVersions();
 
   const isNetworkStep = currentStep === 2;
   const isCompilerTypeStep = currentStep === 3;
@@ -205,40 +185,96 @@ const ContractForm: React.FC<ContractFormProps> = ({
       )}
 
       {isCompilerStep && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label className="block text-lg font-medium text-gray-200 mb-2">
-              Compiler Version
-            </label>
-            <select
-              value={details.compilerVersion || ""}
-              onChange={(e) => onChange({ compilerVersion: e.target.value })}
-              className="w-full p-3 bg-dark-700 border border-gray-700 rounded-lg text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              <option value="">Select compiler version</option>
-              {compilerVersions.map((version) => (
-                <option key={version} value={version}>
-                  {version}
-                </option>
-              ))}
-            </select>
+        <div className="space-y-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-lg font-medium text-gray-200 mb-2">
+                Compiler Version
+              </label>
+              <select
+                value={details.compilerVersion || ""}
+                onChange={(e) => onChange({ compilerVersion: e.target.value })}
+                className="w-full p-3 bg-dark-700 border border-gray-700 rounded-lg text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+                <option value="">Select compiler version</option>
+                {compilerVersions.map((version) => (
+                  <option key={version} value={version}>
+                    {version}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-lg font-medium text-gray-200 mb-2">
+                EVM Version
+              </label>
+              <select
+                value={details.evmVersion || "shanghai"}
+                onChange={(e) => onChange({ evmVersion: e.target.value })}
+                className="w-full p-3 bg-dark-700 border border-gray-700 rounded-lg text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+                {evmVersions.map((version) => (
+                  <option key={version} value={version}>
+                    {version}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-lg font-medium text-gray-200 mb-2">
-              EVM Version
-            </label>
-            <select
-              value={details.evmVersion || "shanghai"}
-              onChange={(e) => onChange({ evmVersion: e.target.value })}
-              className="w-full p-3 bg-dark-700 border border-gray-700 rounded-lg text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              {evmVersions.map((version) => (
-                <option key={version} value={version}>
-                  {version}
-                </option>
-              ))}
-            </select>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-lg font-medium text-gray-200 mb-2">
+                Optimization
+              </label>
+              <select
+                value={details.optimizationUsed || "0"}
+                onChange={(e) => onChange({ optimizationUsed: e.target.value })}
+                className="w-full p-3 bg-dark-700 border border-gray-700 rounded-lg text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-lg font-medium text-gray-200 mb-2">
+                Runs (if optimization enabled)
+              </label>
+              <input
+                type="number"
+                value={details.runs || 200}
+                onChange={(e) =>
+                  onChange({ runs: parseInt(e.target.value) || 200 })
+                }
+                className="w-full p-3 bg-dark-700 border border-gray-700 rounded-lg text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                min="1"
+                max="10000000"
+                disabled={details.optimizationUsed === "0"}
+              />
+            </div>
+          </div>
+
+          <div className="bg-blue-900/20 p-4 rounded-lg border border-blue-500/30">
+            <h4 className="font-semibold mb-2 text-blue-400">💡 Pro Tips</h4>
+            <ul className="list-disc pl-5 space-y-1 text-sm text-gray-300">
+              <li>
+                Make sure the compiler version matches exactly what was used
+                during deployment
+              </li>
+              <li>
+                Shanghai is the recommended EVM version for Core blockchain
+              </li>
+              <li>
+                If your contract was optimized during compilation, set
+                optimization to &quot;Yes&quot;
+              </li>
+              <li>
+                The default runs value is 200, but check your compilation
+                settings
+              </li>
+            </ul>
           </div>
         </div>
       )}
