@@ -84,7 +84,6 @@ export async function verifySourceCode(
   const bodyParams: any = { ...params };
   delete bodyParams.module;
   delete bodyParams.action;
-  // apikey is not part of the body according to docs
 
   const baseUrl = COREDAO_API_ENDPOINTS[network];
   const urlSearchParams = new URLSearchParams();

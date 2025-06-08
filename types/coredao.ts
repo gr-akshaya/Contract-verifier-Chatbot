@@ -39,27 +39,27 @@ export interface VerifySourceCodeParams {
   action: "verifysourcecode";
   contractaddress: string;
   sourceCode: string;
-  codeformat: "solidity-single-file" | "solidity-standard-json-input"; // Adjust based on compilerType
+  codeformat: "solidity-single-file" | "solidity-standard-json-input";
   contractname: string;
-  compilerversion: string; // e.g., "v0.8.20+commit.a1b79de6"
-  optimizationUsed: "0" | "1"; // 0 = No, 1 = Yes
-  runs: string; // number of runs if optimizationUsed is 1
-  constructorArguements?: string; // ABI-encoded
-  evmversion?: string; // e.g., "london"
-  licenseType?: number; // Integer mapping to license type
+  compilerversion: string;
+  optimizationUsed: "0" | "1";
+  runs: string;
+  constructorArguements?: string;
+  evmversion?: string;
+  licenseType?: number;
   libraryname1?: string;
   libraryaddress1?: string;
 }
 
 export interface VerifySourceCodeResponse {
-  status: "1" | "0"; // "1" for success, "0" for error
-  message: string; // "OK" or "Error message"
-  result: string; // GUID or error details
+  status: "1" | "0";
+  message: string;
+  result: string;
 }
 
 export interface CheckVerificationStatusResponse {
   status: "1" | "0";
-  message: string; // "Pending in queue", "Pass - Verified", "Fail - Unable to verify"
+  message: string;
   result: string;
 }
 
@@ -71,13 +71,13 @@ export interface GetSourceCodeResponse {
     ABI: string;
     ContractName: string;
     CompilerVersion: string;
-    OptimizationUsed: string; // "0" or "1"
+    OptimizationUsed: string;
     Runs: string;
     ConstructorArguments: string;
     EVMVersion: string;
     Library: string;
     LicenseType: string;
-    Proxy: string; // "0" or "1"
+    Proxy: string;
     Implementation: string;
     SwarmSource: string;
   }>;

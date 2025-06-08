@@ -120,3 +120,39 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom scrolling improvements */
+.scroll-area-content {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Smooth scrolling for all scroll containers */
+* {
+  scroll-behavior: smooth;
+}
+
+/* Ensure scroll area viewport has proper height */
+[data-radix-scroll-area-viewport] {
+  height: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+/* Hide scrollbar for better appearance while keeping functionality */
+[data-radix-scroll-area-viewport]::-webkit-scrollbar {
+  width: 6px;
+}
+
+[data-radix-scroll-area-viewport]::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 3px;
+}
+
+[data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--border) / 0.8);
+}

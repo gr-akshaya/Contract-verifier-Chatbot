@@ -12,7 +12,7 @@ export const NETWORKS: { value: Network; label: string }[] = [
 
 export const COMPILER_TYPES: { value: CompilerType; label: string }[] = [
   { value: "solidity-single", label: "Solidity (Single file)" },
-  // { value: "solidity-multi", label: "Solidity (Multi-Part files)" }, // Not implementing multipart for simplicity
+  //  TODO: { value: "solidity-multi", label: "Solidity (Multi-Part files)" }, // Not implementing multipart for simplicity
   { value: "solidity-json", label: "Solidity (Standard-Json-Input)" },
 ];
 
@@ -96,7 +96,7 @@ export const EVM_VERSIONS: string[] = [
   "berlin",
   "london",
   "paris",
-  "shanghai", // Recommended for Core
+  "shanghai",
 ];
 
 export const OPTIMIZATION_OPTIONS: { value: "0" | "1"; label: string }[] = [
@@ -106,7 +106,7 @@ export const OPTIMIZATION_OPTIONS: { value: "0" | "1"; label: string }[] = [
 
 export const COREDAO_API_ENDPOINTS: Record<Network, string> = {
   mainnet: "https://openapi.coredao.org/api",
-  testnet2: "https://api.testnet.coredao.org/api", // Corrected testnet endpoint
+  testnet2: "https://api.testnet.coredao.org/api",
 };
 
 export const DEFAULT_VERIFICATION_DETAILS: VerificationDetails = {
