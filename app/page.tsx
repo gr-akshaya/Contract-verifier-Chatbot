@@ -923,7 +923,7 @@ export default function Home() {
       <Header />
       <main className="flex-1 flex flex-col min-h-0">
         <div className="flex-1 overflow-hidden px-4 pt-4">
-          <ScrollArea className="h-full" ref={scrollAreaRef}>
+          <ScrollArea className="h-full md:px-28" ref={scrollAreaRef}>
             <div className="space-y-6 pb-4">
               {messages.map((msg) => (
                 <div
@@ -1006,7 +1006,7 @@ export default function Home() {
         </div>
 
         <div className="shrink-0 border-t border-border bg-background">
-          <div className="md:px-60 px-5 py-4">
+          <div className="md:px-48 px-5 py-4">
             <div className="flex items-center gap-2">
               <Input
                 type="text"
