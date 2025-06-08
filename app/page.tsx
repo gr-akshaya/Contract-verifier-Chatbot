@@ -77,6 +77,12 @@ export default function Home() {
       } catch (error) {
         console.error("Failed to load cached messages:", error);
       }
+    } else {
+      // Only add welcome message if no cached messages exist
+      addMessage(
+        "ai",
+        "🚀 **Welcome to Core Smart Contract AI Agent!**\n\n🔥 *The smartest way to verify contracts on Core blockchain!* 🔥\n\n**🎯 What I can do for you:**\n\n🔍 **Instant Lookup** - Drop any contract address & get instant insights!\n⚡ **Smart Verification** - I'll guide you through contract verification step-by-step\n🧠 **AI-Powered** - Smart detection of contract types and settings\n🛡️ **Multi-Format Support** - Single files, multi-files, and JSON inputs\n\n**🚀 Try these:**\n  • Paste: `0x8C9d5AeA15C2A6eF94bC3C8317B889bED6E8Bf8d`\n  • Type: `verify 0x123...` \n  • Say: `help me verify my token contract`\n\n💡 **Pro tip:** I auto-detect everything - just paste and watch the magic! ✨\n\n*Ready to make your contracts trustworthy? Let's go!* 🎊"
+      );
     }
   }, []);
 
@@ -107,15 +113,6 @@ export default function Home() {
 
     if (messages.length > 0) {
       scrollToBottom();
-    }
-  }, [messages]);
-
-  useEffect(() => {
-    if (messages.length === 0) {
-      addMessage(
-        "ai",
-        "🚀 **Welcome to Core Smart Contract AI Agent!**\n\n🔥 *The smartest way to verify contracts on Core blockchain!* 🔥\n\n**🎯 What I can do for you:**\n\n🔍 **Instant Lookup** - Drop any contract address & get instant insights!\n⚡ **Smart Verification** - I'll guide you through contract verification step-by-step\n🧠 **AI-Powered** - Smart detection of contract types and settings\n🛡️ **Multi-Format Support** - Single files, multi-files, and JSON inputs\n\n**🚀 Try these:**\n  • Paste: `0x8C9d5AeA15C2A6eF94bC3C8317B889bED6E8Bf8d`\n  • Type: `verify 0x123...` \n  • Say: `help me verify my token contract`\n\n💡 **Pro tip:** I auto-detect everything - just paste and watch the magic! ✨\n\n*Ready to make your contracts trustworthy? Let's go!* 🎊"
-      );
     }
   }, [messages]);
 
@@ -444,7 +441,12 @@ export default function Home() {
                 : ""
             }\n**Compiler:** ${
               contractData.CompilerVersion
-            }\n\nWould you like to lookup another contract?`,
+            }\n\nWould you like to lookup another contract?`
+          );
+
+          addMessage(
+            "ai",
+            undefined,
             formatContractInfo(contractData, network, address)
           );
           return;
@@ -968,7 +970,7 @@ export default function Home() {
                                             {codePart}
                                           </code>
                                         ) : (
-                                          codePart
+                                          <span key={k}>{codePart}</span>
                                         )
                                       )
                                     )
@@ -1013,7 +1015,7 @@ export default function Home() {
                 placeholder="Paste contract address, type 'lookup', 'help', or ask me anything..."
                 value={userInput}
                 onChange={(e) => setUserInput(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && handleUserInput()}
+                onKeyDown={(e) => e.key === "Enter" && handleUserInput()}
                 className="flex-grow"
                 disabled={isProcessing}
               />
