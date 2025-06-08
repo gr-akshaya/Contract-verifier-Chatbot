@@ -63,59 +63,6 @@ export default function Home() {
   } | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const cachedMessages = localStorage.getItem("core-chatbot-messages");
-    if (cachedMessages) {
-      try {
-        const parsed = JSON.parse(cachedMessages);
-        setMessages(
-          parsed.map((msg: any) => ({
-            ...msg,
-            timestamp: new Date(msg.timestamp),
-          }))
-        );
-      } catch (error) {
-        console.error("Failed to load cached messages:", error);
-      }
-    } else {
-      // Only add welcome message if no cached messages exist
-      addMessage(
-        "ai",
-        "🚀 **Welcome to Core Smart Contract AI Agent!**\n\n🔥 *The smartest way to verify contracts on Core blockchain!* 🔥\n\n**🎯 What I can do for you:**\n\n🔍 **Instant Lookup** - Drop any contract address & get instant insights!\n⚡ **Smart Verification** - I'll guide you through contract verification step-by-step\n🧠 **AI-Powered** - Smart detection of contract types and settings\n🛡️ **Multi-Format Support** - Single files, multi-files, and JSON inputs\n\n**🚀 Try these:**\n  • Paste: `0x8C9d5AeA15C2A6eF94bC3C8317B889bED6E8Bf8d`\n  • Type: `verify 0x123...` \n  • Say: `help me verify my token contract`\n\n💡 **Pro tip:** I auto-detect everything - just paste and watch the magic! ✨\n\n*Ready to make your contracts trustworthy? Let's go!* 🎊"
-      );
-    }
-  }, []);
-
-  useEffect(() => {
-    if (messages.length > 0) {
-      localStorage.setItem("core-chatbot-messages", JSON.stringify(messages));
-    }
-  }, [messages]);
-
-  useEffect(() => {
-    const scrollToBottom = () => {
-      if (scrollAreaRef.current) {
-        const scrollElement = scrollAreaRef.current.querySelector(
-          "[data-radix-scroll-area-viewport]"
-        ) as HTMLElement;
-        if (scrollElement) {
-          scrollElement.scrollTop = scrollElement.scrollHeight;
-
-          setTimeout(() => {
-            scrollElement.scrollTo({
-              top: scrollElement.scrollHeight,
-              behavior: "smooth",
-            });
-          }, 100);
-        }
-      }
-    };
-
-    if (messages.length > 0) {
-      scrollToBottom();
-    }
-  }, [messages]);
-
   const addMessage = (
     sender: "user" | "ai",
     text?: string,
@@ -152,6 +99,58 @@ export default function Home() {
   const removeTypingMessage = (typingId: string) => {
     setMessages((prev) => prev.filter((msg) => msg.id !== typingId));
   };
+
+  useEffect(() => {
+    const cachedMessages = localStorage.getItem("core-chatbot-messages");
+    if (cachedMessages) {
+      try {
+        const parsed = JSON.parse(cachedMessages);
+        setMessages(
+          parsed.map((msg: any) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp),
+          }))
+        );
+      } catch (error) {
+        console.error("Failed to load cached messages:", error);
+      }
+    } else {
+      addMessage(
+        "ai",
+        "🚀 **Welcome to Core Smart Contract AI Agent!**\n\n🔥 *The smartest way to verify contracts on Core blockchain!* 🔥\n\n**🎯 What I can do for you:**\n\n🔍 **Instant Lookup** - Drop any contract address & get instant insights!\n⚡ **Smart Verification** - I'll guide you through contract verification step-by-step\n🧠 **AI-Powered** - Smart detection of contract types and settings\n🛡️ **Multi-Format Support** - Single files, multi-files, and JSON inputs\n\n**🚀 Try these:**\n  • Paste: `0x8C9d5AeA15C2A6eF94bC3C8317B889bED6E8Bf8d`\n  • Type: `verify 0x123...` \n  • Say: `help me verify my token contract`\n\n💡 **Pro tip:** I auto-detect everything - just paste and watch the magic! ✨\n\n*Ready to make your contracts trustworthy? Let's go!* 🎊"
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem("core-chatbot-messages", JSON.stringify(messages));
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    const scrollToBottom = () => {
+      if (scrollAreaRef.current) {
+        const scrollElement = scrollAreaRef.current.querySelector(
+          "[data-radix-scroll-area-viewport]"
+        ) as HTMLElement;
+        if (scrollElement) {
+          scrollElement.scrollTop = scrollElement.scrollHeight;
+
+          setTimeout(() => {
+            scrollElement.scrollTo({
+              top: scrollElement.scrollHeight,
+              behavior: "smooth",
+            });
+          }, 100);
+        }
+      }
+    };
+
+    if (messages.length > 0) {
+      scrollToBottom();
+    }
+  }, [messages]);
 
   const extractContractAddress = (input: string): string | null => {
     const matches = input.match(CONTRACT_ADDRESS_REGEX);
