@@ -1,9 +1,9 @@
 export type Network = "testnet2" | "mainnet";
 
 export type CompilerType =
-  | "solidity-single"
-  | "solidity-multi"
-  | "solidity-json";
+  | "solidity-single-file"
+  | "solidity-multi-file"
+  | "solidity-standard-json-input";
 
 export type LicenseType =
   | "None"
@@ -36,10 +36,20 @@ export interface VerificationDetails {
   contractName?: string;
   compilerVersion?: string;
   evmVersion?: string;
+  optimizationUsed?: string;
+  runs?: number;
 }
 
 export interface VerificationResult {
   status: string;
   message: string;
   result?: string;
+}
+
+export interface ContractABI {
+  [key: string]: unknown;
+}
+
+export interface ContractSourceCode {
+  [key: string]: unknown;
 }
