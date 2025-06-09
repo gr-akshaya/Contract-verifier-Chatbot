@@ -143,6 +143,10 @@ export default function Home() {
               behavior: "smooth",
             });
           }, 100);
+
+          setTimeout(() => {
+            scrollElement.scrollTop = scrollElement.scrollHeight;
+          }, 300);
         }
       }
     };
@@ -926,7 +930,10 @@ export default function Home() {
       <Header />
       <main className="flex-1 flex flex-col min-h-0">
         <div className="flex-1 overflow-hidden px-4 pt-4">
-          <ScrollArea className="h-full md:px-28" ref={scrollAreaRef}>
+          <ScrollArea
+            className="h-full md:px-28 overflow-y-auto"
+            ref={scrollAreaRef}
+          >
             <div className="space-y-6 pb-4">
               {messages.map((msg) => (
                 <div
