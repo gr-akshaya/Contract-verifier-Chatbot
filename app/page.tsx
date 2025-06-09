@@ -334,20 +334,16 @@ export default function Home() {
       const sourceCodeResponse = await getSourceCode(network, address);
       removeTypingMessage(typingId);
 
-      if (
-        sourceCodeResponse.status === "1" &&
-        sourceCodeResponse.result &&
-        sourceCodeResponse.result.length > 0
-      ) {
+      if (sourceCodeResponse.result && sourceCodeResponse.result.length > 0) {
         const contractData = sourceCodeResponse.result[0];
+        const isVerified =
+          contractData.ABI !== "Contract source code not verified";
+
         addMessage(
           "ai",
           undefined,
           formatContractInfo(contractData, network, address)
         );
-
-        const isVerified =
-          contractData.ABI !== "Contract source code not verified";
 
         if (isVerified) {
           addMessage(
@@ -357,7 +353,7 @@ export default function Home() {
         } else {
           addMessage(
             "ai",
-            `🚀 **Want to verify this contract?**\n\nContract verification makes your smart contract more trustworthy and transparent. Here's what you can do:\n\n• Type \`verify ${address}\` to start verification\n• Make sure you have the exact source code and compiler settings\n\nReady to verify? Just type \`verify ${address}\`!`
+            `🚀 **Want to verify this contract?**\n\nI found your contract, but it's not verified yet. Verification makes your smart contract more trustworthy and transparent. Here's what you can do:\n\n• Type \`verify ${address}\` to start verification\n• Make sure you have the exact source code and compiler settings\n\nReady to verify? Just type \`verify ${address}\`!`
           );
         }
       } else {
@@ -428,11 +424,7 @@ export default function Home() {
       const sourceCodeResponse = await getSourceCode(network, address);
       removeTypingMessage(typingId);
 
-      if (
-        sourceCodeResponse.status === "1" &&
-        sourceCodeResponse.result &&
-        sourceCodeResponse.result.length > 0
-      ) {
+      if (sourceCodeResponse.result && sourceCodeResponse.result.length > 0) {
         const contractData = sourceCodeResponse.result[0];
         const isVerified =
           contractData.ABI !== "Contract source code not verified";
@@ -706,6 +698,195 @@ export default function Home() {
     }
   };
 
+  const handleUserInput = async (): Promise<void> => {
+    if (!userInput.trim() || isProcessing) return;
+
+    const input = userInput.trim();
+    addMessage("user", input);
+    setUserInput("");
+
+    const lowerInput = input.toLowerCase();
+
+    if (shouldContinueVerificationSession(lowerInput)) {
+      await handleVerificationInput(input);
+      return;
+    }
+
+    if (await handleCommand(lowerInput, input)) {
+      return;
+    }
+
+    if (await handleContractAddressInput(input)) {
+      return;
+    }
+
+    showHelpMessage();
+  };
+
+  const shouldContinueVerificationSession = (
+    lowerInput: string
+  ): boolean | null => {
+    return (
+      verificationSession &&
+      !lowerInput.startsWith("clear") &&
+      !lowerInput.startsWith("help")
+    );
+  };
+
+  const handleCommand = async (
+    lowerInput: string,
+    originalInput: string
+  ): Promise<boolean> => {
+    if (lowerInput === "clear") {
+      clearChatSession();
+      return true;
+    }
+
+    if (lowerInput === "help") {
+      showAvailableCommands();
+      return true;
+    }
+
+    if (lowerInput.startsWith("verify")) {
+      await handleVerifyCommand(originalInput);
+      return true;
+    }
+
+    if (lowerInput.startsWith("lookup")) {
+      await handleLookupCommand(originalInput);
+      return true;
+    }
+
+    return false;
+  };
+
+  const clearChatSession = (): void => {
+    setMessages([]);
+    setVerificationSession(null);
+    localStorage.removeItem("core-chatbot-messages");
+    addMessage(
+      "ai",
+      "🧹 **Chat cleared!**\n\nHow can I help you with smart contract verification today?"
+    );
+  };
+
+  const showAvailableCommands = (): void => {
+    const commandList = AVAILABLE_COMMANDS.map(
+      (cmd) => `• \`${cmd.command}\` - ${cmd.description}`
+    ).join("\n");
+
+    addMessage(
+      "ai",
+      `📚 **Available Commands:**\n\n${commandList}\n\n` +
+        "**Quick Tips:**\n" +
+        "• Just paste any contract address and I'll look it up\n" +
+        "• Use `verify <address>` to start contract verification\n" +
+        "• Specify network with keywords like 'testnet' or 'mainnet'\n" +
+        "• Example: `verify 0x123... on testnet`"
+    );
+  };
+
+  const handleVerifyCommand = async (input: string): Promise<void> => {
+    const address = extractContractAddress(input);
+
+    if (!address) {
+      showVerifyUsageMessage();
+      return;
+    }
+
+    const network = detectNetwork(input);
+    const networkName =
+      network === "mainnet" ? "CoreDAO Mainnet" : "CoreDAO Testnet";
+
+    addMessage(
+      "ai",
+      `🔍 **Starting verification for:** \`${address}\`\n\n` +
+        `Checking contract status on **${networkName}**...`
+    );
+
+    await startVerificationFlow(address, network);
+  };
+
+  const showVerifyUsageMessage = (): void => {
+    addMessage(
+      "ai",
+      "⚡ **Contract Verification**\n\n" +
+        "To verify a contract, please provide the contract address:\n\n" +
+        "**Usage:** `verify 0x1234...`\n" +
+        "**With network:** `verify 0x1234... on testnet`\n\n" +
+        "**Example:**\n" +
+        "`verify 0x8C9d5AeA15C2A6eF94bC3C8317B889bED6E8Bf8d`"
+    );
+  };
+
+  const handleLookupCommand = async (input: string): Promise<void> => {
+    const address = extractContractAddress(input);
+
+    if (!address) {
+      showLookupUsageMessage();
+      return;
+    }
+
+    await performContractLookup(address, input);
+  };
+
+  const showLookupUsageMessage = (): void => {
+    addMessage(
+      "ai",
+      "🔍 **Contract Lookup**\n\n" +
+        "To look up a contract, please provide the contract address. You can:\n\n" +
+        "• Type: `lookup 0x1234...`\n" +
+        "• Just paste the address directly\n" +
+        "• Specify network: `lookup 0x1234... on testnet`\n\n" +
+        "**Example:**\n" +
+        "`lookup 0x8C9d5AeA15C2A6eF94bC3C8317B889bED6E8Bf8d`"
+    );
+  };
+
+  const handleContractAddressInput = async (
+    input: string
+  ): Promise<boolean> => {
+    const contractAddress = extractContractAddress(input);
+
+    if (!contractAddress) {
+      return false;
+    }
+
+    await performContractLookup(contractAddress, input);
+    return true;
+  };
+
+  const performContractLookup = async (
+    address: string,
+    input: string
+  ): Promise<void> => {
+    const network = detectNetwork(input);
+    const networkName =
+      network === "mainnet" ? "CoreDAO Mainnet" : "CoreDAO Testnet";
+
+    addMessage(
+      "ai",
+      `🔍 **Looking up contract...**\n\n` +
+        `Searching for \`${address}\` on **${networkName}**`
+    );
+
+    await handleContractLookup(address, network);
+  };
+
+  const showHelpMessage = (): void => {
+    addMessage(
+      "ai",
+      "🤔 **I'm not sure how to help with that.**\n\n" +
+        "Here's what I can do:\n\n" +
+        "• **Look up contracts**: Just paste a contract address\n" +
+        "• **Verify contracts**: Type `verify <address>`\n" +
+        "• **Show help**: Type `help`\n" +
+        "• **Clear chat**: Type `clear`\n\n" +
+        "**Example**: Try pasting this address:\n" +
+        "`0x8C9d5AeA15C2A6eF94bC3C8317B889bED6E8Bf8d`"
+    );
+  };
+
   const executeVerification = async () => {
     if (!verificationSession) return;
 
@@ -903,95 +1084,6 @@ export default function Home() {
         );
       }
     }
-  };
-
-  const handleUserInput = async () => {
-    if (!userInput.trim() || isProcessing) return;
-
-    const input = userInput.trim();
-    addMessage("user", input);
-    setUserInput("");
-
-    const lowerInput = input.toLowerCase();
-
-    if (
-      verificationSession &&
-      !lowerInput.startsWith("clear") &&
-      !lowerInput.startsWith("help")
-    ) {
-      await handleVerificationInput(input);
-      return;
-    }
-
-    if (lowerInput === "clear") {
-      setMessages([]);
-      setVerificationSession(null);
-      localStorage.removeItem("core-chatbot-messages");
-      addMessage(
-        "ai",
-        "🧹 **Chat cleared!**\n\nHow can I help you with smart contract verification today?"
-      );
-      return;
-    }
-
-    if (lowerInput === "help") {
-      addMessage(
-        "ai",
-        "📚 **Available Commands:**\n\n" +
-          AVAILABLE_COMMANDS.map(
-            (cmd) => `• \`${cmd.command}\` - ${cmd.description}`
-          ).join("\n") +
-          "\n\n**Quick Tips:**\n• Just paste any contract address and I'll look it up\n• Use `verify <address>` to start contract verification\n• Specify network with keywords like 'testnet' or 'mainnet'\n• Example: `verify 0x123... on testnet`"
-      );
-      return;
-    }
-
-    const contractAddress = extractContractAddress(input);
-
-    if (contractAddress) {
-      const network = detectNetwork(input);
-      addMessage(
-        "ai",
-        `🔍 **Looking up contract...**\n\nSearching for \`${contractAddress}\` on **${
-          network === "mainnet" ? "CoreDAO Mainnet" : "CoreDAO Testnet"
-        }**`
-      );
-      await handleContractLookup(contractAddress, network);
-      return;
-    }
-
-    if (lowerInput.startsWith("lookup")) {
-      addMessage(
-        "ai",
-        "🔍 **Contract Lookup**\n\nTo look up a contract, please provide the contract address. You can:\n\n• Type: `lookup 0x1234...`\n• Just paste the address directly\n• Specify network: `lookup 0x1234... on testnet`\n\n**Example:**\n`lookup 0x8C9d5AeA15C2A6eF94bC3C8317B889bED6E8Bf8d`"
-      );
-      return;
-    }
-
-    if (lowerInput.startsWith("verify")) {
-      const address = extractContractAddress(input);
-      if (address) {
-        const network = detectNetwork(input);
-        addMessage(
-          "ai",
-          `🔍 **Starting verification for:** \`${address}\`\n\nChecking contract status on **${
-            network === "mainnet" ? "CoreDAO Mainnet" : "CoreDAO Testnet"
-          }**...`
-        );
-        await startVerificationFlow(address, network);
-      } else {
-        addMessage(
-          "ai",
-          "⚡ **Contract Verification**\n\nTo verify a contract, please provide the contract address:\n\n**Usage:** `verify 0x1234...`\n**With network:** `verify 0x1234... on testnet`\n\n**Example:**\n`verify 0x8C9d5AeA15C2A6eF94bC3C8317B889bED6E8Bf8d`"
-        );
-      }
-      return;
-    }
-
-    addMessage(
-      "ai",
-      "🤔 **I'm not sure how to help with that.**\n\nHere's what I can do:\n\n• **Look up contracts**: Just paste a contract address\n• **Verify contracts**: Type `verify <address>`\n• **Show help**: Type `help`\n• **Clear chat**: Type `clear`\n\n**Example**: Try pasting this address:\n`0x8C9d5AeA15C2A6eF94bC3C8317B889bED6E8Bf8d`"
-    );
   };
 
   const TypingIndicator = () => (

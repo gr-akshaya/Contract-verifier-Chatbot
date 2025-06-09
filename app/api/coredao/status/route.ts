@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     }
 
     const baseUrl = COREDAO_API_ENDPOINTS[network];
-    const url = `${baseUrl}/contracts/check_source_code_verification_status?guid=${guid}&apikey=${apiKey}`;
+    const url = `${baseUrl}/contracts/check_proxy_contract_verification_submission_status_using_cURL?guid=${guid}&apikey=${apiKey}`;
 
     const response = await fetch(url, {
       method: "GET",
