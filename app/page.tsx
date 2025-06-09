@@ -117,7 +117,7 @@ export default function Home() {
     } else {
       addMessage(
         "ai",
-        "🚀 **Welcome to Core Smart Contract AI Agent!**\n\n🔥 *The smartest way to verify contracts on Core blockchain!* 🔥\n\n**🎯 What I can do for you:**\n\n🔍 **Instant Lookup** - Drop any contract address & get instant insights!\n⚡ **Smart Verification** - I'll guide you through contract verification step-by-step\n🧠 **AI-Powered** - Smart detection of contract types and settings\n🛡️ **Multi-Format Support** - Single files, multi-files, and JSON inputs\n\n**🚀 Try these:**\n  • Paste: `0x8C9d5AeA15C2A6eF94bC3C8317B889bED6E8Bf8d`\n  • Type: `verify 0x123...` \n  • Say: `help me verify my token contract`\n\n💡 **Pro tip:** I auto-detect everything - just paste and watch the magic! ✨\n\n*Ready to make your contracts trustworthy? Let's go!* 🎊"
+        "🚀 **Welcome to Core Smart Contract Verifier!**\n\n🔥 *The smartest way to verify contracts on Core blockchain!* 🔥\n\n**🎯 What I can do for you:**\n\n🔍 **Contract Lookup** - Drop any contract address & get instant insights!\n⚡ **Contract Verification** - I'll guide you through verification step-by-step\n🧠 **Smart Features** - Auto-detection of contracts and easy verification process\n🛡️ **Multi-Format Support** - Single files, multi-files, and JSON inputs\n\n**🚀 Try these:**\n  • Paste: `0x8C9d5AeA15C2A6eF94bC3C8317B889bED6E8Bf8d`\n  • Type: `verify 0x123...` \n  • Type: `help` for command list\n\n💡 **Pro tip:** Just paste your contract address to start! ✨\n\n*Ready to verify your contracts? Let's go!* 🎊"
       );
     }
   }, []);
@@ -790,7 +790,9 @@ export default function Home() {
     if (attempts >= 10) {
       addMessage(
         "ai",
-        "⏰ **Verification taking longer than expected**\n\nYou can check the status manually on the Core block explorer, or try again later."
+        "⏰ **Verification taking longer than expected**\n\nYour contract verification request is still being processed. You can check the status manually on the Core block explorer using this GUID: `" +
+          guid +
+          "`\n\nThe process usually completes within 5 minutes."
       );
       return;
     }
@@ -799,17 +801,65 @@ export default function Home() {
       const statusResult = await checkVerificationStatus(network, guid);
 
       if (statusResult.status === "1") {
-        if (statusResult.message.includes("Pass")) {
+        if (statusResult.result === "Pass - Verified") {
+          const explorerUrl =
+            network === "mainnet"
+              ? `https://scan.coredao.org/address/${verificationSession?.address}`
+              : `https://scan.test2.btcs.network/address/${verificationSession?.address}`;
+
           addMessage(
             "ai",
-            "🎉 **Verification successful!**\n\nYour contract has been successfully verified! You can now view it on the Core block explorer.\n\nThe verified source code and ABI are now publicly available. Great job! 🎊\n\nWant to verify another contract?"
+            `🎉 **Verification successful!**\n\nYour contract has been successfully verified! You can now view it on the Core block explorer.\n\nThe verified source code and ABI are now publicly available. Great job! 🎊\n\nWant to verify another contract?`
           );
-        } else if (statusResult.message.includes("Fail")) {
+
+          try {
+            if (verificationSession?.address) {
+              setTimeout(async () => {
+                const sourceCodeResponse = await getSourceCode(
+                  network,
+                  verificationSession.address
+                );
+                if (
+                  sourceCodeResponse.status === "1" &&
+                  sourceCodeResponse.result &&
+                  sourceCodeResponse.result.length > 0
+                ) {
+                  const contractData = sourceCodeResponse.result[0];
+                  addMessage(
+                    "ai",
+                    undefined,
+                    formatContractInfo(
+                      contractData,
+                      network,
+                      verificationSession.address
+                    )
+                  );
+                }
+              }, 2000);
+            }
+          } catch (error) {
+            console.error("Error fetching verified contract details:", error);
+          }
+        } else if (
+          statusResult.result.includes("Fail") ||
+          statusResult.result === "Fail"
+        ) {
           addMessage(
             "ai",
-            `❌ **Verification failed**\n\n**Reason:** ${statusResult.result}\n\nPlease check your contract details and try again. Common issues:\n• Compiler version mismatch\n• Wrong optimization settings\n• Source code differences\n\nWant to try again?`
+            `❌ **Verification failed**\n\n**Reason:** ${statusResult.result}\n\nPlease check your contract details and try again. Common issues:\n• Compiler version mismatch\n• Wrong optimization settings\n• Source code doesn't match deployed bytecode\n• Constructor arguments might be incorrect\n\nWant to try again with different settings? Type \`verify ${verificationSession?.address}\``
           );
-        } else if (statusResult.message.includes("Pending")) {
+        } else if (
+          statusResult.result.includes("Pending") ||
+          statusResult.result === "Pending in queue"
+        ) {
+          addMessage(
+            "ai",
+            `⏳ **Verification in progress**\n\nYour contract is still being verified. This typically takes 1-2 minutes.\n\nI'll check again shortly...`
+          );
+          setTimeout(() => {
+            checkVerificationStatusPeriodically(network, guid, attempts + 1);
+          }, 15000);
+        } else {
           setTimeout(() => {
             checkVerificationStatusPeriodically(network, guid, attempts + 1);
           }, 15000);
@@ -825,6 +875,13 @@ export default function Home() {
         setTimeout(() => {
           checkVerificationStatusPeriodically(network, guid, attempts + 1);
         }, 20000);
+      } else {
+        addMessage(
+          "ai",
+          `⚠️ **Verification status check failed**\n\nI'm having trouble checking the status of your verification. You can check it manually on the Core block explorer using this GUID: \`${guid}\`\n\nError: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
+        );
       }
     }
   };
@@ -928,10 +985,10 @@ export default function Home() {
   return (
     <div className="flex flex-col h-screen bg-background">
       <Header />
-      <main className="flex-1 flex flex-col min-h-0">
+      <main className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <div className="flex-1 overflow-hidden px-4 pt-4">
           <ScrollArea
-            className="h-full md:px-28 overflow-y-auto"
+            className="h-full md:px-28 overflow-y-auto chat-scroll-area"
             ref={scrollAreaRef}
           >
             <div className="space-y-6 pb-4">
@@ -1015,7 +1072,7 @@ export default function Home() {
           </ScrollArea>
         </div>
 
-        <div className="shrink-0 border-t border-border bg-background">
+        <div className="shrink-0 border-t border-border bg-background sticky bottom-0">
           <div className="md:px-48 px-5 py-4">
             <div className="flex items-center gap-2">
               <Input
