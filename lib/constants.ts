@@ -12,7 +12,7 @@ export const NETWORKS: { value: Network; label: string }[] = [
 
 export const COMPILER_TYPES: { value: CompilerType; label: string }[] = [
   { value: "solidity-single", label: "Solidity (Single file)" },
-  //  TODO: { value: "solidity-multi", label: "Solidity (Multi-Part files)" }, // Not implementing multipart for simplicity
+  { value: "solidity-multi", label: "Solidity (Multi-Part files)" },
   { value: "solidity-json", label: "Solidity (Standard-Json-Input)" },
 ];
 
@@ -106,7 +106,18 @@ export const OPTIMIZATION_OPTIONS: { value: "0" | "1"; label: string }[] = [
 
 export const COREDAO_API_ENDPOINTS: Record<Network, string> = {
   mainnet: "https://openapi.coredao.org/api",
-  testnet2: "https://api.testnet.coredao.org/api",
+  testnet2: "https://api.test2.btcs.network/api",
+};
+
+export const COREDAO_CONTRACT_ENDPOINTS = {
+  getAbi: (address: string) => `/contracts/abi_of_verified_contract/${address}`,
+  getSourceCode: (address: string) =>
+    `/contracts/source_code_of_verified_contract/${address}`,
+  verifySourceCode: "/contracts/verify_source_code",
+  verifyProxyContract: "/contracts/verify_proxy_contract",
+  verifyProxyContractCurl: "/contracts/verify_proxy_contract_using_cURL",
+  checkProxyVerificationStatus:
+    "/contracts/check_proxy_contract_verification_submission_status_using_cURL",
 };
 
 export const DEFAULT_VERIFICATION_DETAILS: VerificationDetails = {

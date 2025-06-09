@@ -246,6 +246,7 @@ export default function Home() {
               <Button
                 variant="ghost"
                 size="sm"
+                className="cursor-pointer"
                 onClick={() => {
                   navigator.clipboard.writeText(address);
                   toast.success("Address copied to clipboard");
@@ -266,6 +267,7 @@ export default function Home() {
                 <Button
                   variant="ghost"
                   size="sm"
+                  className="cursor-pointer"
                   onClick={() => {
                     navigator.clipboard.writeText(
                       contractData.SourceCode || ""
@@ -273,7 +275,7 @@ export default function Home() {
                     toast.success("Source code copied to clipboard");
                   }}
                 >
-                  <Copy className="w-3 h-3" />
+                  <Copy className="w-3 h-3 cursor-pointer" />
                 </Button>
               </div>
               <div className="bg-muted p-3 rounded max-h-60 overflow-y-auto">
@@ -718,7 +720,7 @@ export default function Home() {
           codeformat = "solidity-single-file";
           break;
         case "solidity-multi":
-          codeformat = "solidity-single-file"; // TODO: For now, CoreDAO might not support multi-file separately
+          codeformat = "solidity-single-file";
           break;
         case "solidity-json":
           codeformat = "solidity-standard-json-input";
@@ -736,7 +738,7 @@ export default function Home() {
         contractname: data.contractName!,
         compilerversion: data.compilerVersion!,
         optimizationUsed: data.optimizationUsed!,
-        runs: data.runs!.toString(),
+        runs: Number(data.runs!),
         evmversion: data.evmVersion || "shanghai",
         licenseType: 1,
       };

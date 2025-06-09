@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ThemeToggleButton } from "./ThemeToggleButton";
+import { Button } from "@/components/ui/button";
 import Image from "next/image";
 
 export default function Header() {
@@ -25,7 +26,12 @@ export default function Header() {
             Smart Contract Verifier
           </h1>
         </Link>
-        <ThemeToggleButton />
+        <div className="flex items-center gap-4">
+          <Link href="/dashboard">
+            <Button variant="outline">Dashboard</Button>
+          </Link>
+          <ThemeToggleButton />
+        </div>
       </div>
     </header>
   );

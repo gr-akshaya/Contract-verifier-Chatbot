@@ -35,20 +35,108 @@ export type VerificationDetails = {
 };
 
 export interface VerifySourceCodeParams {
-  module: "contract";
-  action: "verifysourcecode";
-  contractaddress: string;
-  sourceCode: string;
-  codeformat: "solidity-single-file" | "solidity-standard-json-input";
-  contractname: string;
-  compilerversion: string;
-  optimizationUsed: "0" | "1";
-  runs: string;
+  action?: string;
+  address?: string;
+  apikey?: string;
+  blockno?: number;
+  blocktype?: string;
+  boolean?: boolean;
+  closest?: string;
+  codeformat?: string;
+  compilerversion?: string;
   constructorArguements?: string;
+  contractaddress?: string;
+  contractname?: string;
+  contractaddresses?: string;
+  data?: string;
+  endblock?: number;
   evmversion?: string;
+  fromBlock?: number;
+  gas?: string;
+  gasPrice?: string;
+  guid?: string;
+  hex?: string;
+  index?: string;
   licenseType?: number;
   libraryname1?: string;
   libraryaddress1?: string;
+  module?: string;
+  offset?: number;
+  optimizationUsed?: string;
+  page?: number;
+  position?: string;
+  q?: string;
+  runs?: number;
+  sort?: string;
+  sourceCode?: string;
+  startblock?: number;
+  tag?: string;
+  timestamp?: number;
+  to?: string;
+  toBlock?: string;
+  topic0?: string;
+  topic0_1_opr?: string;
+  topic0_2_opr?: string;
+  topic0_3_opr?: string;
+  topic1?: string;
+  topic1_2_opr?: string;
+  topic1_3_opr?: string;
+  topic2?: string;
+  topic2_3_opr?: string;
+  topic3?: string;
+  txhash?: string;
+  value?: string;
+}
+
+export interface VerifyProxyContractParams {
+  action?: string;
+  address: string;
+  apikey?: string;
+  blockno?: number;
+  blocktype?: string;
+  boolean?: boolean;
+  closest?: string;
+  codeformat?: string;
+  compilerversion?: string;
+  constructorArguements?: string;
+  contractaddress?: string;
+  contractaddresses?: string;
+  data?: string;
+  endblock?: number;
+  evmversion?: string;
+  fromBlock?: number;
+  gas?: string;
+  gasPrice?: string;
+  guid?: string;
+  hex?: string;
+  index?: string;
+  licenseType?: number;
+  module?: string;
+  offset?: number;
+  optimizationUsed?: string;
+  page?: number;
+  position?: string;
+  q?: string;
+  runs?: number;
+  sort?: string;
+  sourceCode?: string;
+  startblock?: number;
+  tag?: string;
+  timestamp?: number;
+  to?: string;
+  toBlock?: string;
+  topic0?: string;
+  topic0_1_opr?: string;
+  topic0_2_opr?: string;
+  topic0_3_opr?: string;
+  topic1?: string;
+  topic1_2_opr?: string;
+  topic1_3_opr?: string;
+  topic2?: string;
+  topic2_3_opr?: string;
+  topic3?: string;
+  txhash?: string;
+  value?: string;
 }
 
 export interface VerifySourceCodeResponse {
@@ -95,4 +183,16 @@ export interface AISuggestion {
   optimizationUsed?: "yes" | "no";
   runs?: number;
   fixes?: string;
+}
+
+export interface VerifyProxyContractResponse {
+  status: "1" | "0";
+  message: string;
+  result: string;
+}
+
+export interface CheckProxyVerificationStatusResponse {
+  status: "1" | "0";
+  message: string;
+  result: string;
 }

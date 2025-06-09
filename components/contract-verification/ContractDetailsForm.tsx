@@ -43,14 +43,13 @@ import {
   DEFAULT_VERIFICATION_DETAILS,
 } from "@/lib/constants";
 import {
-  verifySourceCode,
+  verifyContract,
   checkVerificationStatus,
   getSourceCode,
   getAbi,
 } from "@/lib/coredao";
 import type {
   VerificationDetails,
-  VerifySourceCodeParams,
   AISuggestion,
   Network,
   GetSourceCodeResponse,
@@ -360,26 +359,20 @@ export default function ContractDetailsForm({
 
     const license = LICENSE_TYPES.find((lt) => lt.value === data.licenseType);
 
-    const params: VerifySourceCodeParams = {
-      module: "contract",
-      action: "verifysourcecode",
-      contractaddress: data.contractAddress,
-      sourceCode: data.sourceCode,
-      codeformat:
-        data.compilerType === "solidity-json"
-          ? "solidity-standard-json-input"
-          : "solidity-single-file",
-      contractname: data.contractName,
-      compilerversion: data.compilerVersion,
-      optimizationUsed: data.optimizationUsed,
-      runs: String(data.runs),
-      constructorArguements: data.constructorArguments,
-      evmversion: data.evmVersion,
-      licenseType: license?.apiValue,
-    };
-
     try {
-      const response = await verifySourceCode(data.network, params);
+      const response = await verifyContract(data.network, {
+        contractAddress: data.contractAddress,
+        compilerType: data.compilerType,
+        sourceCode: data.sourceCode,
+        contractName: data.contractName,
+        compilerVersion: data.compilerVersion,
+        optimizationUsed: data.optimizationUsed,
+        runs: Number(data.runs),
+        licenseType: license?.apiValue || 1,
+        evmVersion: data.evmVersion,
+        constructorArguments: data.constructorArguments,
+      });
+
       if (response.status === "1") {
         toast("Verification Submitted", {
           description: `GUID: ${response.result}. We'll check the status.`,
@@ -622,7 +615,10 @@ export default function ContractDetailsForm({
                       </SelectTrigger>
                       <SelectContent>
                         {COMPILER_TYPES.map((type) => (
-                          <SelectItem key={type.value} value={type.value}>
+                          <SelectItem
+                            key={type.value}
+                            value={type.value || "default"}
+                          >
                             {type.label}
                           </SelectItem>
                         ))}
@@ -653,7 +649,10 @@ export default function ContractDetailsForm({
                       </SelectTrigger>
                       <SelectContent className="max-h-60">
                         {COMPILER_VERSIONS.map((version) => (
-                          <SelectItem key={version} value={version}>
+                          <SelectItem
+                            key={version}
+                            value={version || "default"}
+                          >
                             {version}
                           </SelectItem>
                         ))}
@@ -687,7 +686,10 @@ export default function ContractDetailsForm({
                       <SelectContent className="max-h-60">
                         <SelectItem value="">Default</SelectItem>
                         {EVM_VERSIONS.map((version) => (
-                          <SelectItem key={version} value={version}>
+                          <SelectItem
+                            key={version}
+                            value={version || "default"}
+                          >
                             {version}
                           </SelectItem>
                         ))}
@@ -716,7 +718,10 @@ export default function ContractDetailsForm({
                       </SelectTrigger>
                       <SelectContent className="max-h-60">
                         {LICENSE_TYPES.map((type) => (
-                          <SelectItem key={type.value} value={type.value}>
+                          <SelectItem
+                            key={type.value}
+                            value={type.value || "default"}
+                          >
                             {type.label}
                           </SelectItem>
                         ))}
@@ -752,7 +757,10 @@ export default function ContractDetailsForm({
                       </SelectTrigger>
                       <SelectContent>
                         {OPTIMIZATION_OPTIONS.map((opt) => (
-                          <SelectItem key={opt.value} value={opt.value}>
+                          <SelectItem
+                            key={opt.value}
+                            value={opt.value || "default"}
+                          >
                             {opt.label}
                           </SelectItem>
                         ))}
