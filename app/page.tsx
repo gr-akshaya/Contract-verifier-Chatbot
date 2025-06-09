@@ -137,22 +137,24 @@ export default function Home() {
         if (scrollElement) {
           scrollElement.scrollTop = scrollElement.scrollHeight;
 
-          setTimeout(() => {
-            scrollElement.scrollTo({
-              top: scrollElement.scrollHeight,
-              behavior: "smooth",
-            });
-          }, 100);
+          const delays = [50, 100, 200, 500];
 
-          setTimeout(() => {
-            scrollElement.scrollTop = scrollElement.scrollHeight;
-          }, 300);
+          delays.forEach((delay) => {
+            setTimeout(() => {
+              if (scrollElement) {
+                scrollElement.scrollTo({
+                  top: scrollElement.scrollHeight,
+                  behavior: delay > 100 ? "smooth" : "auto",
+                });
+              }
+            }, delay);
+          });
         }
       }
     };
 
     if (messages.length > 0) {
-      scrollToBottom();
+      setTimeout(scrollToBottom, 10);
     }
   }, [messages]);
 
@@ -809,7 +811,24 @@ export default function Home() {
 
           addMessage(
             "ai",
-            `🎉 **Verification successful!**\n\nYour contract has been successfully verified! You can now view it on the Core block explorer.\n\nThe verified source code and ABI are now publicly available. Great job! 🎊\n\nWant to verify another contract?`
+            `🎉 **Verification successful!**\n\nYour contract has been successfully verified! You can view it on the Core block explorer with the button below.\n\nThe verified source code and ABI are now publicly available. Great job! 🎊\n\nWant to verify another contract?`
+          );
+
+          addMessage(
+            "ai",
+            undefined,
+            <div className="mt-4">
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => {
+                  window.open(explorerUrl, "_blank");
+                }}
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                View Contract on Explorer
+              </Button>
+            </div>
           );
 
           try {
@@ -1020,28 +1039,45 @@ export default function Home() {
                         <>
                           {msg.text && (
                             <div className="text-sm whitespace-pre-wrap markdown-content">
-                              {msg.text.split("\n").map((line, i) => (
-                                <p key={i} className={i > 0 ? "mt-2" : ""}>
-                                  {line.split("**").map((part, j) =>
-                                    j % 2 === 1 ? (
-                                      <strong key={j}>{part}</strong>
-                                    ) : (
-                                      part.split("`").map((codePart, k) =>
-                                        k % 2 === 1 ? (
+                              {msg.text.split("\n").map((line, i) => {
+                                const parts = [];
+                                const boldParts = line.split("**");
+
+                                for (let j = 0; j < boldParts.length; j++) {
+                                  if (j % 2 === 0) {
+                                    const codeParts = boldParts[j].split("`");
+                                    for (let k = 0; k < codeParts.length; k++) {
+                                      if (k % 2 === 0) {
+                                        parts.push(
+                                          <span key={`${i}-${j}-${k}`}>
+                                            {codeParts[k]}
+                                          </span>
+                                        );
+                                      } else {
+                                        parts.push(
                                           <code
-                                            key={k}
+                                            key={`${i}-${j}-${k}`}
                                             className="bg-muted px-1 py-0.5 rounded text-xs font-mono"
                                           >
-                                            {codePart}
+                                            {codeParts[k]}
                                           </code>
-                                        ) : (
-                                          <span key={k}>{codePart}</span>
-                                        )
-                                      )
-                                    )
-                                  )}
-                                </p>
-                              ))}
+                                        );
+                                      }
+                                    }
+                                  } else {
+                                    parts.push(
+                                      <strong key={`${i}-${j}`}>
+                                        {boldParts[j]}
+                                      </strong>
+                                    );
+                                  }
+                                }
+                                return (
+                                  <p key={i} className={i > 0 ? "mt-2" : ""}>
+                                    {parts}
+                                  </p>
+                                );
+                              })}
                             </div>
                           )}
                           {msg.component && (
