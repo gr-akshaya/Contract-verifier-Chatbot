@@ -13,6 +13,7 @@ interface CodeEditorProps {
   onSourceCodeChange: (value: string) => void;
   contractName: string;
   onContractNameChange: (value: string) => void;
+  compilerType?: string;
   placeholder?: string;
 }
 
@@ -21,6 +22,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   onSourceCodeChange,
   contractName,
   onContractNameChange,
+  compilerType = "solidity-single",
   placeholder = "Paste your Solidity contract source code here...",
 }) => {
   const [isDragActive, setIsDragActive] = useState(false);
@@ -29,19 +31,40 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
 
   const handleFileUpload = useCallback(
     (file: File) => {
-      if (!file.name.endsWith(".sol")) {
-        setError("Invalid file type. Please upload a .sol file.");
+      // Support multiple file types based on compiler type
+      const validExtensions =
+        compilerType === "solidity-json"
+          ? [".json"]
+          : compilerType === "solidity-multi"
+          ? [".sol", ".zip", ".tar.gz"]
+          : [".sol"];
+
+      const isValidFile = validExtensions.some((ext) =>
+        file.name.toLowerCase().endsWith(ext)
+      );
+
+      if (!isValidFile) {
+        const expectedTypes =
+          compilerType === "solidity-json"
+            ? "JSON files"
+            : compilerType === "solidity-multi"
+            ? ".sol, .zip, or .tar.gz files"
+            : ".sol files";
+        setError(`Invalid file type. Please upload ${expectedTypes}.`);
         setFileName(null);
         onSourceCodeChange("");
         return;
       }
+
       setError(null);
       setFileName(file.name);
       const reader = new FileReader();
       reader.onload = (e) => {
         const content = e.target?.result as string;
         onSourceCodeChange(content);
-        if (!contractName) {
+
+        // Auto-detect contract name for Solidity files
+        if (file.name.endsWith(".sol") && !contractName) {
           const match = content.match(/contract\s+(\w+)\s*\{/);
           if (match && match[1]) {
             onContractNameChange(match[1]);
@@ -50,7 +73,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
       };
       reader.readAsText(file);
     },
-    [onSourceCodeChange, onContractNameChange, contractName]
+    [onSourceCodeChange, onContractNameChange, contractName, compilerType]
   );
 
   const handleDrop = useCallback(
@@ -120,15 +143,28 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
             <Button variant="outline" size="sm" asChild>
               <span>
                 <Upload size={16} className="mr-2" />
-                Upload .sol file
+                Upload{" "}
+                {compilerType === "solidity-json"
+                  ? "JSON"
+                  : compilerType === "solidity-multi"
+                  ? "Files"
+                  : ".sol"}{" "}
+                file
               </span>
             </Button>
             <input
               id="file-upload"
               type="file"
-              accept=".sol"
+              accept={
+                compilerType === "solidity-json"
+                  ? ".json"
+                  : compilerType === "solidity-multi"
+                  ? ".sol,.zip,.tar.gz"
+                  : ".sol"
+              }
               className="hidden"
               onChange={handleFileInputChange}
+              multiple={compilerType === "solidity-multi"}
             />
           </Label>
           {fileName && (
@@ -178,7 +214,13 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm rounded-md pointer-events-none">
               <FileText size={48} className="text-primary mb-2" />
               <p className="text-lg font-medium text-primary">
-                Drop Solidity file here
+                Drop{" "}
+                {compilerType === "solidity-json"
+                  ? "JSON"
+                  : compilerType === "solidity-multi"
+                  ? "source"
+                  : "Solidity"}{" "}
+                file{compilerType === "solidity-multi" ? "s" : ""} here
               </p>
             </div>
           )}

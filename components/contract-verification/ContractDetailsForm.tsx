@@ -144,6 +144,7 @@ export default function ContractDetailsForm({
 
   const sourceCode = watch("sourceCode");
   const optimizationUsed = watch("optimizationUsed");
+  const compilerType = watch("compilerType");
 
   const handleGetAISuggestions = useCallback(async () => {
     if (!sourceCode) {
@@ -561,6 +562,7 @@ export default function ContractDetailsForm({
                       }}
                       contractName={contractNameField.value}
                       onContractNameChange={contractNameField.onChange}
+                      compilerType={compilerType}
                     />
                   )}
                 />
@@ -858,52 +860,67 @@ export default function ContractDetailsForm({
   };
 
   return (
-    <FormProvider {...methods}>
-      <Card className="w-full shadow-lg border-primary/20">
-        <CardHeader>
-          <CardTitle className="text-xl font-headline text-primary">
-            {`Step ${getStepNumber(currentStep)} of 3: ${
-              stepTitles[currentStep]
-            }`}
-          </CardTitle>
-          <CardDescription>
-            {currentStep === "address" &&
-              "Specify the contract address and the network it's deployed on."}
-            {currentStep === "source" &&
-              "Provide the Solidity source code and contract name. You can also get AI suggestions here."}
-            {currentStep === "compiler" &&
-              "Configure compiler settings, EVM version, and license type. Click 'Verify Contract' to submit."}
-          </CardDescription>
-        </CardHeader>
+    <div className="mx-auto max-w-4xl px-6">
+      <FormProvider {...methods}>
+        <Card className="w-full shadow-lg border-primary/20">
+          <CardHeader>
+            <CardTitle className="text-xl font-headline text-primary">
+              {`Step ${getStepNumber(currentStep)} of 3: ${
+                stepTitles[currentStep]
+              }`}
+            </CardTitle>
+            <CardDescription>
+              {currentStep === "address" &&
+                "Specify the contract address and the network it's deployed on."}
+              {currentStep === "source" &&
+                "Provide the Solidity source code and contract name. You can also get AI suggestions here."}
+              {currentStep === "compiler" &&
+                "Configure compiler settings, EVM version, and license type. Click 'Verify Contract' to submit."}
+            </CardDescription>
+          </CardHeader>
 
-        {renderStep()}
+          {renderStep()}
 
-        <CardFooter className="flex justify-between pt-6 border-t">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={prev}
-            disabled={currentStep === "address" || isSubmittingForVerification}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" /> Previous
-          </Button>
-          <Button
-            type="button"
-            onClick={next}
-            disabled={
-              isSubmittingForVerification ||
-              (currentStep === "address" &&
-                (!watch("contractAddress") ||
-                  !!errors.contractAddress ||
-                  !watch("network") ||
-                  !!errors.network))
-            }
-          >
-            {currentStep === "compiler" ? "Verify Contract" : "Next"}{" "}
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        </CardFooter>
-      </Card>
-    </FormProvider>
+          <CardFooter className="flex justify-between pt-6 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={prev}
+              disabled={
+                currentStep === "address" || isSubmittingForVerification
+              }
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" /> Previous
+            </Button>
+            <Button
+              type="button"
+              onClick={next}
+              disabled={
+                isSubmittingForVerification ||
+                (currentStep === "address" &&
+                  (!watch("contractAddress") ||
+                    !!errors.contractAddress ||
+                    !watch("network") ||
+                    !!errors.network))
+              }
+            >
+              {isSubmittingForVerification && currentStep === "compiler" ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Verifying...
+                </>
+              ) : currentStep === "compiler" ? (
+                "Verify Contract"
+              ) : (
+                "Next"
+              )}{" "}
+              {!isSubmittingForVerification && (
+                <ArrowRight className="ml-2 h-4 w-4" />
+              )}
+            </Button>
+          </CardFooter>
+        </Card>
+      </FormProvider>
+    </div>
   );
 }

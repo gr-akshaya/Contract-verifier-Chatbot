@@ -149,98 +149,100 @@ export default function ContractLookupForm({
   };
 
   return (
-    <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(onSubmit)} className="w-full">
-        <Card className="w-full shadow-lg border-primary/20">
-          <CardHeader>
-            <CardTitle className="text-xl font-headline text-primary">
-              Lookup Verified Contract
-            </CardTitle>
-            <CardDescription>
-              Enter the contract address and select the network to fetch its
-              verified source code and ABI.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6 pt-6">
-            <div>
-              <Label htmlFor="lookup-network" className="text-base">
-                Network
-              </Label>
-              <Controller
-                name="network"
-                control={control}
-                render={({ field }) => (
-                  <RadioGroup
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    className="flex space-x-4 mt-2"
-                    id="lookup-network"
-                  >
-                    {NETWORKS.map((networkItem) => (
-                      <div
-                        key={networkItem.value}
-                        className="flex items-center space-x-2"
-                      >
-                        <RadioGroupItem
-                          value={networkItem.value}
-                          id={`lookup-${networkItem.value}`}
-                        />
-                        <Label
-                          htmlFor={`lookup-${networkItem.value}`}
-                          className="font-normal cursor-pointer"
+    <div className="mx-auto max-w-4xl px-6">
+      <FormProvider {...methods}>
+        <form onSubmit={handleSubmit(onSubmit)} className="w-full">
+          <Card className="w-full shadow-lg border-primary/20">
+            <CardHeader>
+              <CardTitle className="text-xl font-headline text-primary">
+                Lookup Verified Contract
+              </CardTitle>
+              <CardDescription>
+                Enter the contract address and select the network to fetch its
+                verified source code and ABI.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6 pt-6">
+              <div>
+                <Label htmlFor="lookup-network" className="text-base">
+                  Network
+                </Label>
+                <Controller
+                  name="network"
+                  control={control}
+                  render={({ field }) => (
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      className="flex space-x-4 mt-2"
+                      id="lookup-network"
+                    >
+                      {NETWORKS.map((networkItem) => (
+                        <div
+                          key={networkItem.value}
+                          className="flex items-center space-x-2"
                         >
-                          {networkItem.label}
-                        </Label>
-                      </div>
-                    ))}
-                  </RadioGroup>
+                          <RadioGroupItem
+                            value={networkItem.value}
+                            id={`lookup-${networkItem.value}`}
+                          />
+                          <Label
+                            htmlFor={`lookup-${networkItem.value}`}
+                            className="font-normal cursor-pointer"
+                          >
+                            {networkItem.label}
+                          </Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  )}
+                />
+                {errors.network && (
+                  <p className="text-sm text-destructive mt-1">
+                    {errors.network.message}
+                  </p>
                 )}
-              />
-              {errors.network && (
-                <p className="text-sm text-destructive mt-1">
-                  {errors.network.message}
-                </p>
-              )}
-            </div>
-            <div>
-              <Label htmlFor="lookup-contractAddress" className="text-base">
-                Contract Address
-              </Label>
-              <Controller
-                name="contractAddress"
-                control={control}
-                render={({ field }) => (
-                  <Input
-                    {...field}
-                    id="lookup-contractAddress"
-                    placeholder="0x..."
-                    className="mt-1 text-base"
-                  />
+              </div>
+              <div>
+                <Label htmlFor="lookup-contractAddress" className="text-base">
+                  Contract Address
+                </Label>
+                <Controller
+                  name="contractAddress"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      id="lookup-contractAddress"
+                      placeholder="0x..."
+                      className="mt-1 text-base"
+                    />
+                  )}
+                />
+                {errors.contractAddress && (
+                  <p className="text-sm text-destructive mt-1">
+                    {errors.contractAddress.message}
+                  </p>
                 )}
-              />
-              {errors.contractAddress && (
-                <p className="text-sm text-destructive mt-1">
-                  {errors.contractAddress.message}
-                </p>
-              )}
-            </div>
-          </CardContent>
-          <CardFooter className="pt-6 border-t">
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="w-full sm:w-auto"
-            >
-              {isLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Search className="mr-2 h-4 w-4" />
-              )}
-              Search Contract
-            </Button>
-          </CardFooter>
-        </Card>
-      </form>
-    </FormProvider>
+              </div>
+            </CardContent>
+            <CardFooter className="pt-6 border-t">
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="w-full sm:w-auto"
+              >
+                {isLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Search className="mr-2 h-4 w-4" />
+                )}
+                Search Contract
+              </Button>
+            </CardFooter>
+          </Card>
+        </form>
+      </FormProvider>
+    </div>
   );
 }

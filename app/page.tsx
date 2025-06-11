@@ -20,6 +20,8 @@ import {
   Code,
   Loader2,
   User,
+  Upload,
+  FolderOpen,
 } from "lucide-react";
 import {
   getSourceCode,
@@ -379,17 +381,11 @@ export default function Home() {
   };
 
   const createVerificationStepComponent = (step: number, sessionData: any) => {
-    return (
-      <Card className="w-full max-w-2xl">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Code className="w-5 h-5" />
-            Contract Verification - Step {step} of 6
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {step === 1 && (
-            <div className="space-y-4">
+    const renderStepContent = () => {
+      switch (step) {
+        case 1:
+          return (
+            <div className="space-y-6">
               <div>
                 <label className="text-sm font-medium">Contract Address</label>
                 <p className="text-sm font-mono bg-muted p-2 rounded">
@@ -412,8 +408,67 @@ export default function Home() {
                 </p>
               </div>
             </div>
-          )}
-        </CardContent>
+          );
+        case 2:
+          return (
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  Compiler Type
+                </label>
+                <select
+                  className="w-full p-2 border rounded-md bg-background"
+                  value={sessionData.compilerType || "solidity-single"}
+                  onChange={(e) => {
+                    if (verificationSession) {
+                      setVerificationSession({
+                        ...verificationSession,
+                        data: {
+                          ...verificationSession.data,
+                          compilerType: e.target.value as
+                            | "solidity-single"
+                            | "solidity-multi"
+                            | "solidity-json",
+                        },
+                      });
+                    }
+                  }}
+                >
+                  <option value="solidity-single">Single Solidity File</option>
+                  <option value="solidity-multi">
+                    Multiple Solidity Files
+                  </option>
+                  <option value="solidity-json">
+                    Solidity Standard JSON Input
+                  </option>
+                </select>
+              </div>
+              <div className="bg-amber-50 dark:bg-amber-950 p-3 rounded-lg">
+                <p className="text-sm text-amber-700 dark:text-amber-300">
+                  📝 **Selected:**{" "}
+                  {sessionData.compilerType === "solidity-single"
+                    ? "Single Solidity File"
+                    : sessionData.compilerType === "solidity-multi"
+                    ? "Multiple Solidity Files"
+                    : "Solidity Standard JSON Input"}
+                </p>
+              </div>
+            </div>
+          );
+        default:
+          return null;
+      }
+    };
+
+    return (
+      <Card className="w-full max-w-3xl mx-auto">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Code className="w-5 h-5" />
+            Contract Verification - Step {step} of 6
+          </CardTitle>
+        </CardHeader>
+        <CardContent>{renderStepContent()}</CardContent>
       </Card>
     );
   };
@@ -469,8 +524,76 @@ export default function Home() {
           "ai",
           `🚀 **Starting verification for contract:** \`${address}\`\n\n**Network:** ${
             network === "mainnet" ? "CoreDAO Mainnet" : "CoreDAO Testnet"
-          }\n\nLet's gather the required information. First, I need your contract's source code.\n\n**Step 1 of 6: Source Code**\nPlease paste your complete Solidity source code below:`,
+          }\n\nLet's gather the required information step by step. I'll guide you through each step with proper forms and dropdown menus.\n\n**Step 1 of 6: Source Code**\nPlease provide your contract's source code in one of the following ways:`,
           createVerificationStepComponent(1, { address, network })
+        );
+
+        // Add source code input options
+        addMessage(
+          "ai",
+          undefined,
+          <Card className="w-full max-w-3xl mx-auto mt-4">
+            <CardHeader>
+              <CardTitle>📄 Source Code Input</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Button
+                  variant="outline"
+                  className="h-20 flex flex-col items-center justify-center"
+                  onClick={() => {
+                    addMessage("user", "📝 I'll paste my source code");
+                    addMessage(
+                      "ai",
+                      "Perfect! Please paste your complete Solidity source code below. Make sure it includes all contracts, imports, and dependencies:"
+                    );
+                  }}
+                >
+                  <Code className="w-6 h-6 mb-2" />
+                  Paste Code
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-20 flex flex-col items-center justify-center"
+                  onClick={() => {
+                    const input = document.createElement("input");
+                    input.type = "file";
+                    input.accept = ".sol,.json";
+                    input.onchange = (e) => {
+                      const file = (e.target as HTMLInputElement).files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                          const content = e.target?.result as string;
+                          addMessage("user", `📁 Uploaded file: ${file.name}`);
+                          handleVerificationInput(content);
+                        };
+                        reader.readAsText(file);
+                      }
+                    };
+                    input.click();
+                  }}
+                >
+                  <Upload className="w-6 h-6 mb-2" />
+                  Upload File
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-20 flex flex-col items-center justify-center"
+                  onClick={() => {
+                    addMessage("user", "📋 I'll use multiple files");
+                    addMessage(
+                      "ai",
+                      "Great! For multiple files, please combine them or provide them as a JSON input. You can also zip multiple .sol files and upload them."
+                    );
+                  }}
+                >
+                  <FolderOpen className="w-6 h-6 mb-2" />
+                  Multiple Files
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         );
       } else {
         addMessage(
@@ -518,7 +641,76 @@ export default function Home() {
 
         addMessage(
           "ai",
-          "✅ **Source code received!**\n\n**Step 2 of 6: Compiler Type**\nWhat type of source code are you providing?\n\n• Type `1` for **Single Solidity File** (most common)\n• Type `2` for **Multiple Solidity Files** (with imports)\n• Type `3` for **Solidity Standard JSON Input** (from Hardhat/Truffle)\n\nIf you're not sure, choose option 1 (Single File)."
+          "✅ **Source code received!**\n\n**Step 2 of 6: Compiler Type**\nWhat type of source code are you providing?",
+          <Card className="w-full max-w-3xl mx-auto mt-4">
+            <CardHeader>
+              <CardTitle>📝 Compiler Type Selection</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  Select the compiler type that matches your source code
+                </label>
+                <select
+                  className="w-full p-3 border rounded-md bg-background text-sm"
+                  onChange={(e) => {
+                    if (verificationSession && e.target.value) {
+                      let compilerDescription: string;
+                      if (e.target.value === "solidity-single") {
+                        compilerDescription = "Single Solidity File";
+                      } else if (e.target.value === "solidity-multi") {
+                        compilerDescription = "Multiple Solidity Files";
+                      } else {
+                        compilerDescription = "Solidity Standard JSON Input";
+                      }
+
+                      setVerificationSession((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              step: 3,
+                              data: {
+                                ...prev.data,
+                                compilerType: e.target.value as
+                                  | "solidity-single"
+                                  | "solidity-multi"
+                                  | "solidity-json",
+                              },
+                            }
+                          : null
+                      );
+
+                      addMessage("user", `Selected: ${compilerDescription}`);
+                      addMessage(
+                        "ai",
+                        `✅ **Compiler type set:** ${compilerDescription}\n\n**Step 3 of 6: Contract Name**\nWhat's the name of your main contract? (This should match the contract name in your source code)\n\nExample: \`MyToken\`, \`SwapContract\`, etc.`
+                      );
+                    }
+                  }}
+                  defaultValue=""
+                >
+                  <option value="" disabled>
+                    Select compiler type...
+                  </option>
+                  <option value="solidity-single">
+                    Single Solidity File (most common)
+                  </option>
+                  <option value="solidity-multi">
+                    Multiple Solidity Files (with imports)
+                  </option>
+                  <option value="solidity-json">
+                    Solidity Standard JSON Input (from Hardhat/Truffle)
+                  </option>
+                </select>
+              </div>
+              <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg">
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  💡 **Tip:** If you&apos;re not sure, choose &quot;Single
+                  Solidity File&quot; - it&apos;s the most common option.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         );
         break;
 
@@ -552,7 +744,13 @@ export default function Home() {
             ? {
                 ...prev,
                 step: 3,
-                data: { ...prev.data, compilerType },
+                data: {
+                  ...prev.data,
+                  compilerType: compilerType as
+                    | "solidity-single"
+                    | "solidity-multi"
+                    | "solidity-json",
+                },
               }
             : null
         );
@@ -584,7 +782,321 @@ export default function Home() {
 
         addMessage(
           "ai",
-          "✅ **Contract name set!**\n\n**Step 4 of 6: Compiler Version**\nWhich Solidity compiler version did you use? Common versions:\n\n• `v0.8.20+commit.a1b79de6`\n• `v0.8.19+commit.7dd6d404`\n• `v0.8.18+commit.87f61d96`\n• `v0.8.17+commit.8df45f5f`\n\nPlease enter the full version string:"
+          "✅ **Contract name set!**\n\n**Step 4 of 6: Compiler Version**\nWhich Solidity compiler version did you use?\n\nPlease select from the dropdown below:",
+          <Card className="w-full max-w-3xl mx-auto mt-4">
+            <CardHeader>
+              <CardTitle>🔧 Compiler Version</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <select
+                  className="w-full p-3 border rounded-md bg-background text-sm"
+                  onChange={(e) => {
+                    if (verificationSession && e.target.value) {
+                      // Update the session with the compiler version
+                      setVerificationSession((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              step: 5,
+                              data: {
+                                ...prev.data,
+                                compilerVersion: e.target.value,
+                              },
+                            }
+                          : null
+                      );
+
+                      addMessage("user", `Selected: ${e.target.value}`);
+
+                      // Proceed to next step automatically
+                      addMessage(
+                        "ai",
+                        "✅ **Compiler version set!**\n\n**Step 5 of 6: Optimization & License Settings**\nPlease configure the optimization and license settings:",
+                        <Card className="w-full max-w-3xl mx-auto mt-4">
+                          <CardHeader>
+                            <CardTitle>⚙️ Configuration Settings</CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-6">
+                            <div>
+                              <label className="text-sm font-medium mb-2 block">
+                                Was optimization enabled during compilation?
+                              </label>
+                              <select
+                                className="w-full p-3 border rounded-md bg-background text-sm"
+                                onChange={(optE) => {
+                                  if (
+                                    verificationSession &&
+                                    optE.target.value
+                                  ) {
+                                    const isEnabled = optE.target.value === "1";
+                                    setVerificationSession((prev) =>
+                                      prev
+                                        ? {
+                                            ...prev,
+                                            data: {
+                                              ...prev.data,
+                                              optimizationUsed: optE.target
+                                                .value as "0" | "1",
+                                            },
+                                          }
+                                        : null
+                                    );
+
+                                    if (isEnabled) {
+                                      addMessage(
+                                        "ai",
+                                        "**Optimization enabled!** How many optimization runs were used?",
+                                        <Card className="w-full max-w-md mx-auto mt-2">
+                                          <CardContent className="pt-4">
+                                            <input
+                                              type="number"
+                                              placeholder="200"
+                                              className="w-full p-2 border rounded-md bg-background"
+                                              onChange={(runsE) => {
+                                                if (
+                                                  verificationSession &&
+                                                  runsE.target.value
+                                                ) {
+                                                  const runs = parseInt(runsE.target.value);
+                                                  setVerificationSession(
+                                                    (prev) =>
+                                                      prev
+                                                        ? {
+                                                            ...prev,
+                                                            data: {
+                                                              ...prev.data,
+                                                              runs,
+                                                            },
+                                                          }
+                                                        : null
+                                                  );
+                                                  
+                                                  // Auto-proceed after a short delay
+                                                  setTimeout(() => {
+                                                    addMessage("user", `Entered ${runs} optimization runs`);
+                                                    addMessage(
+                                                      "ai",
+                                                      "✅ **Optimization settings saved!** Now please select a license type from the dropdown below."
+                                                    );
+                                                  }, 1000);
+                                                }
+                                              }}
+                                            />
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                              Default is usually 200
+                                            </p>
+                                          </CardContent>
+                                        </Card>
+                                      );
+                                    } else {
+                                      setVerificationSession((prev) =>
+                                        prev
+                                          ? {
+                                              ...prev,
+                                              data: { ...prev.data, runs: 200 },
+                                            }
+                                          : null
+                                      );
+                                      addMessage("user", "Selected: No - Optimization was disabled");
+                                      addMessage(
+                                        "ai",
+                                        "✅ **Optimization settings saved!** Now please select a license type from the dropdown below."
+                                      );
+                                    }
+                                  }
+                                }}
+                                defaultValue=""
+                              >
+                                <option value="" disabled>
+                                  Select optimization setting...
+                                </option>
+                                <option value="0">
+                                  No - Optimization was disabled
+                                </option>
+                                <option value="1">
+                                  Yes - Optimization was enabled
+                                </option>
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="text-sm font-medium mb-2 block">
+                                License Type
+                              </label>
+                              <select
+                                className="w-full p-3 border rounded-md bg-background text-sm"
+                                onChange={(licE) => {
+                                  if (
+                                    verificationSession &&
+                                    licE.target.value
+                                  ) {
+                                    setVerificationSession((prev) =>
+                                      prev
+                                        ? {
+                                            ...prev,
+                                            step: 6,
+                                            data: {
+                                              ...prev.data,
+                                              licenseType: licE.target
+                                                .value as any,
+                                            },
+                                          }
+                                        : null
+                                    );
+
+                                    // Show final step
+                                    addMessage(
+                                      "user",
+                                      `Selected license: ${licE.target.value}`
+                                    );
+                                    addMessage(
+                                      "ai",
+                                      "✅ **Settings complete!**\n\n**Step 6 of 6: Ready to Verify**\nGreat! I have all the information needed:\n\n• **Source Code:** ✅\n• **Compiler Type:** ✅\n• **Contract Name:** ✅\n• **Compiler Version:** ✅\n• **License:** ✅\n\nClick the button below to start the verification process!",
+                                      <div className="mt-4 flex justify-center">
+                                        <Button
+                                          onClick={() => executeVerification()}
+                                          className="px-8 py-3 text-lg"
+                                          disabled={isProcessing}
+                                        >
+                                          {isProcessing ? (
+                                            <>
+                                              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                              Verifying...
+                                            </>
+                                          ) : (
+                                            "🚀 Start Verification"
+                                          )}
+                                        </Button>
+                                      </div>
+                                    );
+                                  }
+                                }}
+                                defaultValue="MIT"
+                              >
+                                <option value="MIT">MIT License</option>
+                                <option value="Apache-2.0">Apache 2.0</option>
+                                <option value="GNU GPLv3">
+                                  GNU General Public License v3.0
+                                </option>
+                                <option value="GNU GPLv2">
+                                  GNU General Public License v2.0
+                                </option>
+                                <option value="BSD-3-Clause">
+                                  BSD 3-Clause License
+                                </option>
+                                <option value="BSD-2-Clause">
+                                  BSD 2-Clause License
+                                </option>
+                                <option value="None">No License</option>
+                                <option value="Unlicense">The Unlicense</option>
+                              </select>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    }
+                  }}
+                  defaultValue=""
+                >
+                  <option value="" disabled>
+                    Select compiler version...
+                  </option>
+                  <option value="v0.8.28+commit.7893614a">
+                    v0.8.28+commit.7893614a
+                  </option>
+                  <option value="v0.8.27+commit.40a35a09">
+                    v0.8.27+commit.40a35a09
+                  </option>
+                  <option value="v0.8.26+commit.8a97fa7a">
+                    v0.8.26+commit.8a97fa7a
+                  </option>
+                  <option value="v0.8.25+commit.b61c2a91">
+                    v0.8.25+commit.b61c2a91
+                  </option>
+                  <option value="v0.8.24+commit.e11b9ed9">
+                    v0.8.24+commit.e11b9ed9
+                  </option>
+                  <option value="v0.8.23+commit.f704f362">
+                    v0.8.23+commit.f704f362
+                  </option>
+                  <option value="v0.8.22+commit.4fc1097e">
+                    v0.8.22+commit.4fc1097e
+                  </option>
+                  <option value="v0.8.21+commit.d9974bed">
+                    v0.8.21+commit.d9974bed
+                  </option>
+                  <option value="v0.8.20+commit.a1b79de6">
+                    v0.8.20+commit.a1b79de6
+                  </option>
+                  <option value="v0.8.19+commit.7dd6d414">
+                    v0.8.19+commit.7dd6d414
+                  </option>
+                  <option value="v0.8.18+commit.87f61d96">
+                    v0.8.18+commit.87f61d96
+                  </option>
+                  <option value="v0.8.17+commit.8df45f5f">
+                    v0.8.17+commit.8df45f5f
+                  </option>
+                  <option value="v0.8.16+commit.07c72cc2">
+                    v0.8.16+commit.07c72cc2
+                  </option>
+                  <option value="v0.8.15+commit.e14f2714">
+                    v0.8.15+commit.e14f2714
+                  </option>
+                  <option value="v0.8.14+commit.80d49f37">
+                    v0.8.14+commit.80d49f37
+                  </option>
+                  <option value="v0.8.13+commit.abaa5c0e">
+                    v0.8.13+commit.abaa5c0e
+                  </option>
+                  <option value="v0.8.12+commit.f00d7308">
+                    v0.8.12+commit.f00d7308
+                  </option>
+                  <option value="v0.8.11+commit.d7f03943">
+                    v0.8.11+commit.d7f03943
+                  </option>
+                  <option value="v0.8.10+commit.fc410830">
+                    v0.8.10+commit.fc410830
+                  </option>
+                  <option value="v0.8.9+commit.e5eed63a">
+                    v0.8.9+commit.e5eed63a
+                  </option>
+                  <option value="v0.8.8+commit.dddeac2f">
+                    v0.8.8+commit.dddeac2f
+                  </option>
+                  <option value="v0.8.7+commit.e28d00a7">
+                    v0.8.7+commit.e28d00a7
+                  </option>
+                  <option value="v0.8.6+commit.11564f7e">
+                    v0.8.6+commit.11564f7e
+                  </option>
+                  <option value="v0.8.5+commit.a4f2e591">
+                    v0.8.5+commit.a4f2e591
+                  </option>
+                  <option value="v0.8.4+commit.c7e474f2">
+                    v0.8.4+commit.c7e474f2
+                  </option>
+                  <option value="v0.8.3+commit.8d00100c">
+                    v0.8.3+commit.8d00100c
+                  </option>
+                  <option value="v0.8.2+commit.661d1103">
+                    v0.8.2+commit.661d1103
+                  </option>
+                  <option value="v0.8.1+commit.df193b15">
+                    v0.8.1+commit.df193b15
+                  </option>
+                  <option value="v0.8.0+commit.c7dfd78e">
+                    v0.8.0+commit.c7dfd78e
+                  </option>
+                </select>
+                <div className="text-sm text-muted-foreground">
+                  💡 Most common versions: v0.8.20+commit.a1b79de6,
+                  v0.8.19+commit.7dd6d414
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         );
         break;
 
@@ -609,7 +1121,126 @@ export default function Home() {
 
         addMessage(
           "ai",
-          "✅ **Compiler version set!**\n\n**Step 5 of 6: Optimization Settings**\nWas optimization enabled when you compiled your contract?\n\n• Type `yes` if optimization was enabled\n• Type `no` if optimization was disabled\n• If yes, I'll also need the number of runs (usually 200)"
+          "✅ **Compiler version set!**\n\n**Step 5 of 6: Optimization & License Settings**\nPlease configure the optimization and license settings:",
+          <Card className="w-full max-w-3xl mx-auto mt-4">
+            <CardHeader>
+              <CardTitle>⚙️ Configuration Settings</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  Was optimization enabled during compilation?
+                </label>
+                <select
+                  className="w-full p-3 border rounded-md bg-background text-sm"
+                  onChange={(e) => {
+                    if (verificationSession && e.target.value) {
+                      const isEnabled = e.target.value === "1";
+                      setVerificationSession((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              data: {
+                                ...prev.data,
+                                optimizationUsed: e.target.value as "0" | "1",
+                              },
+                            }
+                          : null
+                      );
+
+                      if (isEnabled) {
+                        addMessage(
+                          "ai",
+                          "**Optimization enabled!** How many optimization runs were used?",
+                          <Card className="w-full max-w-md mx-auto mt-2">
+                            <CardContent className="pt-4">
+                              <input
+                                type="number"
+                                placeholder="200"
+                                className="w-full p-2 border rounded-md bg-background"
+                                onChange={(e) => {
+                                  if (verificationSession && e.target.value) {
+                                    setVerificationSession((prev) =>
+                                      prev
+                                        ? {
+                                            ...prev,
+                                            data: {
+                                              ...prev.data,
+                                              runs: parseInt(e.target.value),
+                                            },
+                                          }
+                                        : null
+                                    );
+                                  }
+                                }}
+                              />
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Default is usually 200
+                              </p>
+                            </CardContent>
+                          </Card>
+                        );
+                      } else {
+                        setVerificationSession((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                data: { ...prev.data, runs: 200 },
+                              }
+                            : null
+                        );
+                      }
+                    }
+                  }}
+                  defaultValue=""
+                >
+                  <option value="" disabled>
+                    Select optimization setting...
+                  </option>
+                  <option value="0">No - Optimization was disabled</option>
+                  <option value="1">Yes - Optimization was enabled</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  License Type
+                </label>
+                <select
+                  className="w-full p-3 border rounded-md bg-background text-sm"
+                  onChange={(e) => {
+                    if (verificationSession && e.target.value) {
+                      setVerificationSession((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              data: {
+                                ...prev.data,
+                                licenseType: e.target.value as any,
+                              },
+                            }
+                          : null
+                      );
+                    }
+                  }}
+                  defaultValue="MIT"
+                >
+                  <option value="MIT">MIT License</option>
+                  <option value="Apache-2.0">Apache 2.0</option>
+                  <option value="GNU GPLv3">
+                    GNU General Public License v3.0
+                  </option>
+                  <option value="GNU GPLv2">
+                    GNU General Public License v2.0
+                  </option>
+                  <option value="BSD-3-Clause">BSD 3-Clause License</option>
+                  <option value="BSD-2-Clause">BSD 2-Clause License</option>
+                  <option value="None">No License</option>
+                  <option value="Unlicense">The Unlicense</option>
+                </select>
+              </div>
+            </CardContent>
+          </Card>
         );
         break;
 
@@ -649,7 +1280,23 @@ export default function Home() {
           );
           addMessage(
             "ai",
-            "✅ **Settings complete!**\n\n**Step 6 of 6: Ready to Verify**\nGreat! I have all the information needed:\n\n• **Source Code:** ✅\n• **Compiler Type:** ✅\n• **Contract Name:** ✅\n• **Compiler Version:** ✅\n• **Optimization:** Disabled\n\nType `confirm` to start the verification process!"
+            "✅ **Settings complete!**\n\n**Step 6 of 6: Ready to Verify**\nGreat! I have all the information needed:\n\n• **Source Code:** ✅\n• **Compiler Type:** ✅\n• **Contract Name:** ✅\n• **Compiler Version:** ✅\n• **Optimization:** Disabled\n\nClick the button below to start the verification process!",
+            <div className="mt-4 flex justify-center">
+              <Button
+                onClick={() => executeVerification()}
+                className="px-8 py-3 text-lg"
+                disabled={isProcessing}
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Verifying...
+                  </>
+                ) : (
+                  "🚀 Start Verification"
+                )}
+              </Button>
+            </div>
           );
         } else {
           addMessage(
@@ -681,19 +1328,24 @@ export default function Home() {
 
         addMessage(
           "ai",
-          `✅ **Settings complete!**\n\n**Step 6 of 6: Ready to Verify**\nPerfect! I have all the information needed:\n\n• **Source Code:** ✅\n• **Compiler Type:** ✅\n• **Contract Name:** ✅\n• **Compiler Version:** ✅\n• **Optimization:** Enabled (${runs} runs)\n\nType \`confirm\` to start the verification process!`
+          `✅ **Settings complete!**\n\n**Step 6 of 6: Ready to Verify**\nPerfect! I have all the information needed:\n\n• **Source Code:** ✅\n• **Compiler Type:** ✅\n• **Contract Name:** ✅\n• **Compiler Version:** ✅\n• **Optimization:** Enabled (${runs} runs)\n\nClick the button below to start the verification process!`,
+          <div className="mt-4 flex justify-center">
+            <Button
+              onClick={() => executeVerification()}
+              className="px-8 py-3 text-lg"
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Verifying...
+                </>
+              ) : (
+                "🚀 Start Verification"
+              )}
+            </Button>
+          </div>
         );
-        break;
-
-      case 6:
-        if (input.toLowerCase() === "confirm") {
-          await executeVerification();
-        } else {
-          addMessage(
-            "ai",
-            "Please type `confirm` to proceed with verification, or `cancel` to abort."
-          );
-        }
         break;
     }
   };
@@ -1097,12 +1749,12 @@ export default function Home() {
     <div className="flex flex-col h-screen bg-background">
       <Header />
       <main className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        <div className="flex-1 overflow-hidden px-4 pt-4">
+        <div className="flex-1 overflow-hidden px-6 md:px-12 pt-4">
           <ScrollArea
-            className="h-full md:px-28 overflow-y-auto chat-scroll-area"
+            className="h-full max-w-6xl mx-auto overflow-y-auto chat-scroll-area"
             ref={scrollAreaRef}
           >
-            <div className="space-y-6 pb-4">
+            <div className="space-y-6 pb-4 px-4 md:px-8">
               {messages.map((msg) => (
                 <div
                   key={msg.id}
@@ -1201,7 +1853,7 @@ export default function Home() {
         </div>
 
         <div className="shrink-0 border-t border-border bg-background sticky bottom-0">
-          <div className="md:px-48 px-5 py-4">
+          <div className="max-w-6xl mx-auto px-6 md:px-12 py-4">
             <div className="flex items-center gap-2">
               <Input
                 type="text"
