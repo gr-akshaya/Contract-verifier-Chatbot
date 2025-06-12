@@ -25,28 +25,47 @@ export async function POST(request: NextRequest) {
     }
 
     const baseUrl = COREDAO_API_ENDPOINTS[selectedNetwork];
-    const url = `${baseUrl}/contracts/verify_source_code?apikey=${apiKey}`;
+    console.log("Using CoreDAO API base URL:", baseUrl);
+    const url = `https://scan.test2.btcs.network/api/chain/verify_contract?apikey=${apiKey}`;
+    console.log("Verification URL:", url);
+    console.log("Request payload:", JSON.stringify(params, null, 2));
+
+    const requestBody = { ...params };
+    if (Array.isArray(requestBody.sourceCodes)) {
+      requestBody.sourceCodes = requestBody.sourceCodes.map(
+        (item: { code: string; fileName: string }) => ({
+          ...item,
+          code: item.code ? Buffer.from(item.code).toString("base64") : "",
+        })
+      );
+    } else if (typeof requestBody.sourceCodes === "string") {
+      requestBody.sourceCodes = Buffer.from(requestBody.sourceCodes).toString(
+        "base64"
+      );
+    }
 
     const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(params),
+      body: JSON.stringify(requestBody),
     });
 
-    console.log("Request URL:", url);
-
-    if (!response.ok) {
-      const errorText = await response.text();
+    const responseData = await response.json();
+    console.log("Response status:", responseData);
+    if (!responseData.data || responseData.data.success !== true) {
       return NextResponse.json(
-        { error: `CoreDAO API Error: ${response.status} ${errorText}` },
+        {
+          error: `CoreDAO API Error: ${response.status} ${JSON.stringify(
+            responseData
+          )}`,
+        },
         { status: response.status }
       );
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
+    return NextResponse.json(responseData);
   } catch (error) {
     console.error("Error verifying source code:", error);
     return NextResponse.json(

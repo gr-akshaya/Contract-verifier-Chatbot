@@ -5,20 +5,21 @@ export type CompilerType =
   | "solidity-multi"
   | "solidity-json";
 
-export type LicenseType =
-  | "None"
-  | "Unlicense"
-  | "MIT"
-  | "GNU GPLv2"
-  | "GNU GPLv3"
-  | "GNU LGPLv2.1"
-  | "GNU LGPLv3"
-  | "BSD-2-Clause"
-  | "BSD-3-Clause"
-  | "MPL-2.0"
-  | "OSL-3.0"
-  | "Apache-2.0"
-  | "GNU AGPLv3";
+export enum LicenseType {
+  None = 1,
+  Unlicense = 2,
+  MIT = 3,
+  GNU_GPLv2 = 4,
+  GNU_GPLv3 = 5,
+  GNU_LGPLv2_1 = 6,
+  GNU_LGPLv3 = 7,
+  BSD_2_Clause = 8,
+  BSD_3_Clause = 9,
+  MPL_2_0 = 10,
+  OSL_3_0 = 11,
+  Apache_2_0 = 12,
+  GNU_AGPLv3 = 13,
+}
 
 export type VerificationDetails = {
   network: Network;
@@ -29,12 +30,13 @@ export type VerificationDetails = {
   compilerVersion: string;
   optimizationUsed: "0" | "1";
   runs: string | number;
-  licenseType: LicenseType;
+  licenseType: number;
   evmVersion?: string;
   constructorArguments?: string;
 };
 
 export interface VerifySourceCodeParams {
+  // Legacy parameters
   action?: string;
   address?: string;
   apikey?: string;
@@ -45,12 +47,12 @@ export interface VerifySourceCodeParams {
   codeformat?: string;
   compilerversion?: string;
   constructorArguements?: string;
-  contractaddress?: string;
+  contractAddress?: string;
   contractname?: string;
   contractaddresses?: string;
   data?: string;
   endblock?: number;
-  evmversion?: string;
+  evmVersion: number;
   fromBlock?: number;
   gas?: string;
   gasPrice?: string;
@@ -86,6 +88,14 @@ export interface VerifySourceCodeParams {
   topic3?: string;
   txhash?: string;
   value?: string;
+
+  // New format parameters for chain/verify_contract endpoint
+  compilerType?: number;
+  compilerVersion?: string;
+  optimizeEnable?: boolean;
+  optimizeRuns?: number;
+  sourceCodes?: string | Array<{ code: string; fileName: string }>;
+  argument?: string | null;
 }
 
 export interface VerifyProxyContractParams {
@@ -140,9 +150,19 @@ export interface VerifyProxyContractParams {
 }
 
 export interface VerifySourceCodeResponse {
-  status: "1" | "0";
-  message: string;
-  result: string;
+  code: string;
+  data: {
+    success: boolean;
+    response: string;
+    abi?: Array<{
+      inputs: Array<{ internalType: string; name: string; type: string }>;
+      stateMutability: string;
+      type: string;
+    }>;
+    errMsg?: string;
+    txHash?: string;
+  };
+  message?: string;
 }
 
 export interface CheckVerificationStatusResponse {

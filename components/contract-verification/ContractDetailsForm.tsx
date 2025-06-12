@@ -87,12 +87,7 @@ const FormSchema = z.object({
     .min(0)
     .max(10000000)
     .or(z.string().regex(/^\d+$/).transform(Number)),
-  licenseType: z.enum(
-    LICENSE_TYPES.map((lt) => lt.value) as [
-      (typeof LICENSE_TYPES)[number]["value"],
-      ...(typeof LICENSE_TYPES)[number]["value"][]
-    ]
-  ),
+  licenseType: z.number().int().min(0, "License type is required"),
   constructorArguments: z.string().optional(),
 });
 
@@ -135,7 +130,6 @@ export default function ContractDetailsForm({
   });
   const {
     control,
-    handleSubmit,
     watch,
     setValue,
     formState: { errors, touchedFields },
@@ -364,7 +358,7 @@ export default function ContractDetailsForm({
       const response = await verifyContract(data.network, {
         contractAddress: data.contractAddress,
         compilerType: data.compilerType,
-        sourceCode: data.sourceCode,
+        sourceCodes: data.sourceCode,
         contractName: data.contractName,
         compilerVersion: data.compilerVersion,
         optimizationUsed: data.optimizationUsed,
@@ -432,7 +426,7 @@ export default function ContractDetailsForm({
   const triggerSubmitAndProceed = async () => {
     const isValidForm = await trigger();
     if (isValidForm) {
-      handleSubmit(onSubmit)();
+      methods.handleSubmit(onSubmit)();
     } else {
       const fieldErrors = Object.keys(errors);
       if (fieldErrors.length > 0) {
@@ -487,7 +481,9 @@ export default function ContractDetailsForm({
                 render={({ field }) => (
                   <RadioGroup
                     onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    defaultValue={
+                      field.value !== undefined ? String(field.value) : ""
+                    }
                     className="flex space-x-4 mt-2"
                   >
                     {NETWORKS.map((networkItem) => (
@@ -607,7 +603,9 @@ export default function ContractDetailsForm({
                   render={({ field }) => (
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      defaultValue={
+                        field.value !== undefined ? String(field.value) : ""
+                      }
                     >
                       <SelectTrigger
                         id="compilerType"
@@ -619,7 +617,7 @@ export default function ContractDetailsForm({
                         {COMPILER_TYPES.map((type) => (
                           <SelectItem
                             key={type.value}
-                            value={type.value || "default"}
+                            value={String(type.value)}
                           >
                             {type.label}
                           </SelectItem>
@@ -710,7 +708,9 @@ export default function ContractDetailsForm({
                   render={({ field }) => (
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      defaultValue={
+                        field.value !== undefined ? String(field.value) : ""
+                      }
                     >
                       <SelectTrigger
                         id="licenseType"
@@ -722,7 +722,7 @@ export default function ContractDetailsForm({
                         {LICENSE_TYPES.map((type) => (
                           <SelectItem
                             key={type.value}
-                            value={type.value || "default"}
+                            value={String(type.value) || "default"}
                           >
                             {type.label}
                           </SelectItem>

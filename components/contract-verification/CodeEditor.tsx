@@ -7,13 +7,58 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { extractContractName } from "@/lib/coredao";
+
+// Helper function to detect and decode Base64-encoded source code
+const isBase64 = (str: string): boolean => {
+  try {
+    // Check if it's a valid Base64 string
+    const base64regex =
+      /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+    if (!base64regex.test(str)) return false;
+
+    // Try to decode it and see if it contains Solidity patterns
+    const decoded = atob(str);
+    return (
+      decoded.includes("pragma solidity") ||
+      decoded.includes("contract ") ||
+      decoded.includes("// SPDX-License")
+    );
+  } catch {
+    return false;
+  }
+  return false;
+};
+
+const decodeSourceCodeIfNeeded = (content: string): string => {
+  if (isBase64(content)) {
+    try {
+      const decoded = atob(content);
+      // Normalize line endings and ensure proper formatting
+      return decoded
+        .replace(/\r\n/g, "\n")
+        .replace(/(\/\/ SPDX-License-Identifier:[^\n]*?)(?!\n)/g, "$1\n")
+        .replace(/(pragma solidity[^;]*?;)(?!\n)/g, "$1\n")
+        .replace(/(\s*contract\s+\w+)/g, "\n$1");
+    } catch (error) {
+      console.warn("Failed to decode Base64 content:", error);
+      return content;
+    }
+  }
+  return content;
+};
 
 interface CodeEditorProps {
   sourceCode: string;
   onSourceCodeChange: (value: string) => void;
   contractName: string;
   onContractNameChange: (value: string) => void;
-  compilerType?: string;
+  compilerType?:
+    | "solidity-single"
+    | "solidity-multi"
+    | "solidity-json"
+    | string;
   placeholder?: string;
 }
 
@@ -29,9 +74,24 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   const [fileName, setFileName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const handleSourceCodeChange = useCallback(
+    (content: string) => {
+      const decodedCode = decodeSourceCodeIfNeeded(content);
+      onSourceCodeChange(decodedCode);
+
+      // Try to auto-detect contract name if not already set
+      if (!contractName) {
+        const detected = extractContractName(decodedCode);
+        if (detected) {
+          onContractNameChange(detected);
+        }
+      }
+    },
+    [onSourceCodeChange, onContractNameChange, contractName]
+  );
+
   const handleFileUpload = useCallback(
     (file: File) => {
-      // Support multiple file types based on compiler type
       const validExtensions =
         compilerType === "solidity-json"
           ? [".json"]
@@ -39,11 +99,9 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
           ? [".sol", ".zip", ".tar.gz"]
           : [".sol"];
 
-      const isValidFile = validExtensions.some((ext) =>
-        file.name.toLowerCase().endsWith(ext)
-      );
-
-      if (!isValidFile) {
+      if (
+        !validExtensions.some((ext) => file.name.toLowerCase().endsWith(ext))
+      ) {
         const expectedTypes =
           compilerType === "solidity-json"
             ? "JSON files"
@@ -58,172 +116,130 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
 
       setError(null);
       setFileName(file.name);
+
       const reader = new FileReader();
       reader.onload = (e) => {
         const content = e.target?.result as string;
-        onSourceCodeChange(content);
-
-        // Auto-detect contract name for Solidity files
-        if (file.name.endsWith(".sol") && !contractName) {
-          const match = content.match(/contract\s+(\w+)\s*\{/);
-          if (match && match[1]) {
-            onContractNameChange(match[1]);
-          }
-        }
+        handleSourceCodeChange(content);
       };
       reader.readAsText(file);
     },
-    [onSourceCodeChange, onContractNameChange, contractName, compilerType]
+    [compilerType, handleSourceCodeChange, onSourceCodeChange]
   );
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsDragActive(false);
-      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        handleFileUpload(e.dataTransfer.files[0]);
-        e.dataTransfer.clearData();
+  const handleFileInput = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (file) {
+        handleFileUpload(file);
       }
     },
     [handleFileUpload]
   );
 
-  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragActive(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragActive(false);
-  }, []);
-
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      handleFileUpload(e.target.files[0]);
-    }
-  };
-
-  const clearCode = () => {
-    onSourceCodeChange("");
-    setFileName(null);
-    setError(null);
-  };
-
   return (
-    <Card className="w-full shadow-lg">
-      <CardHeader>
-        <CardTitle className="text-xl font-headline">
-          Contract Source Code
+    <Card className="w-full p-4 space-y-4">
+      <CardHeader className="p-0">
+        <CardTitle className="flex items-center justify-between">
+          <Label>Source Code</Label>
+          {fileName && (
+            <Badge variant="secondary" className="flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              {fileName}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="w-4 h-4 p-0"
+                onClick={() => {
+                  setFileName(null);
+                  onSourceCodeChange("");
+                }}
+              >
+                <X className="w-3 h-3" />
+              </Button>
+            </Badge>
+          )}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div>
-          <Label htmlFor="contractName" className="text-sm font-medium">
-            Contract Name
-          </Label>
-          <Input
-            id="contractName"
-            type="text"
-            placeholder="e.g., MyToken (must match contract name in source)"
-            value={contractName}
-            onChange={(e) => onContractNameChange(e.target.value)}
-            className="mt-1 font-body"
+      <CardContent className="p-0 space-y-4">
+        {/* File upload zone */}
+        <div
+          className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
+            isDragActive ? "border-primary bg-primary/5" : "border-gray-200"
+          }`}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDragActive(true);
+          }}
+          onDragLeave={(e) => {
+            e.preventDefault();
+            setIsDragActive(false);
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            setIsDragActive(false);
+            const file = e.dataTransfer.files[0];
+            if (file) {
+              handleFileUpload(file);
+            }
+          }}
+          onClick={() => document.getElementById("file-upload")?.click()}
+        >
+          <input
+            id="file-upload"
+            type="file"
+            className="hidden"
+            onChange={handleFileInput}
+            accept={
+              compilerType === "solidity-json" ? ".json" : ".sol,.zip,.tar.gz"
+            }
           />
-          <p className="mt-1 text-xs text-muted-foreground">
-            The name of the contract exactly as it appears in the source code.
+          <Upload className="mx-auto w-8 h-8 mb-2 text-gray-400" />
+          <p className="text-sm text-gray-600">
+            Drop your file here or click to upload
           </p>
         </div>
 
-        <div className="flex items-center justify-between">
-          <Label htmlFor="file-upload" className="cursor-pointer">
-            <Button variant="outline" size="sm" asChild>
-              <span>
-                <Upload size={16} className="mr-2" />
-                Upload{" "}
-                {compilerType === "solidity-json"
-                  ? "JSON"
-                  : compilerType === "solidity-multi"
-                  ? "Files"
-                  : ".sol"}{" "}
-                file
-              </span>
-            </Button>
-            <input
-              id="file-upload"
-              type="file"
-              accept={
-                compilerType === "solidity-json"
-                  ? ".json"
-                  : compilerType === "solidity-multi"
-                  ? ".sol,.zip,.tar.gz"
-                  : ".sol"
-              }
-              className="hidden"
-              onChange={handleFileInputChange}
-              multiple={compilerType === "solidity-multi"}
-            />
-          </Label>
-          {fileName && (
-            <span className="text-sm text-muted-foreground ml-2">
-              File: {fileName}
-            </span>
-          )}
-          {sourceCode && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearCode}
-              className="text-destructive hover:text-destructive-foreground hover:bg-destructive"
-            >
-              <X size={16} className="mr-1" /> Clear
-            </Button>
-          )}
-        </div>
-
         {error && (
-          <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-md text-destructive text-sm flex items-center">
-            <AlertTriangle size={18} className="mr-2" />
+          <div className="flex items-center gap-2 text-destructive text-sm">
+            <AlertTriangle className="w-4 h-4" />
             {error}
           </div>
         )}
 
-        <div
-          className={`relative border-2 rounded-md transition-colors
-            ${
-              isDragActive
-                ? "border-primary bg-primary/5"
-                : "border-dashed border-input hover:border-accent"
+        {/* Code editor textarea */}
+        <Textarea
+          value={sourceCode}
+          onChange={(e) => handleSourceCodeChange(e.target.value)}
+          placeholder={placeholder}
+          className="min-h-[300px] font-mono whitespace-pre-wrap break-words"
+          style={{ wordBreak: "break-all" }}
+          onPaste={(e) => {
+            const pastedText = e.clipboardData.getData("text");
+            // Preserve formatting and handle base64
+            if (pastedText) {
+              e.preventDefault();
+              // Remove any Windows-style line endings and normalize
+              const normalizedText = pastedText.replace(/\r\n/g, "\n");
+              handleSourceCodeChange(normalizedText);
             }
-            ${error ? "border-destructive" : ""}`}
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-        >
-          <Textarea
-            value={sourceCode}
-            onChange={(e) => onSourceCodeChange(e.target.value)}
-            placeholder={placeholder}
-            className="w-full h-80 min-h-[200px] p-4 font-code text-sm bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 resize-y"
-            spellCheck="false"
+          }}
+          wrap="soft"
+          spellCheck={false}
+          autoCorrect="off"
+          autoCapitalize="off"
+        />
+
+        {/* Contract name input */}
+        <div className="space-y-2">
+          <Label htmlFor="contract-name">Contract Name</Label>
+          <Input
+            id="contract-name"
+            value={contractName}
+            onChange={(e) => onContractNameChange(e.target.value)}
+            placeholder="Enter the main contract name..."
+            className="font-mono"
           />
-          {isDragActive && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm rounded-md pointer-events-none">
-              <FileText size={48} className="text-primary mb-2" />
-              <p className="text-lg font-medium text-primary">
-                Drop{" "}
-                {compilerType === "solidity-json"
-                  ? "JSON"
-                  : compilerType === "solidity-multi"
-                  ? "source"
-                  : "Solidity"}{" "}
-                file{compilerType === "solidity-multi" ? "s" : ""} here
-              </p>
-            </div>
-          )}
         </div>
       </CardContent>
     </Card>

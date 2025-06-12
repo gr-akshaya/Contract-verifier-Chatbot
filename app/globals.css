@@ -24,6 +24,13 @@
   border: none;
 }
 
+.preserve-whitespace {
+  white-space: pre;
+  word-wrap: normal;
+  overflow-x: auto;
+  tab-size: 2;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

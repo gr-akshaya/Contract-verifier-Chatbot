@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Send,
   Bot,
@@ -23,16 +24,13 @@ import {
   Upload,
   FolderOpen,
 } from "lucide-react";
+import { getSourceCode, verifyContract } from "@/lib/coredao";
+import { LICENSE_TYPES, NETWORKS } from "@/lib/constants";
 import {
-  getSourceCode,
-  verifySourceCode,
-  checkVerificationStatus,
-} from "@/lib/coredao";
-import { NETWORKS } from "@/lib/constants";
-import type {
-  Network,
+  type Network,
+  type VerificationDetails,
   GetSourceCodeResponse,
-  VerificationDetails,
+  LicenseType,
 } from "@/types/coredao";
 import { toast } from "sonner";
 
@@ -61,7 +59,12 @@ export default function Home() {
     address: string;
     network: Network;
     step: number;
-    data: Partial<VerificationDetails & { compilerType: string }>;
+    data: Partial<
+      VerificationDetails & {
+        compilerType: string;
+        sourceCodes?: { code: string; fileName: string }[];
+      }
+    >;
   } | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -516,7 +519,7 @@ export default function Home() {
             evmVersion: "shanghai",
             optimizationUsed: "0",
             runs: 200,
-            licenseType: "MIT",
+            licenseType: LicenseType.MIT,
           },
         });
 
@@ -545,7 +548,85 @@ export default function Home() {
                     addMessage("user", "📝 I'll paste my source code");
                     addMessage(
                       "ai",
-                      "Perfect! Please paste your complete Solidity source code below. Make sure it includes all contracts, imports, and dependencies:"
+                      "Perfect! Please paste your complete Solidity source code below. Make sure it includes all contracts, imports, and dependencies:",
+                      <Card className="w-full max-w-3xl mx-auto mt-4">
+                        <CardContent className="p-4">
+                          <Textarea
+                            placeholder="Paste your Solidity source code here..."
+                            className="min-h-[300px] font-mono whitespace-pre preserve-whitespace"
+                            style={{ wordBreak: "normal", whiteSpace: "pre" }}
+                            onPaste={(e) => {
+                              const pastedText =
+                                e.clipboardData.getData("text");
+                              if (pastedText) {
+                                e.preventDefault();
+                                const textarea =
+                                  e.target as HTMLTextAreaElement;
+                                textarea.value = pastedText;
+                                // Don't auto-submit on paste to allow user to verify the code first
+                              }
+                            }}
+                            spellCheck={false}
+                            autoCorrect="off"
+                            autoCapitalize="off"
+                            // Removed auto-submission on change to prevent premature processing
+                          />
+                          <div className="mt-4 flex justify-end">
+                            <Button
+                              onClick={(
+                                e: React.MouseEvent<HTMLButtonElement>
+                              ) => {
+                                const textarea = e.currentTarget.parentElement
+                                  ?.previousElementSibling as HTMLTextAreaElement;
+                                console.log("vm");
+                                if (textarea) {
+                                  const sourceCode = textarea.value;
+
+                                  if (sourceCode.trim().length > 50) {
+                                    // Log the first few characters to check the input
+                                    console.log(
+                                      "Submitting code:",
+                                      sourceCode.substring(0, 100) + "..."
+                                    );
+
+                                    // Add a user message to show the code is being processed
+                                    addMessage(
+                                      "user",
+                                      "Submitting contract source code..."
+                                    );
+                                    setVerificationSession({
+                                      address,
+                                      network,
+                                      step: 1,
+                                      data: {
+                                        network,
+                                        contractAddress: address,
+                                        evmVersion: "shanghai",
+                                        optimizationUsed: "0",
+                                        runs: 200,
+                                        licenseType: LicenseType.MIT,
+                                        sourceCode: sourceCode,
+                                      },
+                                    });
+                                    // Process directly without changing step (handleVerificationInput will update state)
+                                    setTimeout(() => {
+                                      // Don't set the session directly here, let the handleVerificationInput function do it
+                                      handleVerificationInput(sourceCode);
+                                    }, 100);
+                                  } else {
+                                    addMessage(
+                                      "ai",
+                                      "⚠️ **Source code seems too short**\n\nPlease provide the complete Solidity source code. It should typically be more than a few lines long."
+                                    );
+                                  }
+                                }
+                              }}
+                            >
+                              Submit Code
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
                     );
                   }}
                 >
@@ -558,17 +639,77 @@ export default function Home() {
                   onClick={() => {
                     const input = document.createElement("input");
                     input.type = "file";
+                    // multiple files allowed
+                    input.multiple = true;
                     input.accept = ".sol,.json";
                     input.onchange = (e) => {
-                      const file = (e.target as HTMLInputElement).files?.[0];
-                      if (file) {
-                        const reader = new FileReader();
-                        reader.onload = (e) => {
-                          const content = e.target?.result as string;
-                          addMessage("user", `📁 Uploaded file: ${file.name}`);
-                          handleVerificationInput(content);
-                        };
-                        reader.readAsText(file);
+                      const files = (e.target as HTMLInputElement).files;
+                      if (files) {
+                        const processFiles = Array.from(files).map((file) => {
+                          return new Promise<{
+                            code: string;
+                            fileName: string;
+                          }>((resolve) => {
+                            const reader = new FileReader();
+                            reader.onload = (e) => {
+                              const content = e.target?.result as string;
+                              addMessage(
+                                "user",
+                                `📁 Uploaded file: ${file.name}`
+                              );
+                              resolve({
+                                code: content,
+                                fileName: file.name,
+                              });
+                            };
+                            reader.readAsText(file);
+                          });
+                        });
+
+                        Promise.all(processFiles).then(
+                          (
+                            processedFiles: Array<{
+                              code: string;
+                              fileName: string;
+                            }>
+                          ) => {
+                            // Filter out empty or invalid files
+                            const validFiles = processedFiles.filter(
+                              (file) =>
+                                file.code &&
+                                file.fileName.toLowerCase().endsWith(".sol")
+                            );
+
+                            if (validFiles.length === 0) {
+                              addMessage(
+                                "ai",
+                                "⚠️ No valid Solidity files were found in the upload."
+                              );
+                              return;
+                            }
+
+                            setVerificationSession((prev: any) =>
+                              prev
+                                ? {
+                                    ...prev,
+                                    data: {
+                                      ...prev.data,
+                                      compilerType:
+                                        validFiles.length > 1
+                                          ? "solidity-multi"
+                                          : "solidity-single",
+                                      sourceCodes: validFiles,
+                                    },
+                                  }
+                                : null
+                            );
+
+                            const consolidatedCode = processedFiles
+                              .map((f) => `// File: ${f.fileName}\n${f.code}`)
+                              .join("\n\n");
+                            handleVerificationInput(consolidatedCode);
+                          }
+                        );
                       }
                     };
                     input.click();
@@ -615,9 +756,8 @@ export default function Home() {
   };
 
   const handleVerificationInput = async (input: string) => {
-    if (!verificationSession) return;
-
-    const { step } = verificationSession;
+    console.log("Handling verification input:", input);
+    const step = verificationSession?.step || 1;
 
     switch (step) {
       case 1:
@@ -634,7 +774,7 @@ export default function Home() {
             ? {
                 ...prev,
                 step: 2,
-                data: { ...prev.data, sourceCode: input.trim() },
+                data: { ...prev.data, sourceCode: input },
               }
             : null
         );
@@ -858,7 +998,6 @@ export default function Home() {
                                                   verificationSession &&
                                                   runsE.target.value
                                                 ) {
-                                                  const runs = parseInt(runsE.target.value);
                                                   setVerificationSession(
                                                     (prev) =>
                                                       prev
@@ -866,20 +1005,14 @@ export default function Home() {
                                                             ...prev,
                                                             data: {
                                                               ...prev.data,
-                                                              runs,
+                                                              runs: parseInt(
+                                                                runsE.target
+                                                                  .value
+                                                              ),
                                                             },
                                                           }
                                                         : null
                                                   );
-                                                  
-                                                  // Auto-proceed after a short delay
-                                                  setTimeout(() => {
-                                                    addMessage("user", `Entered ${runs} optimization runs`);
-                                                    addMessage(
-                                                      "ai",
-                                                      "✅ **Optimization settings saved!** Now please select a license type from the dropdown below."
-                                                    );
-                                                  }, 1000);
                                                 }
                                               }}
                                             />
@@ -897,11 +1030,6 @@ export default function Home() {
                                               data: { ...prev.data, runs: 200 },
                                             }
                                           : null
-                                      );
-                                      addMessage("user", "Selected: No - Optimization was disabled");
-                                      addMessage(
-                                        "ai",
-                                        "✅ **Optimization settings saved!** Now please select a license type from the dropdown below."
                                       );
                                     }
                                   }
@@ -1552,48 +1680,191 @@ export default function Home() {
         "🚀 **Starting verification process...**\n\nThis may take a few moments. Please wait..."
       );
 
-      let codeformat: "solidity-single-file" | "solidity-standard-json-input";
-
+      // Map compilerType to API value
+      let compilerType: "solidity-single" | "solidity-multi" | "solidity-json";
       switch (data.compilerType) {
         case "solidity-single":
-          codeformat = "solidity-single-file";
-          break;
         case "solidity-multi":
-          codeformat = "solidity-single-file";
-          break;
         case "solidity-json":
-          codeformat = "solidity-standard-json-input";
+          compilerType = data.compilerType;
           break;
         default:
-          codeformat = "solidity-single-file";
+          compilerType = "solidity-single";
+      }
+
+      // Format source code based on type (single or multi)
+      const formattedSourceCode = data.sourceCodes
+        ? data.sourceCodes
+        : data.sourceCode;
+
+      let licenseTypeValue: number;
+      if (typeof data.licenseType === "number") {
+        licenseTypeValue = data.licenseType;
+      } else if (data.licenseType) {
+        const licenseObj = LICENSE_TYPES.find(
+          (lt) => lt.value === (data.licenseType as any)
+        );
+        licenseTypeValue = licenseObj?.apiValue || 3;
+      } else {
+        licenseTypeValue = 3;
       }
 
       const verificationData = {
-        module: "contract" as const,
-        action: "verifysourcecode" as const,
-        contractaddress: address,
-        sourceCode: data.sourceCode!,
-        codeformat,
-        contractname: data.contractName!,
-        compilerversion: data.compilerVersion!,
+        contractAddress: address,
+        compilerType,
+        sourceCodes: formattedSourceCode,
+        contractName: data.contractName!,
+        compilerVersion: data.compilerVersion!,
         optimizationUsed: data.optimizationUsed!,
         runs: Number(data.runs!),
-        evmversion: data.evmVersion || "shanghai",
-        licenseType: 1,
+        evmVersion: data.evmVersion ?? "shanghai",
+        licenseType: licenseTypeValue,
       };
 
-      const result = await verifySourceCode(network, verificationData);
+      const result = await verifyContract(network, verificationData);
       removeTypingMessage(typingId);
 
-      if (result.status === "1") {
+      if (result.data && result?.data?.success === true) {
         addMessage(
           "ai",
-          `🎉 **Verification submitted successfully!**\n\n**GUID:** \`${result.result}\`\n\nYour contract verification is now in the queue. This typically takes 1-2 minutes.\n\nI'll check the status for you automatically...`
-        );
+          "Verification request submitted successfully! 🎉\n\n",
+          <div className="mt-4">
+            <Card className="w-full max-w-2xl">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Code className="w-5 h-5" />
+                    Contract Information
+                  </CardTitle>
+                  <Badge variant={"default"}>
+                    <>
+                      <CheckCircle className="w-3 h-3 mr-1" />
+                      Verified
+                    </>
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Network
+                    </label>
+                    <p className="text-sm">{network}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Contract Name
+                    </label>
+                    <p className="text-sm">{data.contractName || "Unknown"}</p>
+                  </div>
+                  <>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Compiler Version
+                      </label>
+                      <p className="text-sm">
+                        {data.compilerVersion || "Unknown"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Optimization
+                      </label>
+                      <p className="text-sm">
+                        {data.optimizationUsed === "1" ? "Enabled" : "Disabled"}
+                      </p>
+                    </div>
+                  </>
+                </div>
 
-        setTimeout(async () => {
-          await checkVerificationStatusPeriodically(network, result.result);
-        }, 10000);
+                <Separator />
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Contract Address
+                    </label>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="cursor-pointer"
+                      onClick={() => {
+                        navigator.clipboard.writeText(address);
+                        toast.success("Address copied to clipboard");
+                      }}
+                    >
+                      <Copy className="w-3 h-3" />
+                    </Button>
+                  </div>
+                  <p className="text-sm font-mono bg-muted p-2 rounded">
+                    {address}
+                  </p>
+                </div>
+
+                {result.data.response && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Source Code
+                      </label>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="cursor-pointer"
+                        onClick={() => {
+                          navigator.clipboard.writeText(
+                            result.data.response || ""
+                          );
+                          toast.success("Source code copied to clipboard");
+                        }}
+                      >
+                        <Copy className="w-3 h-3 cursor-pointer" />
+                      </Button>
+                    </div>
+                    <div className="bg-muted p-3 rounded max-h-60 overflow-y-auto">
+                      <pre className="text-xs whitespace-pre-wrap">
+                        {result.data.response.substring(0, 1000)}...
+                      </pre>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const explorerUrl =
+                        network === "mainnet"
+                          ? `https://scan.coredao.org/address/${address}`
+                          : `https://scan.test2.btcs.network/address/${address}`;
+                      window.open(explorerUrl, "_blank");
+                    }}
+                  >
+                    <ExternalLink className="w-3 h-3 mr-1" />
+                    View on Explorer
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(
+                        typeof result.data.abi === "string"
+                          ? result.data.abi
+                          : JSON.stringify(result.data.abi ?? "")
+                      );
+                      toast.success("ABI copied to clipboard");
+                    }}
+                  >
+                    <Copy className="w-3 h-3 mr-1" />
+                    Copy ABI
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
       } else {
         addMessage(
           "ai",
@@ -1617,133 +1888,30 @@ export default function Home() {
     }
   };
 
-  const checkVerificationStatusPeriodically = async (
-    network: Network,
-    guid: string,
-    attempts = 0
-  ) => {
-    if (attempts >= 10) {
-      addMessage(
-        "ai",
-        "⏰ **Verification taking longer than expected**\n\nYour contract verification request is still being processed. You can check the status manually on the Core block explorer using this GUID: `" +
-          guid +
-          "`\n\nThe process usually completes within 5 minutes."
-      );
-      return;
-    }
-
-    try {
-      const statusResult = await checkVerificationStatus(network, guid);
-
-      if (statusResult.status === "1") {
-        if (statusResult.result === "Pass - Verified") {
-          const explorerUrl =
-            network === "mainnet"
-              ? `https://scan.coredao.org/address/${verificationSession?.address}`
-              : `https://scan.test2.btcs.network/address/${verificationSession?.address}`;
-
-          addMessage(
-            "ai",
-            `🎉 **Verification successful!**\n\nYour contract has been successfully verified! You can view it on the Core block explorer with the button below.\n\nThe verified source code and ABI are now publicly available. Great job! 🎊\n\nWant to verify another contract?`
-          );
-
-          addMessage(
-            "ai",
-            undefined,
-            <div className="mt-4">
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => {
-                  window.open(explorerUrl, "_blank");
-                }}
-              >
-                <ExternalLink className="w-4 h-4 mr-2" />
-                View Contract on Explorer
-              </Button>
-            </div>
-          );
-
-          try {
-            if (verificationSession?.address) {
-              setTimeout(async () => {
-                const sourceCodeResponse = await getSourceCode(
-                  network,
-                  verificationSession.address
-                );
-                if (
-                  sourceCodeResponse.status === "1" &&
-                  sourceCodeResponse.result &&
-                  sourceCodeResponse.result.length > 0
-                ) {
-                  const contractData = sourceCodeResponse.result[0];
-                  addMessage(
-                    "ai",
-                    undefined,
-                    formatContractInfo(
-                      contractData,
-                      network,
-                      verificationSession.address
-                    )
-                  );
-                }
-              }, 2000);
-            }
-          } catch (error) {
-            console.error("Error fetching verified contract details:", error);
-          }
-        } else if (
-          statusResult.result.includes("Fail") ||
-          statusResult.result === "Fail"
-        ) {
-          addMessage(
-            "ai",
-            `❌ **Verification failed**\n\n**Reason:** ${statusResult.result}\n\nPlease check your contract details and try again. Common issues:\n• Compiler version mismatch\n• Wrong optimization settings\n• Source code doesn't match deployed bytecode\n• Constructor arguments might be incorrect\n\nWant to try again with different settings? Type \`verify ${verificationSession?.address}\``
-          );
-        } else if (
-          statusResult.result.includes("Pending") ||
-          statusResult.result === "Pending in queue"
-        ) {
-          addMessage(
-            "ai",
-            `⏳ **Verification in progress**\n\nYour contract is still being verified. This typically takes 1-2 minutes.\n\nI'll check again shortly...`
-          );
-          setTimeout(() => {
-            checkVerificationStatusPeriodically(network, guid, attempts + 1);
-          }, 15000);
-        } else {
-          setTimeout(() => {
-            checkVerificationStatusPeriodically(network, guid, attempts + 1);
-          }, 15000);
-        }
-      } else {
-        setTimeout(() => {
-          checkVerificationStatusPeriodically(network, guid, attempts + 1);
-        }, 15000);
-      }
-    } catch (error) {
-      console.error("Status check error:", error);
-      if (attempts < 5) {
-        setTimeout(() => {
-          checkVerificationStatusPeriodically(network, guid, attempts + 1);
-        }, 20000);
-      } else {
-        addMessage(
-          "ai",
-          `⚠️ **Verification status check failed**\n\nI'm having trouble checking the status of your verification. You can check it manually on the Core block explorer using this GUID: \`${guid}\`\n\nError: ${
-            error instanceof Error ? error.message : "Unknown error"
-          }`
-        );
-      }
-    }
-  };
-
   const TypingIndicator = () => (
     <div className="flex items-center gap-1 p-2">
       <Loader2 className="w-4 h-4 animate-spin" />
       <span className="text-sm text-muted-foreground">AI is thinking...</span>
     </div>
   );
+
+  // Add an effect to monitor verification session step changes
+  useEffect(() => {
+    if (!verificationSession) return;
+
+    // Only run this effect when step changes and is greater than 1 (after source code submission)
+    const { step } = verificationSession;
+    console.log("Verification session step changed:", step);
+
+    // This ensures the UI always updates after a step change, serving as a fallback mechanism
+    if (step === 2) {
+      // We've just received source code and moved to step 2, ensure UI shows compiler selection
+      const sourceCodeLength = verificationSession.data.sourceCode?.length || 0;
+      console.log(
+        `Source code received (${sourceCodeLength} chars), showing compiler selection options`
+      );
+    }
+  }, [verificationSession?.step]);
 
   return (
     <div className="flex flex-col h-screen bg-background">

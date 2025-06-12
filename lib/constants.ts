@@ -21,52 +21,68 @@ export const LICENSE_TYPES: {
   label: string;
   apiValue: number;
 }[] = [
-  { value: "None", label: "No License (None)", apiValue: 1 },
-  { value: "Unlicense", label: "The Unlicense (Unlicense)", apiValue: 2 },
-  { value: "MIT", label: "MIT License (MIT)", apiValue: 3 },
   {
-    value: "GNU GPLv2",
+    value: "Unlicensed" as unknown as LicenseType,
+    label: "No License (None)",
+    apiValue: 1,
+  },
+  {
+    value: "Unlicense" as unknown as LicenseType,
+    label: "The Unlicense (Unlicense)",
+    apiValue: 2,
+  },
+  {
+    value: "MIT" as unknown as LicenseType,
+    label: "MIT License (MIT)",
+    apiValue: 3,
+  },
+  {
+    value: "GNU GPLv2" as unknown as LicenseType,
     label: "GNU General Public License v2.0 (GNU GPLv2)",
     apiValue: 4,
   },
   {
-    value: "GNU GPLv3",
+    value: "GNU GPLv3" as unknown as LicenseType,
     label: "GNU General Public License v3.0 (GNU GPLv3)",
     apiValue: 5,
   },
   {
-    value: "GNU LGPLv2.1",
+    value: "GNU LGPLv2.1" as unknown as LicenseType,
     label: "GNU Lesser General Public License v2.1 (GNU LGPLv2.1)",
     apiValue: 6,
   },
   {
-    value: "GNU LGPLv3",
+    value: "GNU LGPLv3" as unknown as LicenseType,
     label: "GNU Lesser General Public License v3.0 (GNU LGPLv3)",
     apiValue: 7,
   },
   {
-    value: "BSD-2-Clause",
+    value: "BSD-2-Clause" as unknown as LicenseType,
     label: 'BSD 2-clause "Simplified" license (BSD-2-Clause)',
     apiValue: 8,
   },
   {
-    value: "BSD-3-Clause",
+    value: "BSD-3-Clause" as unknown as LicenseType,
     label: 'BSD 3-clause "New" Or "Revised" license (BSD-3-Clause)',
     apiValue: 9,
   },
   {
-    value: "MPL-2.0",
+    value: "MPL-2.0" as unknown as LicenseType,
     label: "Mozilla Public License 2.0 (MPL-2.0)",
     apiValue: 10,
   },
   {
-    value: "OSL-3.0",
+    value: "OSL-3.0" as unknown as LicenseType,
     label: "Open Software License 3.0 (OSL-3.0)",
     apiValue: 11,
   },
-  { value: "Apache-2.0", label: "Apache 2.0 (Apache-2.0)", apiValue: 12 },
   {
-    value: "GNU AGPLv3",
+    value: "Apache-2.0" as unknown as LicenseType,
+    label: "Apache 2.0 (Apache-2.0)",
+    apiValue: 12,
+  },
+  {
+    value: "GNU AGPLv3" as unknown as LicenseType,
     label: "GNU Affero General Public License (GNU AGPLv3)",
     apiValue: 13,
   },
@@ -179,5 +195,5 @@ export const DEFAULT_VERIFICATION_DETAILS: VerificationDetails = {
   evmVersion: "shanghai",
   optimizationUsed: "0",
   runs: 200,
-  licenseType: "MIT",
+  licenseType: 3,
 };
