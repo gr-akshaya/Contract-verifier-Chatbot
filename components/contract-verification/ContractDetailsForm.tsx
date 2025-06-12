@@ -368,26 +368,25 @@ export default function ContractDetailsForm({
         constructorArguments: data.constructorArguments,
       });
 
-      if (response.status === "1") {
+      if (response.data.success === true) {
         toast("Verification Submitted", {
-          description: `GUID: ${response.result}. We'll check the status.`,
+          description: `Verification submitted successfully.`,
         });
         onCompletion(null, {
           isLoading: true,
           isPolling: true,
-          statusMessage: `Verification submitted. GUID: ${response.result}. Polling for status...`,
+          statusMessage: `Verification submitted`,
           errorMessage: null,
           isVerified: null,
-          guid: response.result,
         });
         pollVerificationStatus(
-          response.result,
+          response.data.txHash || response.data.response,
           data.network,
           data.contractAddress
         );
       } else {
         const errorDetail =
-          response.result ||
+          response.data.response ||
           response.message ||
           "Verification submission failed.";
         onCompletion(errorDetail, {
