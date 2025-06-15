@@ -358,7 +358,7 @@ export default function ContractDetailsForm({
       const response = await verifyContract(data.network, {
         contractAddress: data.contractAddress,
         compilerType: data.compilerType,
-        sourceCodes: data.sourceCode,
+        sourceCode: data.sourceCode,
         contractName: data.contractName,
         compilerVersion: data.compilerVersion,
         optimizationUsed: data.optimizationUsed,

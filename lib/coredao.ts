@@ -124,107 +124,41 @@ export async function checkProxyVerificationStatus(
   return response.json() as Promise<CheckProxyVerificationStatusResponse>;
 }
 
-/**
- * Comprehensive contract verification function that supports all compiler types
- */
 export async function verifyContract(
   network: Network,
   verificationDetails: {
     contractAddress: string;
-    compilerType:
-      | "solidity-single"
-      | "solidity-multi"
-      | "solidity-json"
-      | number;
-    sourceCodes?: string | Array<{ code: string; fileName?: string }>;
+    compilerType: "solidity-single" | "solidity-multi" | "solidity-json";
+    sourceCode: string;
     contractName: string;
     compilerVersion: string;
-    optimizationUsed: "0" | "1" | boolean;
+    optimizationUsed: "0" | "1";
     runs: number;
     licenseType: number;
-    evmVersion?: string | number;
+    evmVersion?: string;
     constructorArguments?: string;
     libraryName1?: string;
     libraryAddress1?: string;
   }
 ): Promise<VerifySourceCodeResponse> {
-  let evmVersion = verificationDetails.evmVersion;
-  if (typeof evmVersion === "number") {
-    evmVersion = evmVersion;
-  } else if (typeof evmVersion === "string" && evmVersion === "shanghai") {
-    evmVersion = 0;
-  } else if (typeof evmVersion === "string") {
-    const evmVersionMap: { [key: string]: number } = {
-      cancun: 1,
-      berlin: 2,
-      london: 3,
-      paris: 4,
-    };
-    evmVersion = evmVersionMap[evmVersion] || 0;
-  }
-
-  // Process the source code to ensure it's properly formatted and encoded
-  let processedSourceCodes: Array<{ code: string; fileName: string }> = [];
-
-  // Handle string source code (single file mode)
-  if (typeof verificationDetails.sourceCodes === "string") {
-    const encodedCode = encodeSourceCodeForApi(verificationDetails.sourceCodes);
-    processedSourceCodes = [
-      {
-        code: encodedCode,
-        fileName: `${verificationDetails.contractName}.sol`,
-      },
-    ];
-  }
-  // Handle array of source codes (multi-file mode)
-  else if (Array.isArray(verificationDetails.sourceCodes)) {
-    // Set compilerType to solidity-multi for multiple files
-    if (verificationDetails.sourceCodes.length > 1) {
-      verificationDetails.compilerType = "solidity-multi";
-    }
-
-    processedSourceCodes = verificationDetails.sourceCodes.map((item) => ({
-      code: encodeSourceCodeForApi(item.code),
-      fileName: item.fileName || `${verificationDetails.contractName}.sol`,
-    }));
-  }
-  // Default empty array if no source codes provided
-  else {
-    processedSourceCodes = [];
-  }
-
-  const requestBody: VerifySourceCodeParams = {
-    argument: null,
-    compilerType:
-      typeof verificationDetails.compilerType === "number"
-        ? verificationDetails.compilerType
-        : verificationDetails.compilerType === "solidity-single"
-        ? 1
-        : verificationDetails.compilerType === "solidity-multi"
-        ? 2
-        : verificationDetails.compilerType === "solidity-json"
-        ? 3
-        : undefined,
-    compilerVersion: verificationDetails.compilerVersion,
-    contractAddress: verificationDetails.contractAddress,
-    evmVersion: evmVersion || 0,
-    licenseType: verificationDetails.licenseType,
-    optimizeEnable:
-      typeof verificationDetails.optimizationUsed === "boolean"
-        ? verificationDetails.optimizationUsed
-        : verificationDetails.optimizationUsed === "1"
-        ? true
-        : verificationDetails.optimizationUsed === "0"
-        ? false
-        : undefined,
-    optimizeRuns: verificationDetails.runs,
-    sourceCodes: processedSourceCodes,
+  const codeFormatMap = {
+    "solidity-single": "solidity-single-file",
+    "solidity-multi": "solidity-multi-part-files",
+    "solidity-json": "solidity-standard-json-input",
   };
 
-  if (verificationDetails.constructorArguments) {
-    requestBody.constructorArguements =
-      verificationDetails.constructorArguments;
-  }
+  const requestBody: VerifySourceCodeParams = {
+    contractaddress: verificationDetails.contractAddress,
+    sourceCode: verificationDetails.sourceCode,
+    codeformat: codeFormatMap[verificationDetails.compilerType],
+    contractname: verificationDetails.contractName,
+    compilerversion: verificationDetails.compilerVersion,
+    optimizationUsed: verificationDetails.optimizationUsed,
+    runs: verificationDetails.runs,
+    licenseType: verificationDetails.licenseType,
+    evmversion: verificationDetails.evmVersion || "shanghai",
+    constructorArguements: verificationDetails.constructorArguments || "",
+  };
 
   if (verificationDetails.libraryName1 && verificationDetails.libraryAddress1) {
     requestBody.libraryname1 = verificationDetails.libraryName1;

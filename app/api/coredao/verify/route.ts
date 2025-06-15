@@ -25,47 +25,31 @@ export async function POST(request: NextRequest) {
     }
 
     const baseUrl = COREDAO_API_ENDPOINTS[selectedNetwork];
-    console.log("Using CoreDAO API base URL:", baseUrl);
-    const url = `https://scan.test2.btcs.network/api/chain/verify_contract?apikey=${apiKey}`;
-    console.log("Verification URL:", url);
-    console.log("Request payload:", JSON.stringify(params, null, 2));
-
-    const requestBody = { ...params };
-    if (Array.isArray(requestBody.sourceCodes)) {
-      requestBody.sourceCodes = requestBody.sourceCodes.map(
-        (item: { code: string; fileName: string }) => ({
-          ...item,
-          code: item.code ? Buffer.from(item.code).toString("base64") : "",
-        })
-      );
-    } else if (typeof requestBody.sourceCodes === "string") {
-      requestBody.sourceCodes = Buffer.from(requestBody.sourceCodes).toString(
-        "base64"
-      );
-    }
-
+    const url = `${baseUrl}/contracts/verify_source_code?apikey=${apiKey}`;
+    console.log("Request Payload:", JSON.stringify(params));
+    //add source code to params
+    // params.sourceCode =
+    //  "// SPDX-License-Identifier: GPL-3.0\npragma solidity ^0.8.24;\ncontract Testing2 {\n    uint256 number;\n    function tstore(uint256 num) public { number = num; }\n    function store(uint256 num) public { number = num; }\n    function Testretrieve() public view returns (uint256){ return number; }\n}";
     const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify(params),
     });
 
-    const responseData = await response.json();
-    console.log("Response status:", responseData);
-    if (!responseData.data || responseData.data.success !== true) {
+    console.log("Request URL:", url);
+
+    if (!response.ok) {
+      const errorText = await response.text();
       return NextResponse.json(
-        {
-          error: `CoreDAO API Error: ${response.status} ${JSON.stringify(
-            responseData
-          )}`,
-        },
+        { error: `CoreDAO API Error: ${response.status} ${errorText}` },
         { status: response.status }
       );
     }
 
-    return NextResponse.json(responseData);
+    const data = await response.json();
+    return NextResponse.json(data);
   } catch (error) {
     console.error("Error verifying source code:", error);
     return NextResponse.json(

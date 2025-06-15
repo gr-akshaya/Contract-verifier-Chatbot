@@ -24,7 +24,7 @@ import {
   Upload,
   FolderOpen,
 } from "lucide-react";
-import { getSourceCode, verifyContract } from "@/lib/coredao";
+import { getSourceCode, verifyContract, getAbi } from "@/lib/coredao";
 import { LICENSE_TYPES, NETWORKS } from "@/lib/constants";
 import {
   type Network,
@@ -62,7 +62,8 @@ export default function Home() {
     data: Partial<
       VerificationDetails & {
         compilerType: string;
-        sourceCodes?: { code: string; fileName: string }[];
+        sourceCode: string;
+        //sourceCodes?: { code: string; fileName: string }[];
       }
     >;
   } | null>(null);
@@ -1697,126 +1698,136 @@ export default function Home() {
         ? data.sourceCodes
         : data.sourceCode;
 
-      let licenseTypeValue: number;
-      if (typeof data.licenseType === "number") {
-        licenseTypeValue = data.licenseType;
-      } else if (data.licenseType) {
-        const licenseObj = LICENSE_TYPES.find(
-          (lt) => lt.value === (data.licenseType as any)
-        );
-        licenseTypeValue = licenseObj?.apiValue || 3;
-      } else {
-        licenseTypeValue = 3;
-      }
+      console.log("Raw data.sourceCode:", data.sourceCode);
+      console.log("Raw data.sourceCodes:", data.sourceCodes);
 
       const verificationData = {
         contractAddress: address,
         compilerType,
-        sourceCodes: formattedSourceCode,
+        sourceCode: data.sourceCode || "", // Just pass the source code directly
         contractName: data.contractName!,
         compilerVersion: data.compilerVersion!,
         optimizationUsed: data.optimizationUsed!,
         runs: Number(data.runs!),
         evmVersion: data.evmVersion ?? "shanghai",
-        licenseType: licenseTypeValue,
+        licenseType: data.licenseType || LicenseType.MIT,
       };
 
+      console.log("Final verificationData:", verificationData);
+
       const result = await verifyContract(network, verificationData);
+      console.log("Result:", result);
+      //{message
+      // :
+      // "OK"
+      // result
+      // :
+      // "0c9e888a3f7740df883d6ec57e5be35a"
+      // status
+      // :
+      // "1"};
+
       removeTypingMessage(typingId);
 
-      if (result.data && result?.data?.success === true) {
-        addMessage(
-          "ai",
-          "Verification request submitted successfully! 🎉\n\n",
-          <div className="mt-4">
-            <Card className="w-full max-w-2xl">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <Code className="w-5 h-5" />
-                    Contract Information
-                  </CardTitle>
-                  <Badge variant={"default"}>
-                    <>
-                      <CheckCircle className="w-3 h-3 mr-1" />
-                      Verified
-                    </>
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">
-                      Network
-                    </label>
-                    <p className="text-sm">{network}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">
-                      Contract Name
-                    </label>
-                    <p className="text-sm">{data.contractName || "Unknown"}</p>
-                  </div>
-                  <>
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">
-                        Compiler Version
-                      </label>
-                      <p className="text-sm">
-                        {data.compilerVersion || "Unknown"}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">
-                        Optimization
-                      </label>
-                      <p className="text-sm">
-                        {data.optimizationUsed === "1" ? "Enabled" : "Disabled"}
-                      </p>
-                    </div>
-                  </>
-                </div>
+      if (result.message === "OK") {
+        // Try to get the ABI to confirm verification
+        const abiResponse = await getAbi(network, address);
 
-                <Separator />
-
-                <div className="space-y-2">
+        if (abiResponse.status === "1") {
+          // Contract is verified and we have the ABI
+          addMessage(
+            "ai",
+            "Verification request submitted successfully! 🎉\n\n",
+            <div className="mt-4">
+              <Card className="w-full max-w-2xl">
+                <CardHeader>
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-muted-foreground">
-                      Contract Address
-                    </label>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="cursor-pointer"
-                      onClick={() => {
-                        navigator.clipboard.writeText(address);
-                        toast.success("Address copied to clipboard");
-                      }}
-                    >
-                      <Copy className="w-3 h-3" />
-                    </Button>
+                    <CardTitle className="flex items-center gap-2">
+                      <Code className="w-5 h-5" />
+                      Contract Information
+                    </CardTitle>
+                    <Badge variant={"default"}>
+                      <>
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        Verified
+                      </>
+                    </Badge>
                   </div>
-                  <p className="text-sm font-mono bg-muted p-2 rounded">
-                    {address}
-                  </p>
-                </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Network
+                      </label>
+                      <p className="text-sm">{network}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Contract Name
+                      </label>
+                      <p className="text-sm">
+                        {data.contractName || "Unknown"}
+                      </p>
+                    </div>
+                    <>
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">
+                          Compiler Version
+                        </label>
+                        <p className="text-sm">
+                          {data.compilerVersion || "Unknown"}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">
+                          Optimization
+                        </label>
+                        <p className="text-sm">
+                          {data.optimizationUsed === "1"
+                            ? "Enabled"
+                            : "Disabled"}
+                        </p>
+                      </div>
+                    </>
+                  </div>
 
-                {result.data.response && (
+                  <Separator />
+
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <label className="text-sm font-medium text-muted-foreground">
-                        Source Code
+                        Contract Address
                       </label>
                       <Button
                         variant="ghost"
                         size="sm"
                         className="cursor-pointer"
                         onClick={() => {
-                          navigator.clipboard.writeText(
-                            result.data.response || ""
-                          );
-                          toast.success("Source code copied to clipboard");
+                          navigator.clipboard.writeText(address);
+                          toast.success("Address copied to clipboard");
+                        }}
+                      >
+                        <Copy className="w-3 h-3" />
+                      </Button>
+                    </div>
+                    <p className="text-sm font-mono bg-muted p-2 rounded">
+                      {address}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium text-muted-foreground">
+                        ABI
+                      </label>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="cursor-pointer"
+                        onClick={() => {
+                          navigator.clipboard.writeText(abiResponse.result);
+                          toast.success("ABI copied to clipboard");
                         }}
                       >
                         <Copy className="w-3 h-3 cursor-pointer" />
@@ -1824,47 +1835,58 @@ export default function Home() {
                     </div>
                     <div className="bg-muted p-3 rounded max-h-60 overflow-y-auto">
                       <pre className="text-xs whitespace-pre-wrap">
-                        {result.data.response.substring(0, 1000)}...
+                        {JSON.stringify(
+                          JSON.parse(abiResponse.result),
+                          null,
+                          2
+                        )}
                       </pre>
                     </div>
                   </div>
-                )}
 
-                <div className="flex gap-2 pt-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const explorerUrl =
-                        network === "mainnet"
-                          ? `https://scan.coredao.org/address/${address}`
-                          : `https://scan.test2.btcs.network/address/${address}`;
-                      window.open(explorerUrl, "_blank");
-                    }}
-                  >
-                    <ExternalLink className="w-3 h-3 mr-1" />
-                    View on Explorer
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      navigator.clipboard.writeText(
-                        typeof result.data.abi === "string"
-                          ? result.data.abi
-                          : JSON.stringify(result.data.abi ?? "")
-                      );
-                      toast.success("ABI copied to clipboard");
-                    }}
-                  >
-                    <Copy className="w-3 h-3 mr-1" />
-                    Copy ABI
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        );
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const explorerUrl =
+                          network === "mainnet"
+                            ? `https://scan.coredao.org/address/${address}`
+                            : `https://scan.test2.btcs.network/address/${address}`;
+                        window.open(explorerUrl, "_blank");
+                      }}
+                    >
+                      <ExternalLink className="w-3 h-3 mr-1" />
+                      View on Explorer
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          );
+        } else {
+          // Verification submitted but not yet processed
+          addMessage(
+            "ai",
+            `✅ **Verification submitted!**\n\nYour contract verification request has been submitted successfully. The verification process may take a few moments to complete.\n\n**GUID:** \`${result.result}\`\n\nYou can check the verification status on the block explorer:`,
+            <div className="mt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const explorerUrl =
+                    network === "mainnet"
+                      ? `https://scan.coredao.org/address/${address}`
+                      : `https://scan.test2.btcs.network/address/${address}`;
+                  window.open(explorerUrl, "_blank");
+                }}
+              >
+                <ExternalLink className="w-3 h-3 mr-1" />
+                View on Explorer
+              </Button>
+            </div>
+          );
+        }
       } else {
         addMessage(
           "ai",
@@ -1993,7 +2015,11 @@ export default function Home() {
                             </div>
                           )}
                           {msg.component && (
-                            <div className="mt-3">{msg.component}</div>
+                            <div className="mt-3">
+                              {React.isValidElement(msg.component)
+                                ? msg.component
+                                : null}
+                            </div>
                           )}
                         </>
                       )}

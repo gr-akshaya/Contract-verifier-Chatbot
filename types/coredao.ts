@@ -36,7 +36,6 @@ export type VerificationDetails = {
 };
 
 export interface VerifySourceCodeParams {
-  // Legacy parameters
   action?: string;
   address?: string;
   apikey?: string;
@@ -47,12 +46,12 @@ export interface VerifySourceCodeParams {
   codeformat?: string;
   compilerversion?: string;
   constructorArguements?: string;
-  contractAddress?: string;
+  contractaddress?: string;
   contractname?: string;
   contractaddresses?: string;
   data?: string;
   endblock?: number;
-  evmVersion: number;
+  evmversion?: string;
   fromBlock?: number;
   gas?: string;
   gasPrice?: string;
@@ -88,14 +87,6 @@ export interface VerifySourceCodeParams {
   topic3?: string;
   txhash?: string;
   value?: string;
-
-  // New format parameters for chain/verify_contract endpoint
-  compilerType?: number;
-  compilerVersion?: string;
-  optimizeEnable?: boolean;
-  optimizeRuns?: number;
-  sourceCodes?: string | Array<{ code: string; fileName: string }>;
-  argument?: string | null;
 }
 
 export interface VerifyProxyContractParams {
