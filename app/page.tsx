@@ -25,7 +25,7 @@ import {
   FolderOpen,
 } from "lucide-react";
 import { getSourceCode, verifyContract, getAbi } from "@/lib/coredao";
-import { LICENSE_TYPES, NETWORKS } from "@/lib/constants";
+import { NETWORKS } from "@/lib/constants";
 import {
   type Network,
   type VerificationDetails,
@@ -1694,12 +1694,12 @@ export default function Home() {
       }
 
       // Format source code based on type (single or multi)
-      const formattedSourceCode = data.sourceCodes
-        ? data.sourceCodes
-        : data.sourceCode;
+      // const formattedSourceCode = data.sourceCodes
+      //   ? data.sourceCodes
+      //   : data.sourceCode;
 
-      console.log("Raw data.sourceCode:", data.sourceCode);
-      console.log("Raw data.sourceCodes:", data.sourceCodes);
+      // console.log("Raw data.sourceCode:", data.sourceCode);
+      // console.log("Raw data.sourceCodes:", data.sourceCodes);
 
       const verificationData = {
         contractAddress: address,
@@ -1868,7 +1868,7 @@ export default function Home() {
           // Verification submitted but not yet processed
           addMessage(
             "ai",
-            `✅ **Verification submitted!**\n\nYour contract verification request has been submitted successfully. The verification process may take a few moments to complete.\n\n**GUID:** \`${result.result}\`\n\nYou can check the verification status on the block explorer:`,
+            `✅ **Verification submitted!**\n\nYour contract verification request has been submitted successfully. The verification process may take a few moments to complete.\n\n**GUID:** \`${result.data.response}\`\n\nYou can check the verification status on the block explorer:`,
             <div className="mt-4">
               <Button
                 variant="outline"
