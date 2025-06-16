@@ -6,8 +6,8 @@ import type {
 } from "@/types/coredao";
 
 export const NETWORKS: { value: Network; label: string }[] = [
-  { value: "mainnet", label: "CoreDAO Mainnet" },
-  { value: "testnet2", label: "CoreDAO Testnet" },
+  { value: "mainnet", label: "Core Mainnet" },
+  { value: "testnet2", label: "Core Testnet" },
 ];
 
 export const COMPILER_TYPES: { value: CompilerType; label: string }[] = [

@@ -154,6 +154,7 @@ export interface VerifySourceCodeResponse {
     txHash?: string;
   };
   message?: string;
+  result?: string;
 }
 
 export interface CheckVerificationStatusResponse {

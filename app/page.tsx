@@ -123,7 +123,7 @@ export default function Home() {
     } else {
       addMessage(
         "ai",
-        "🚀 **Welcome to Core Smart Contract Verifier!**\n\n🔥 *The smartest way to verify contracts on Core blockchain!* 🔥\n\n**🎯 What I can do for you:**\n\n🔍 **Contract Lookup** - Drop any contract address & get instant insights!\n⚡ **Contract Verification** - I'll guide you through verification step-by-step\n🧠 **Smart Features** - Auto-detection of contracts and easy verification process\n🛡️ **Multi-Format Support** - Single files, multi-files, and JSON inputs\n\n**🚀 Try these:**\n  • Paste: `0x8C9d5AeA15C2A6eF94bC3C8317B889bED6E8Bf8d`\n  • Type: `verify 0x123...` \n  • Type: `help` for command list\n\n💡 **Pro tip:** Just paste your contract address to start! ✨\n\n*Ready to verify your contracts? Let's go!* 🎊"
+        "🚀 **Welcome to Core Smart Contract Verifier!**\n\n** What I can do for you:**\n\n🔍 **Contract Lookup** - Drop any contract address & get instant insights!\n⚡ **Contract Verification** - I'll guide you through verification step-by-step\n🧠 **Smart Features** - Auto-detection of contracts and easy verification process\n\n**🚀 Try these:**\n  • Paste: `0x8C9d5AeA15C2A6eF94bC3C8317B889bED6E8Bf8d`\n  • Type: `verify 0x123...` \n  • Type: `help` for command list\n\n*Ready to verify your contracts? Let's go!* 🎊"
       );
     }
   }, []);
@@ -366,7 +366,7 @@ export default function Home() {
         addMessage(
           "ai",
           `❌ **Contract not found**\n\nI couldn't find a contract at address \`${address}\` on ${
-            network === "mainnet" ? "CoreDAO Mainnet" : "CoreDAO Testnet"
+            network === "mainnet" ? "Core Mainnet" : "Core Testnet"
           }.\n\n**Double-check:**\n• The address is correct\n• The contract is deployed on the right network\n• Try the other network (mainnet/testnet)\n\nWant to try a different address or network?`
         );
       }
@@ -400,8 +400,8 @@ export default function Home() {
                 <label className="text-sm font-medium">Network</label>
                 <p className="text-sm">
                   {sessionData.network === "mainnet"
-                    ? "CoreDAO Mainnet"
-                    : "CoreDAO Testnet"}
+                    ? "Core Mainnet"
+                    : "Core Testnet"}
                 </p>
               </div>
               <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg">
@@ -492,7 +492,7 @@ export default function Home() {
           addMessage(
             "ai",
             `✅ **Contract already verified!**\n\nThe contract at \`${address}\` is already verified on ${
-              network === "mainnet" ? "CoreDAO Mainnet" : "CoreDAO Testnet"
+              network === "mainnet" ? "Core Mainnet" : "Core Testnet"
             }.\n\n${
               contractData.ContractName
                 ? `**Contract Name:** ${contractData.ContractName}`
@@ -527,7 +527,7 @@ export default function Home() {
         addMessage(
           "ai",
           `🚀 **Starting verification for contract:** \`${address}\`\n\n**Network:** ${
-            network === "mainnet" ? "CoreDAO Mainnet" : "CoreDAO Testnet"
+            network === "mainnet" ? "Core Mainnet" : "Core Testnet"
           }\n\nLet's gather the required information step by step. I'll guide you through each step with proper forms and dropdown menus.\n\n**Step 1 of 6: Source Code**\nPlease provide your contract's source code in one of the following ways:`,
           createVerificationStepComponent(1, { address, network })
         );
@@ -741,7 +741,7 @@ export default function Home() {
         addMessage(
           "ai",
           `❌ **Contract not found**\n\nI couldn't find a contract at address \`${address}\` on ${
-            network === "mainnet" ? "CoreDAO Mainnet" : "CoreDAO Testnet"
+            network === "mainnet" ? "Core Mainnet" : "Core Testnet"
           }.\n\nPlease make sure:\n• The contract address is correct\n• The contract is deployed\n• You're using the right network\n\nTry again with a different address or network.`
         );
       }
@@ -1576,8 +1576,7 @@ export default function Home() {
     }
 
     const network = detectNetwork(input);
-    const networkName =
-      network === "mainnet" ? "CoreDAO Mainnet" : "CoreDAO Testnet";
+    const networkName = network === "mainnet" ? "Core Mainnet" : "Core Testnet";
 
     addMessage(
       "ai",
@@ -1642,8 +1641,7 @@ export default function Home() {
     input: string
   ): Promise<void> => {
     const network = detectNetwork(input);
-    const networkName =
-      network === "mainnet" ? "CoreDAO Mainnet" : "CoreDAO Testnet";
+    const networkName = network === "mainnet" ? "Core Mainnet" : "Core Testnet";
 
     addMessage(
       "ai",
@@ -1868,7 +1866,7 @@ export default function Home() {
           // Verification submitted but not yet processed
           addMessage(
             "ai",
-            `✅ **Verification submitted!**\n\nYour contract verification request has been submitted successfully. The verification process may take a few moments to complete.\n\n**GUID:** \`${result.data.response}\`\n\nYou can check the verification status on the block explorer:`,
+            `✅ **Verification submitted!**\n\nYour contract verification request has been submitted successfully. The verification process may take a few moments to complete.\n\n**GUID:** \`${result.result}\`\n\nYou can check the verification status on the block explorer:`,
             <div className="mt-4">
               <Button
                 variant="outline"
@@ -2073,8 +2071,7 @@ export default function Home() {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground mt-2 text-center">
-              Core Smart Contract Verifier AI © {new Date().getFullYear()} -
-              Powered by CoreDAO Blockchain
+              Core Smart Contract Verifier AI © {new Date().getFullYear()}
             </p>
           </div>
         </div>
