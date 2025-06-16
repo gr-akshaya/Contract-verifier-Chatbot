@@ -23,6 +23,7 @@ import {
   User,
   Upload,
   FolderOpen,
+  ArrowLeft,
 } from "lucide-react";
 import { getSourceCode, verifyContract, getAbi } from "@/lib/coredao";
 import { NETWORKS } from "@/lib/constants";
@@ -467,12 +468,68 @@ export default function Home() {
     return (
       <Card className="w-full max-w-3xl mx-auto">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Code className="w-5 h-5" />
-            Contract Verification - Step {step} of 6
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Code className="w-5 h-5" />
+              Contract Verification - Step {step} of 6
+            </CardTitle>
+            {step > 1 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (verificationSession) {
+                    setVerificationSession({
+                      ...verificationSession,
+                      step: step - 1,
+                    });
+                    // Add a message to indicate going back
+                    addMessage(
+                      "ai",
+                      `Going back to Step ${step - 1}...`,
+                      createVerificationStepComponent(
+                        step - 1,
+                        verificationSession
+                      )
+                    );
+                  }
+                }}
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+            )}
+          </div>
         </CardHeader>
-        <CardContent>{renderStepContent()}</CardContent>
+        <CardContent>
+          {renderStepContent()}
+          {step > 1 && (
+            <div className="flex justify-start mt-6">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (verificationSession) {
+                    setVerificationSession({
+                      ...verificationSession,
+                      step: step - 1,
+                    });
+                    addMessage(
+                      "ai",
+                      `Going back to Step ${step - 1}...`,
+                      createVerificationStepComponent(
+                        step - 1,
+                        verificationSession
+                      )
+                    );
+                  }
+                }}
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Previous Step
+              </Button>
+            </div>
+          )}
+        </CardContent>
       </Card>
     );
   };
@@ -759,6 +816,24 @@ export default function Home() {
   const handleVerificationInput = async (input: string) => {
     console.log("Handling verification input:", input);
     const step = verificationSession?.step || 1;
+
+    // Add back button handling
+    if (input.toLowerCase() === "back" && step > 1) {
+      setVerificationSession((prev) =>
+        prev
+          ? {
+              ...prev,
+              step: step - 1,
+            }
+          : null
+      );
+      addMessage(
+        "ai",
+        `Going back to Step ${step - 1}...`,
+        createVerificationStepComponent(step - 1, verificationSession)
+      );
+      return;
+    }
 
     switch (step) {
       case 1:

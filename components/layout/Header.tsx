@@ -8,24 +8,25 @@ export default function Header() {
       <div className="container mx-auto flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
           <Image
-            src="/dark.png"
+            src="/Core_logo_light.svg"
             alt=""
             width={32}
             height={32}
             className="h-8 w-24 hidden dark:block text-primary"
           />
           <Image
-            src="/light.png"
+            src="/Core_logo.svg"
             alt=""
             width={32}
             height={32}
             className="h-8 w-24 dark:hidden block text-primary"
           />
-          <h1 className="text-2xl font-headline font-semibold text-foreground">
+        </Link>
+
+        <div className="flex items-center gap-4">
+          <h1 className="text-xl font-headline font-semibold ">
             Smart Contract Verifier
           </h1>
-        </Link>
-        <div className="flex items-center gap-4">
           <ThemeToggleButton />
         </div>
       </div>
