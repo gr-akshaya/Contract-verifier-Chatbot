@@ -426,16 +426,40 @@ export default function Home() {
                   value={sessionData.compilerType || "solidity-single"}
                   onChange={(e) => {
                     if (verificationSession) {
-                      setVerificationSession({
-                        ...verificationSession,
-                        data: {
-                          ...verificationSession.data,
-                          compilerType: e.target.value as
-                            | "solidity-single"
-                            | "solidity-multi"
-                            | "solidity-json",
-                        },
-                      });
+                      let compilerDescription: string;
+                      if (e.target.value === "solidity-single") {
+                        compilerDescription = "Single Solidity File";
+                      } else if (e.target.value === "solidity-multi") {
+                        compilerDescription = "Multiple Solidity Files";
+                      } else {
+                        compilerDescription = "Solidity Standard JSON Input";
+                      }
+
+                      // First add the user message
+                      addMessage("user", `Selected: ${compilerDescription}`);
+
+                      // Then update the session state
+                      setVerificationSession((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              step: 3,
+                              data: {
+                                ...prev.data,
+                                compilerType: e.target.value as
+                                  | "solidity-single"
+                                  | "solidity-multi"
+                                  | "solidity-json",
+                              },
+                            }
+                          : null
+                      );
+
+                      // Finally add the AI response
+                      addMessage(
+                        "ai",
+                        `✅ **Compiler type set:** ${compilerDescription}\n\n**Step 3 of 6: Contract Name**\nWhat's the name of your main contract? (This should match the contract name in your source code)\n\nExample: \`MyToken\`, \`SwapContract\`, etc.`
+                      );
                     }
                   }}
                 >
@@ -870,7 +894,9 @@ export default function Home() {
                 <select
                   className="w-full p-3 border rounded-md bg-background text-sm"
                   onChange={(e) => {
-                    if (verificationSession && e.target.value) {
+                    console.log("target value", e.target.value);
+                    console.log("verificationSession", verificationSession);
+                    if (e.target.value) {
                       let compilerDescription: string;
                       if (e.target.value === "solidity-single") {
                         compilerDescription = "Single Solidity File";
@@ -880,6 +906,7 @@ export default function Home() {
                         compilerDescription = "Solidity Standard JSON Input";
                       }
 
+                      // Then update the session state
                       setVerificationSession((prev) =>
                         prev
                           ? {
@@ -896,7 +923,10 @@ export default function Home() {
                           : null
                       );
 
+                      // First add the user message
                       addMessage("user", `Selected: ${compilerDescription}`);
+
+                      // Finally add the AI response
                       addMessage(
                         "ai",
                         `✅ **Compiler type set:** ${compilerDescription}\n\n**Step 3 of 6: Contract Name**\nWhat's the name of your main contract? (This should match the contract name in your source code)\n\nExample: \`MyToken\`, \`SwapContract\`, etc.`
@@ -927,53 +957,6 @@ export default function Home() {
               </div>
             </CardContent>
           </Card>
-        );
-        break;
-
-      case 2:
-        const compilerChoice = input.trim();
-        let compilerType:
-          | "solidity-single"
-          | "solidity-multi"
-          | "solidity-json";
-        let compilerDescription: string;
-
-        if (compilerChoice === "1") {
-          compilerType = "solidity-single";
-          compilerDescription = "Single Solidity File";
-        } else if (compilerChoice === "2") {
-          compilerType = "solidity-multi";
-          compilerDescription = "Multiple Solidity Files";
-        } else if (compilerChoice === "3") {
-          compilerType = "solidity-json";
-          compilerDescription = "Solidity Standard JSON Input";
-        } else {
-          addMessage(
-            "ai",
-            "⚠️ **Invalid choice**\n\nPlease select a valid option:\n• Type `1` for Single Solidity File\n• Type `2` for Multiple Solidity Files\n• Type `3` for Solidity Standard JSON Input"
-          );
-          return;
-        }
-
-        setVerificationSession((prev) =>
-          prev
-            ? {
-                ...prev,
-                step: 3,
-                data: {
-                  ...prev.data,
-                  compilerType: compilerType as
-                    | "solidity-single"
-                    | "solidity-multi"
-                    | "solidity-json",
-                },
-              }
-            : null
-        );
-
-        addMessage(
-          "ai",
-          `✅ **Compiler type set:** ${compilerDescription}\n\n**Step 3 of 6: Contract Name**\nWhat's the name of your main contract? (This should match the contract name in your source code)\n\nExample: \`MyToken\`, \`SwapContract\`, etc.`
         );
         break;
 
@@ -1041,10 +1024,7 @@ export default function Home() {
                               <select
                                 className="w-full p-3 border rounded-md bg-background text-sm"
                                 onChange={(optE) => {
-                                  if (
-                                    verificationSession &&
-                                    optE.target.value
-                                  ) {
+                                  if (optE.target.value) {
                                     const isEnabled = optE.target.value === "1";
                                     setVerificationSession((prev) =>
                                       prev
@@ -1071,7 +1051,7 @@ export default function Home() {
                                               className="w-full p-2 border rounded-md bg-background"
                                               onChange={(runsE) => {
                                                 if (
-                                                  verificationSession &&
+                                                  // verificationSession &&
                                                   runsE.target.value
                                                 ) {
                                                   setVerificationSession(
@@ -1132,7 +1112,7 @@ export default function Home() {
                                 className="w-full p-3 border rounded-md bg-background text-sm"
                                 onChange={(licE) => {
                                   if (
-                                    verificationSession &&
+                                    // verificationSession &&
                                     licE.target.value
                                   ) {
                                     setVerificationSession((prev) =>
@@ -1295,8 +1275,7 @@ export default function Home() {
                   </option>
                 </select>
                 <div className="text-sm text-muted-foreground">
-                  💡 Most common versions: v0.8.20+commit.a1b79de6,
-                  v0.8.19+commit.7dd6d414
+                  💡 Recommended versions: v0.8.24+commit.e11b9ed9
                 </div>
               </div>
             </CardContent>
@@ -1338,7 +1317,7 @@ export default function Home() {
                 <select
                   className="w-full p-3 border rounded-md bg-background text-sm"
                   onChange={(e) => {
-                    if (verificationSession && e.target.value) {
+                    if (e.target.value) {
                       const isEnabled = e.target.value === "1";
                       setVerificationSession((prev) =>
                         prev
@@ -2116,6 +2095,39 @@ export default function Home() {
                 </div>
               ))}
             </div>
+            {/* Add back button container */}
+            {verificationSession && verificationSession.step > 1 && (
+              <div>
+                <div className="max-w-6xl mx-auto px-6 md:px-12 py-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (verificationSession) {
+                        setVerificationSession({
+                          ...verificationSession,
+                          step: verificationSession.step - 1,
+                        });
+                        addMessage(
+                          "ai",
+                          `Going back to Step ${
+                            verificationSession.step - 1
+                          }...`,
+                          createVerificationStepComponent(
+                            verificationSession.step - 1,
+                            verificationSession
+                          )
+                        );
+                      }
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    Back to Previous Step
+                  </Button>
+                </div>
+              </div>
+            )}
           </ScrollArea>
         </div>
 
