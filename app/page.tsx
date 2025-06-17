@@ -1278,6 +1278,37 @@ export default function Home() {
                   💡 Recommended versions: v0.8.24+commit.e11b9ed9
                 </div>
               </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  EVM Version
+                </label>
+                <select
+                  className="w-full p-3 border rounded-md bg-background text-sm"
+                  onChange={(e) => {
+                    if (verificationSession && e.target.value) {
+                      setVerificationSession((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              data: {
+                                ...prev.data,
+                                evmVersion: e.target.value,
+                              },
+                            }
+                          : null
+                      );
+                    }
+                  }}
+                  defaultValue="shanghai"
+                >
+                  <option value="cancun">Cancun</option>
+                  <option value="shanghai">Shanghai</option>
+                  <option value="paris">Paris</option>
+                </select>
+                <div className="text-sm text-muted-foreground">
+                  💡 Recommended version: shanghai
+                </div>
+              </div>
             </CardContent>
           </Card>
         );
@@ -1769,21 +1800,13 @@ export default function Home() {
 
       const result = await verifyContract(network, verificationData);
       console.log("Result:", result);
-      //{message
-      // :
-      // "OK"
-      // result
-      // :
-      // "0c9e888a3f7740df883d6ec57e5be35a"
-      // status
-      // :
-      // "1"};
 
       removeTypingMessage(typingId);
 
       if (result.message === "OK") {
         // Try to get the ABI to confirm verification
         const abiResponse = await getAbi(network, address);
+        console.log("abiResponse", abiResponse);
 
         if (abiResponse.status === "1") {
           // Contract is verified and we have the ABI
