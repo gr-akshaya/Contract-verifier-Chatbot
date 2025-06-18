@@ -86,6 +86,11 @@ export const LICENSE_TYPES: {
     label: "GNU Affero General Public License (GNU AGPLv3)",
     apiValue: 13,
   },
+  {
+    value: "BSL-1.1" as unknown as LicenseType,
+    label: "Business Source License (BSL-1.1)",
+    apiValue: 14,
+  },
 ];
 
 export const COMPILER_VERSIONS: string[] = [

@@ -1263,33 +1263,71 @@ export default function Home() {
                                                               Select license
                                                               type...
                                                             </option>
-                                                            <option value="MIT">
-                                                              MIT License
-                                                            </option>
-                                                            <option value="Apache-2.0">
-                                                              Apache 2.0
-                                                            </option>
-                                                            <option value="GNU GPLv3">
-                                                              GNU General Public
-                                                              License v3.0
-                                                            </option>
-                                                            <option value="GNU GPLv2">
-                                                              GNU General Public
-                                                              License v2.0
-                                                            </option>
-                                                            <option value="BSD-3-Clause">
-                                                              BSD 3-Clause
-                                                              License
-                                                            </option>
-                                                            <option value="BSD-2-Clause">
-                                                              BSD 2-Clause
-                                                              License
-                                                            </option>
-                                                            <option value="None">
-                                                              No License
+                                                            <option value="Unlicensed">
+                                                              No License (None)
                                                             </option>
                                                             <option value="Unlicense">
                                                               The Unlicense
+                                                              (Unlicense)
+                                                            </option>
+                                                            <option value="MIT">
+                                                              MIT License (MIT)
+                                                            </option>
+                                                            <option value="GNU GPLv2">
+                                                              GNU General Public
+                                                              License v2.0 (GNU
+                                                              GPLv2)
+                                                            </option>
+                                                            <option value="GNU GPLv3">
+                                                              GNU General Public
+                                                              License v3.0 (GNU
+                                                              GPLv3)
+                                                            </option>
+                                                            <option value="GNU LGPLv2.1">
+                                                              GNU Lesser General
+                                                              Public License
+                                                              v2.1 (GNU
+                                                              LGPLv2.1)
+                                                            </option>
+                                                            <option value="GNU LGPLv3">
+                                                              GNU Lesser General
+                                                              Public License
+                                                              v3.0 (GNU LGPLv3)
+                                                            </option>
+                                                            <option value="BSD-2-Clause">
+                                                              BSD 2-clause
+                                                              "Simplified"
+                                                              license
+                                                              (BSD-2-Clause)
+                                                            </option>
+                                                            <option value="BSD-3-Clause">
+                                                              BSD 3-clause "New"
+                                                              Or "Revised"
+                                                              license
+                                                              (BSD-3-Clause)
+                                                            </option>
+                                                            <option value="MPL-2.0">
+                                                              Mozilla Public
+                                                              License 2.0
+                                                              (MPL-2.0)
+                                                            </option>
+                                                            <option value="OSL-3.0">
+                                                              Open Software
+                                                              License 3.0
+                                                              (OSL-3.0)
+                                                            </option>
+                                                            <option value="Apache-2.0">
+                                                              Apache 2.0
+                                                              (Apache-2.0)
+                                                            </option>
+                                                            <option value="GNU AGPLv3">
+                                                              GNU Affero General
+                                                              Public License
+                                                              (GNU AGPLv3)
+                                                            </option>
+                                                            <option value="BSL-1.1">
+                                                              Business Source
+                                                              License (BSL-1.1)
                                                             </option>
                                                           </select>
                                                         </div>

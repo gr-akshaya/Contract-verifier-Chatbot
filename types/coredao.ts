@@ -19,6 +19,7 @@ export enum LicenseType {
   OSL_3_0 = 11,
   Apache_2_0 = 12,
   GNU_AGPLv3 = 13,
+  BSL_1_1 = 14,
 }
 
 export type VerificationDetails = {
