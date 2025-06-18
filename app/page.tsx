@@ -133,6 +133,7 @@ export default function Home() {
     if (messages.length > 0) {
       // Filter out components before saving to localStorage since they contain circular references
       const serializableMessages = messages.map(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         ({ component, ...rest }) => rest
       );
       localStorage.setItem(
@@ -2237,31 +2238,6 @@ export default function Home() {
       );
     }
   }, [verificationSession?.step]);
-
-  // Create a helper function to update verification session safely
-  const updateVerificationSession = (
-    updates: Partial<{
-      step: number;
-      data: Partial<{
-        evmVersion: string;
-        optimizationUsed: "0" | "1";
-        runs: number;
-        licenseType: any;
-      }>;
-    }>
-  ) => {
-    setVerificationSession((prev) => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        ...updates,
-        data: {
-          ...prev.data,
-          ...updates.data,
-        },
-      };
-    });
-  };
 
   return (
     <div className="flex flex-col h-screen bg-background">
