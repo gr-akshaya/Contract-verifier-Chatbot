@@ -1923,7 +1923,7 @@ export default function Home() {
         compilerType,
         sourceCode: data.sourceCode || "", // Just pass the source code directly
         contractName: data.contractName!,
-        compilerVersion: data.compilerVersion!,
+        compilerVersion: data.compilerVersion || "v0.8.24+commit.e11b9ed9",
         optimizationUsed: data.optimizationUsed!,
         runs: Number(data.runs!),
         evmVersion: data.evmVersion ?? "shanghai",
