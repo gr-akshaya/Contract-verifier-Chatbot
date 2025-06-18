@@ -26,7 +26,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { getSourceCode, verifyContract, getAbi } from "@/lib/coredao";
-import { NETWORKS } from "@/lib/constants";
+import { NETWORKS, LICENSE_TYPES } from "@/lib/constants";
 import {
   type Network,
   type VerificationDetails,
@@ -131,7 +131,14 @@ export default function Home() {
 
   useEffect(() => {
     if (messages.length > 0) {
-      localStorage.setItem("core-chatbot-messages", JSON.stringify(messages));
+      // Filter out components before saving to localStorage since they contain circular references
+      const serializableMessages = messages.map(
+        ({ component, ...rest }) => rest
+      );
+      localStorage.setItem(
+        "core-chatbot-messages",
+        JSON.stringify(serializableMessages)
+      );
     }
   }, [messages]);
 
@@ -995,16 +1002,16 @@ export default function Home() {
                       // Update the session with the compiler version
                       console.log("Previous data:", verificationSession.data);
                       setVerificationSession((prev) => {
-                        const newState = prev
-                          ? {
-                              ...prev,
-                              step: 5,
-                              data: {
-                                ...prev.data,
-                                compilerVersion: e.target.value,
-                              },
-                            }
-                          : null;
+                        if (!prev) return null;
+
+                        const newState = {
+                          ...prev,
+                          step: 5,
+                          data: {
+                            ...prev.data,
+                            compilerVersion: e.target.value,
+                          },
+                        };
                         console.log("After update - New state:", newState);
                         return newState;
                       });
@@ -1025,22 +1032,19 @@ export default function Home() {
                                 className="w-full p-3 border rounded-md bg-background text-sm"
                                 onChange={(ev) => {
                                   if (ev.target.value) {
-                                    console.log(
-                                      "Previous data:",
-                                      verificationSession.data
-                                    );
-                                    setVerificationSession((prev) =>
-                                      prev
-                                        ? {
-                                            ...prev,
-                                            step: 6,
-                                            data: {
-                                              ...prev.data,
-                                              evmVersion: ev.target.value,
-                                            },
-                                          }
-                                        : null
-                                    );
+                                    setVerificationSession((prev) => {
+                                      if (!prev) return null;
+
+                                      console.log("Previous data:", prev.data);
+                                      return {
+                                        ...prev,
+                                        step: 6, // Move to optimization step
+                                        data: {
+                                          ...prev.data,
+                                          evmVersion: ev.target.value,
+                                        },
+                                      };
+                                    });
 
                                     // Add user message
                                     addMessage(
@@ -1048,17 +1052,17 @@ export default function Home() {
                                       `Selected EVM version: ${ev.target.value}`
                                     );
 
-                                    // Add AI response for optimization settings
+                                    // Add AI response for optimization step
                                     addMessage(
                                       "ai",
-                                      "✅ **EVM version set!**\n\n**Step 6 of 6: Optimization & License Settings**\nPlease configure the optimization and license settings:",
+                                      "✅ **EVM version set!**\n\n**Step 6 of 7: Optimization Settings**\nWas optimization enabled during compilation?",
                                       <Card className="w-full max-w-3xl mx-auto mt-4">
                                         <CardHeader>
                                           <CardTitle>
-                                            ⚙️ Configuration Settings
+                                            ⚙️ Optimization Settings
                                           </CardTitle>
                                         </CardHeader>
-                                        <CardContent className="space-y-6">
+                                        <CardContent className="space-y-4">
                                           <div>
                                             <label className="text-sm font-medium mb-2 block">
                                               Was optimization enabled during
@@ -1070,21 +1074,39 @@ export default function Home() {
                                                 if (e.target.value) {
                                                   const isEnabled =
                                                     e.target.value === "1";
+
                                                   setVerificationSession(
-                                                    (prev) =>
-                                                      prev
-                                                        ? {
-                                                            ...prev,
-                                                            data: {
-                                                              ...prev.data,
-                                                              optimizationUsed:
-                                                                e.target
-                                                                  .value as
-                                                                  | "0"
-                                                                  | "1",
-                                                            },
-                                                          }
-                                                        : null
+                                                    (prev) => {
+                                                      if (!prev) return null;
+                                                      console.log(
+                                                        "line 1074,",
+                                                        prev.data
+                                                      );
+                                                      return {
+                                                        ...prev,
+                                                        step: 7, // Move to license step
+                                                        data: {
+                                                          ...prev.data,
+                                                          optimizationUsed: e
+                                                            .target.value as
+                                                            | "0"
+                                                            | "1",
+                                                          runs: isEnabled
+                                                            ? prev.data.runs ||
+                                                              200
+                                                            : 200,
+                                                        },
+                                                      };
+                                                    }
+                                                  );
+
+                                                  addMessage(
+                                                    "user",
+                                                    `Selected: ${
+                                                      isEnabled
+                                                        ? "Optimization enabled"
+                                                        : "Optimization disabled"
+                                                    }`
                                                   );
 
                                                   if (isEnabled) {
@@ -1099,24 +1121,28 @@ export default function Home() {
                                                             className="w-full p-2 border rounded-md bg-background"
                                                             onChange={(e) => {
                                                               if (
-                                                                verificationSession &&
                                                                 e.target.value
                                                               ) {
                                                                 setVerificationSession(
-                                                                  (prev) =>
-                                                                    prev
-                                                                      ? {
-                                                                          ...prev,
-                                                                          data: {
-                                                                            ...prev.data,
-                                                                            runs: parseInt(
-                                                                              e
-                                                                                .target
-                                                                                .value
-                                                                            ),
-                                                                          },
-                                                                        }
-                                                                      : null
+                                                                  (prev) => {
+                                                                    if (!prev)
+                                                                      return null;
+                                                                    console.log(
+                                                                      "line 1119",
+                                                                      prev.data
+                                                                    );
+                                                                    return {
+                                                                      ...prev,
+                                                                      data: {
+                                                                        ...prev.data,
+                                                                        runs: parseInt(
+                                                                          e
+                                                                            .target
+                                                                            .value
+                                                                        ),
+                                                                      },
+                                                                    };
+                                                                  }
                                                                 );
                                                               }
                                                             }}
@@ -1128,44 +1154,147 @@ export default function Home() {
                                                         </CardContent>
                                                       </Card>
                                                     );
-                                                  } else {
-                                                    setVerificationSession(
-                                                      (prev) =>
-                                                        prev
-                                                          ? {
-                                                              ...prev,
-                                                              data: {
-                                                                ...prev.data,
-                                                                runs: 200,
-                                                              },
-                                                            }
-                                                          : null
-                                                    );
-                                                    addMessage(
-                                                      "ai",
-                                                      "✅ **Settings complete!**\n\n**Ready to Verify**\nGreat! I have all the information needed:\n\n• **Source Code:** ✅\n• **Compiler Type:** ✅\n• **Contract Name:** ✅\n• **Compiler Version:** ✅\n• **EVM Version:** ✅\n• **Optimization:** Disabled\n\nClick the button below to start the verification process!",
-                                                      <div className="mt-4 flex justify-center">
-                                                        <Button
-                                                          onClick={() =>
-                                                            executeVerification()
-                                                          }
-                                                          className="px-8 py-3 text-lg"
-                                                          disabled={
-                                                            isProcessing
-                                                          }
-                                                        >
-                                                          {isProcessing ? (
-                                                            <>
-                                                              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                                              Verifying...
-                                                            </>
-                                                          ) : (
-                                                            "🚀 Start Verification"
-                                                          )}
-                                                        </Button>
-                                                      </div>
-                                                    );
                                                   }
+
+                                                  // Add AI response for license step
+                                                  addMessage(
+                                                    "ai",
+                                                    "✅ **Optimization settings complete!**\n\n**Step 7 of 7: License Type**\nPlease select the license type for your contract:",
+                                                    <Card className="w-full max-w-3xl mx-auto mt-4">
+                                                      <CardHeader>
+                                                        <CardTitle>
+                                                          📄 License Type
+                                                        </CardTitle>
+                                                      </CardHeader>
+                                                      <CardContent className="space-y-4">
+                                                        <div>
+                                                          <label className="text-sm font-medium mb-2 block">
+                                                            Select the license
+                                                            type for your
+                                                            contract
+                                                          </label>
+                                                          <select
+                                                            className="w-full p-3 border rounded-md bg-background text-sm"
+                                                            onChange={(e) => {
+                                                              if (
+                                                                e.target.value
+                                                              ) {
+                                                                setVerificationSession(
+                                                                  (prev) => {
+                                                                    if (!prev)
+                                                                      return null;
+                                                                    console.log(
+                                                                      "line 1171",
+                                                                      prev.data
+                                                                    );
+
+                                                                    const updatedSession =
+                                                                      {
+                                                                        ...prev,
+                                                                        data: {
+                                                                          ...prev.data,
+                                                                          licenseType:
+                                                                            e
+                                                                              .target
+                                                                              .value as any,
+                                                                        },
+                                                                      };
+
+                                                                    // Store the updated session for immediate use
+                                                                    const finalSession =
+                                                                      updatedSession;
+
+                                                                    addMessage(
+                                                                      "user",
+                                                                      `Selected license: ${e.target.value}`
+                                                                    );
+
+                                                                    // Final step - show verification ready message with callback
+                                                                    // Only add this message once to prevent duplicates
+                                                                    setTimeout(
+                                                                      () => {
+                                                                        addMessage(
+                                                                          "ai",
+                                                                          "✅ **All settings complete!**\n\n**Ready to Verify**\nPerfect! I have all the information needed:\n\n• **Source Code:** ✅\n• **Compiler Type:** ✅\n• **Contract Name:** ✅\n• **Compiler Version:** ✅\n• **EVM Version:** ✅\n• **Optimization:** " +
+                                                                            (isEnabled
+                                                                              ? "Enabled"
+                                                                              : "Disabled") +
+                                                                            "\n• **License:** ✅\n\nClick the button below to start the verification process!",
+                                                                          <div className="mt-4 flex justify-center">
+                                                                            <Button
+                                                                              onClick={() => {
+                                                                                // Use the captured session data directly
+                                                                                executeVerification(
+                                                                                  finalSession
+                                                                                );
+                                                                              }}
+                                                                              className="px-8 py-3 text-lg"
+                                                                              disabled={
+                                                                                isProcessing
+                                                                              }
+                                                                            >
+                                                                              {isProcessing ? (
+                                                                                <>
+                                                                                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                                                                  Verifying...
+                                                                                </>
+                                                                              ) : (
+                                                                                "🚀 Start Verification"
+                                                                              )}
+                                                                            </Button>
+                                                                          </div>
+                                                                        );
+                                                                      },
+                                                                      0
+                                                                    );
+
+                                                                    return updatedSession;
+                                                                  }
+                                                                );
+                                                              }
+                                                            }}
+                                                            defaultValue=""
+                                                          >
+                                                            <option
+                                                              value=""
+                                                              disabled
+                                                            >
+                                                              Select license
+                                                              type...
+                                                            </option>
+                                                            <option value="MIT">
+                                                              MIT License
+                                                            </option>
+                                                            <option value="Apache-2.0">
+                                                              Apache 2.0
+                                                            </option>
+                                                            <option value="GNU GPLv3">
+                                                              GNU General Public
+                                                              License v3.0
+                                                            </option>
+                                                            <option value="GNU GPLv2">
+                                                              GNU General Public
+                                                              License v2.0
+                                                            </option>
+                                                            <option value="BSD-3-Clause">
+                                                              BSD 3-Clause
+                                                              License
+                                                            </option>
+                                                            <option value="BSD-2-Clause">
+                                                              BSD 2-Clause
+                                                              License
+                                                            </option>
+                                                            <option value="None">
+                                                              No License
+                                                            </option>
+                                                            <option value="Unlicense">
+                                                              The Unlicense
+                                                            </option>
+                                                          </select>
+                                                        </div>
+                                                      </CardContent>
+                                                    </Card>
+                                                  );
                                                 }
                                               }}
                                               defaultValue=""
@@ -1178,62 +1307,6 @@ export default function Home() {
                                               </option>
                                               <option value="1">
                                                 Yes - Optimization was enabled
-                                              </option>
-                                            </select>
-                                          </div>
-
-                                          <div>
-                                            <label className="text-sm font-medium mb-2 block">
-                                              License Type
-                                            </label>
-                                            <select
-                                              className="w-full p-3 border rounded-md bg-background text-sm"
-                                              onChange={(e) => {
-                                                if (
-                                                  verificationSession &&
-                                                  e.target.value
-                                                ) {
-                                                  setVerificationSession(
-                                                    (prev) =>
-                                                      prev
-                                                        ? {
-                                                            ...prev,
-                                                            data: {
-                                                              ...prev.data,
-                                                              licenseType: e
-                                                                .target
-                                                                .value as any,
-                                                            },
-                                                          }
-                                                        : null
-                                                  );
-                                                }
-                                              }}
-                                              defaultValue="MIT"
-                                            >
-                                              <option value="MIT">
-                                                MIT License
-                                              </option>
-                                              <option value="Apache-2.0">
-                                                Apache 2.0
-                                              </option>
-                                              <option value="GNU GPLv3">
-                                                GNU General Public License v3.0
-                                              </option>
-                                              <option value="GNU GPLv2">
-                                                GNU General Public License v2.0
-                                              </option>
-                                              <option value="BSD-3-Clause">
-                                                BSD 3-Clause License
-                                              </option>
-                                              <option value="BSD-2-Clause">
-                                                BSD 2-Clause License
-                                              </option>
-                                              <option value="None">
-                                                No License
-                                              </option>
-                                              <option value="Unlicense">
-                                                The Unlicense
                                               </option>
                                             </select>
                                           </div>
@@ -1359,342 +1432,363 @@ export default function Home() {
         );
         break;
 
-      case 4:
-        if (!input.trim().startsWith("v0.")) {
-          addMessage(
-            "ai",
-            "⚠️ **Invalid compiler version format**\n\nPlease use the full compiler version format like `v0.8.20+commit.a1b79de6`"
-          );
-          return;
-        }
+      // case 4:
+      //   if (!input.trim().startsWith("v0.")) {
+      //     addMessage(
+      //       "ai",
+      //       "⚠️ **Invalid compiler version format**\n\nPlease use the full compiler version format like `v0.8.20+commit.a1b79de6`"
+      //     );
+      //     return;
+      //   }
 
-        setVerificationSession((prev) =>
-          prev
-            ? {
-                ...prev,
-                step: 5,
-                data: { ...prev.data, compilerVersion: input.trim() },
-              }
-            : null
-        );
+      //   setVerificationSession((prev) =>
+      //     prev
+      //       ? {
+      //           ...prev,
+      //           step: 5,
+      //           data: { ...prev.data, compilerVersion: input.trim() },
+      //         }
+      //       : null
+      //   );
 
-        addMessage(
-          "ai",
-          "✅ **Compiler version set!**\n\n**Step 5 of 6: EVM Version**\nPlease select the EVM version used during compilation:",
-          <Card className="w-full max-w-3xl mx-auto mt-4">
-            <CardHeader>
-              <CardTitle>⚙️ EVM Version</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <select
-                  className="w-full p-3 border rounded-md bg-background text-sm"
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      setVerificationSession((prev) =>
-                        prev
-                          ? {
-                              ...prev,
-                              step: 6,
-                              data: {
-                                ...prev.data,
-                                evmVersion: e.target.value,
-                              },
-                            }
-                          : null
-                      );
+      //   addMessage(
+      //     "ai",
+      //     "✅ **Compiler version set!**\n\n**Step 5 of 6: EVM Version**\nPlease select the EVM version used during compilation:",
+      //     <Card className="w-full max-w-3xl mx-auto mt-4">
+      //       <CardHeader>
+      //         <CardTitle>⚙️ EVM Version</CardTitle>
+      //       </CardHeader>
+      //       <CardContent className="space-y-4">
+      //         <div>
+      //           <select
+      //             className="w-full p-3 border rounded-md bg-background text-sm"
+      //             onChange={(e) => {
+      //               if (e.target.value) {
+      //                 setVerificationSession((prev) =>
+      //                   prev
+      //                     ? {
+      //                         ...prev,
+      //                         step: 6,
+      //                         data: {
+      //                           ...prev.data,
+      //                           evmVersion: e.target.value,
+      //                         },
+      //                       }
+      //                     : null
+      //                 );
 
-                      // Add user message
-                      addMessage(
-                        "user",
-                        `Selected EVM version: ${e.target.value}`
-                      );
+      //                 // Add user message
+      //                 addMessage(
+      //                   "user",
+      //                   `Selected EVM version: ${e.target.value}`
+      //                 );
 
-                      // Add AI response for optimization settings
-                      addMessage(
-                        "ai",
-                        "✅ **EVM version set!**\n\n**Step 6 of 6: Optimization & License Settings**\nPlease configure the optimization and license settings:",
-                        <Card className="w-full max-w-3xl mx-auto mt-4">
-                          <CardHeader>
-                            <CardTitle>⚙️ Configuration Settings</CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-6">
-                            <div>
-                              <label className="text-sm font-medium mb-2 block">
-                                Was optimization enabled during compilation?
-                              </label>
-                              <select
-                                className="w-full p-3 border rounded-md bg-background text-sm"
-                                onChange={(e) => {
-                                  if (e.target.value) {
-                                    const isEnabled = e.target.value === "1";
-                                    setVerificationSession((prev) =>
-                                      prev
-                                        ? {
-                                            ...prev,
-                                            data: {
-                                              ...prev.data,
-                                              optimizationUsed: e.target
-                                                .value as "0" | "1",
-                                            },
-                                          }
-                                        : null
-                                    );
+      //                 // Add AI response for optimization settings
+      //                 addMessage(
+      //                   "ai",
+      //                   "✅ **EVM version set!**\n\n**Step 6 of 7: Optimization Settings**\nWas optimization enabled during compilation?",
+      //                   <Card className="w-full max-w-3xl mx-auto mt-4">
+      //                     <CardHeader>
+      //                       <CardTitle>⚙️ Optimization Settings</CardTitle>
+      //                     </CardHeader>
+      //                     <CardContent className="space-y-4">
+      //                       <div>
+      //                         <label className="text-sm font-medium mb-2 block">
+      //                           Was optimization enabled during compilation?
+      //                         </label>
+      //                         <select
+      //                           className="w-full p-3 border rounded-md bg-background text-sm"
+      //                           onChange={(e) => {
+      //                             if (e.target.value) {
+      //                               const isEnabled = e.target.value === "1";
+      //                               setVerificationSession((prev) =>
+      //                                 prev
+      //                                   ? {
+      //                                       ...prev,
+      //                                       data: {
+      //                                         ...prev.data,
+      //                                         optimizationUsed: e.target
+      //                                           .value as "0" | "1",
+      //                                       },
+      //                                     }
+      //                                   : null
+      //                               );
 
-                                    if (isEnabled) {
-                                      addMessage(
-                                        "ai",
-                                        "**Optimization enabled!** How many optimization runs were used?",
-                                        <Card className="w-full max-w-md mx-auto mt-2">
-                                          <CardContent className="pt-4">
-                                            <input
-                                              type="number"
-                                              placeholder="200"
-                                              className="w-full p-2 border rounded-md bg-background"
-                                              onChange={(e) => {
-                                                if (
-                                                  verificationSession &&
-                                                  e.target.value
-                                                ) {
-                                                  setVerificationSession(
-                                                    (prev) =>
-                                                      prev
-                                                        ? {
-                                                            ...prev,
-                                                            data: {
-                                                              ...prev.data,
-                                                              runs: parseInt(
-                                                                e.target.value
-                                                              ),
-                                                            },
-                                                          }
-                                                        : null
-                                                  );
-                                                }
-                                              }}
-                                            />
-                                            <p className="text-xs text-muted-foreground mt-1">
-                                              Default is usually 200
-                                            </p>
-                                          </CardContent>
-                                        </Card>
-                                      );
-                                    } else {
-                                      setVerificationSession((prev) =>
-                                        prev
-                                          ? {
-                                              ...prev,
-                                              data: {
-                                                ...prev.data,
-                                                runs: 200,
-                                              },
-                                            }
-                                          : null
-                                      );
-                                      addMessage(
-                                        "ai",
-                                        "✅ **Settings complete!**\n\n**Ready to Verify**\nGreat! I have all the information needed:\n\n• **Source Code:** ✅\n• **Compiler Type:** ✅\n• **Contract Name:** ✅\n• **Compiler Version:** ✅\n• **EVM Version:** ✅\n• **Optimization:** Disabled\n\nClick the button below to start the verification process!",
-                                        <div className="mt-4 flex justify-center">
-                                          <Button
-                                            onClick={() =>
-                                              executeVerification()
-                                            }
-                                            className="px-8 py-3 text-lg"
-                                            disabled={isProcessing}
-                                          >
-                                            {isProcessing ? (
-                                              <>
-                                                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                                Verifying...
-                                              </>
-                                            ) : (
-                                              "🚀 Start Verification"
-                                            )}
-                                          </Button>
-                                        </div>
-                                      );
-                                    }
-                                  }
-                                }}
-                                defaultValue=""
-                              >
-                                <option value="" disabled>
-                                  Select optimization setting...
-                                </option>
-                                <option value="0">
-                                  No - Optimization was disabled
-                                </option>
-                                <option value="1">
-                                  Yes - Optimization was enabled
-                                </option>
-                              </select>
-                            </div>
+      //                               if (isEnabled) {
+      //                                 addMessage(
+      //                                   "ai",
+      //                                   "**Optimization enabled!** How many optimization runs were used?",
+      //                                   <Card className="w-full max-w-md mx-auto mt-2">
+      //                                     <CardContent className="pt-4">
+      //                                       <input
+      //                                         type="number"
+      //                                         placeholder="200"
+      //                                         className="w-full p-2 border rounded-md bg-background"
+      //                                         onChange={(e) => {
+      //                                           if (e.target.value) {
+      //                                             setVerificationSession(
+      //                                               (prev) =>
+      //                                                 prev
+      //                                                   ? {
+      //                                                       ...prev,
+      //                                                       data: {
+      //                                                         ...prev.data,
+      //                                                         runs: parseInt(
+      //                                                           e.target.value
+      //                                                         ),
+      //                                                       },
+      //                                                     }
+      //                                                   : null
+      //                                             );
+      //                                           }
+      //                                         }}
+      //                                       />
+      //                                       <p className="text-xs text-muted-foreground mt-1">
+      //                                         Default is usually 200
+      //                                       </p>
+      //                                     </CardContent>
+      //                                   </Card>
+      //                                 );
+      //                               }
 
-                            <div>
-                              <label className="text-sm font-medium mb-2 block">
-                                License Type
-                              </label>
-                              <select
-                                className="w-full p-3 border rounded-md bg-background text-sm"
-                                onChange={(e) => {
-                                  if (verificationSession && e.target.value) {
-                                    setVerificationSession((prev) =>
-                                      prev
-                                        ? {
-                                            ...prev,
-                                            data: {
-                                              ...prev.data,
-                                              licenseType: e.target
-                                                .value as any,
-                                            },
-                                          }
-                                        : null
-                                    );
-                                  }
-                                }}
-                                defaultValue="MIT"
-                              >
-                                <option value="MIT">MIT License</option>
-                                <option value="Apache-2.0">Apache 2.0</option>
-                                <option value="GNU GPLv3">
-                                  GNU General Public License v3.0
-                                </option>
-                                <option value="GNU GPLv2">
-                                  GNU General Public License v2.0
-                                </option>
-                                <option value="BSD-3-Clause">
-                                  BSD 3-Clause License
-                                </option>
-                                <option value="BSD-2-Clause">
-                                  BSD 2-Clause License
-                                </option>
-                                <option value="None">No License</option>
-                                <option value="Unlicense">The Unlicense</option>
-                              </select>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    }
-                  }}
-                  defaultValue=""
-                >
-                  <option value="" disabled>
-                    Select EVM version...
-                  </option>
-                  <option value="cancun">Cancun</option>
-                  <option value="shanghai">Shanghai</option>
-                  <option value="paris">Paris</option>
-                </select>
-              </div>
-            </CardContent>
-          </Card>
-        );
-        break;
+      //                               // Add AI response for license step
+      //                               addMessage(
+      //                                 "ai",
+      //                                 "✅ **Optimization settings complete!**\n\n**Step 7 of 7: License Type**\nPlease select the license type for your contract:",
+      //                                 <Card className="w-full max-w-3xl mx-auto mt-4">
+      //                                   <CardHeader>
+      //                                     <CardTitle>📄 License Type</CardTitle>
+      //                                   </CardHeader>
+      //                                   <CardContent className="space-y-4">
+      //                                     <div>
+      //                                       <label className="text-sm font-medium mb-2 block">
+      //                                         Select the license type for your
+      //                                         contract
+      //                                       </label>
+      //                                       <select
+      //                                         className="w-full p-3 border rounded-md bg-background text-sm"
+      //                                         onChange={(e) => {
+      //                                           if (e.target.value) {
+      //                                             setVerificationSession(
+      //                                               (prev) => {
+      //                                                 if (!prev) return null;
+      //                                                 return {
+      //                                                   ...prev,
+      //                                                   data: {
+      //                                                     ...prev.data,
+      //                                                     licenseType: e.target
+      //                                                       .value as any,
+      //                                                   },
+      //                                                 };
+      //                                               }
+      //                                             );
 
-      case 5:
-        const lowerInput = input.toLowerCase();
-        if (
-          lowerInput.includes("yes") ||
-          lowerInput === "y" ||
-          lowerInput === "1"
-        ) {
-          addMessage(
-            "ai",
-            "**Optimization enabled!** How many optimization runs were used? (Default is usually 200)"
-          );
-          setVerificationSession((prev) =>
-            prev
-              ? {
-                  ...prev,
-                  step: 5.5,
-                  data: { ...prev.data, optimizationUsed: "1" },
-                }
-              : null
-          );
-        } else if (
-          lowerInput.includes("no") ||
-          lowerInput === "n" ||
-          lowerInput === "0"
-        ) {
-          setVerificationSession((prev) =>
-            prev
-              ? {
-                  ...prev,
-                  step: 6,
-                  data: { ...prev.data, optimizationUsed: "0", runs: 200 },
-                }
-              : null
-          );
-          addMessage(
-            "ai",
-            "✅ **Settings complete!**\n\n**Ready to Verify**\nGreat! I have all the information needed:\n\n• **Source Code:** ✅\n• **Compiler Type:** ✅\n• **Contract Name:** ✅\n• **Compiler Version:** ✅\n• **EVM Version:** ✅\n• **Optimization:** Disabled\n\nClick the button below to start the verification process!",
-            <div className="mt-4 flex justify-center">
-              <Button
-                onClick={() => executeVerification()}
-                className="px-8 py-3 text-lg"
-                disabled={isProcessing}
-              >
-                {isProcessing ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    Verifying...
-                  </>
-                ) : (
-                  "🚀 Start Verification"
-                )}
-              </Button>
-            </div>
-          );
-        } else {
-          addMessage(
-            "ai",
-            "⚠️ **Please specify optimization**\n\nType `yes` if optimization was enabled, or `no` if it was disabled."
-          );
-        }
-        break;
+      //                                             addMessage(
+      //                                               "user",
+      //                                               `Selected license: ${e.target.value}`
+      //                                             );
 
-      case 5.5:
-        const runs = parseInt(input.trim());
-        if (isNaN(runs) || runs < 1) {
-          addMessage(
-            "ai",
-            "⚠️ **Invalid number of runs**\n\nPlease enter a valid number (usually 200)."
-          );
-          return;
-        }
+      //                                             // Final step - show verification ready message
+      //                                             addMessage(
+      //                                               "ai",
+      //                                               "✅ **All settings complete!**\n\n**Ready to Verify**\nPerfect! I have all the information needed:\n\n• **Source Code:** ✅\n• **Compiler Type:** ✅\n• **Contract Name:** ✅\n• **Compiler Version:** ✅\n• **EVM Version:** ✅\n• **Optimization:** " +
+      //                                                 (isEnabled
+      //                                                   ? "Enabled"
+      //                                                   : "Disabled") +
+      //                                                 "\n• **License:** ✅\n\nClick the button below to start the verification process!",
+      //                                               <div className="mt-4 flex justify-center">
+      //                                                 <Button
+      //                                                   onClick={() =>
+      //                                                     executeVerification()
+      //                                                   }
+      //                                                   className="px-8 py-3 text-lg"
+      //                                                   disabled={isProcessing}
+      //                                                 >
+      //                                                   {isProcessing ? (
+      //                                                     <>
+      //                                                       <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+      //                                                       Verifying...
+      //                                                     </>
+      //                                                   ) : (
+      //                                                     "🚀 Start Verification"
+      //                                                   )}
+      //                                                 </Button>
+      //                                               </div>
+      //                                             );
+      //                                           }
+      //                                         }}
+      //                                         defaultValue=""
+      //                                       >
+      //                                         <option value="" disabled>
+      //                                           Select license type...
+      //                                         </option>
+      //                                         <option value="MIT">
+      //                                           MIT License
+      //                                         </option>
+      //                                         <option value="Apache-2.0">
+      //                                           Apache 2.0
+      //                                         </option>
+      //                                         <option value="GNU GPLv3">
+      //                                           GNU General Public License v3.0
+      //                                         </option>
+      //                                         <option value="GNU GPLv2">
+      //                                           GNU General Public License v2.0
+      //                                         </option>
+      //                                         <option value="BSD-3-Clause">
+      //                                           BSD 3-Clause License
+      //                                         </option>
+      //                                         <option value="BSD-2-Clause">
+      //                                           BSD 2-Clause License
+      //                                         </option>
+      //                                         <option value="None">
+      //                                           No License
+      //                                         </option>
+      //                                         <option value="Unlicense">
+      //                                           The Unlicense
+      //                                         </option>
+      //                                       </select>
+      //                                     </div>
+      //                                   </CardContent>
+      //                                 </Card>
+      //                               );
+      //                             }
+      //                           }}
+      //                           defaultValue=""
+      //                         >
+      //                           <option value="" disabled>
+      //                             Select optimization setting...
+      //                           </option>
+      //                           <option value="0">
+      //                             No - Optimization was disabled
+      //                           </option>
+      //                           <option value="1">
+      //                             Yes - Optimization was enabled
+      //                           </option>
+      //                         </select>
+      //                       </div>
+      //                     </CardContent>
+      //                   </Card>
+      //                 );
+      //               }
+      //             }}
+      //             defaultValue=""
+      //           >
+      //             <option value="" disabled>
+      //               Select EVM version...
+      //             </option>
+      //             <option value="cancun">Cancun</option>
+      //             <option value="shanghai">Shanghai</option>
+      //             <option value="paris">Paris</option>
+      //           </select>
+      //         </div>
+      //       </CardContent>
+      //     </Card>
+      //   );
+      //   break;
 
-        setVerificationSession((prev) =>
-          prev
-            ? {
-                ...prev,
-                step: 6,
-                data: { ...prev.data, runs },
-              }
-            : null
-        );
+      // case 5:
+      //   const lowerInput = input.toLowerCase();
+      //   if (
+      //     lowerInput.includes("yes") ||
+      //     lowerInput === "y" ||
+      //     lowerInput === "1"
+      //   ) {
+      //     addMessage(
+      //       "ai",
+      //       "**Optimization enabled!** How many optimization runs were used? (Default is usually 200)"
+      //     );
+      //     setVerificationSession((prev) =>
+      //       prev
+      //         ? {
+      //             ...prev,
+      //             step: 5.5,
+      //             data: { ...prev.data, optimizationUsed: "1" },
+      //           }
+      //         : null
+      //     );
+      //   } else if (
+      //     lowerInput.includes("no") ||
+      //     lowerInput === "n" ||
+      //     lowerInput === "0"
+      //   ) {
+      //     setVerificationSession((prev) =>
+      //       prev
+      //         ? {
+      //             ...prev,
+      //             step: 6,
+      //             data: { ...prev.data, optimizationUsed: "0", runs: 200 },
+      //           }
+      //         : null
+      //     );
+      //     addMessage(
+      //       "ai",
+      //       "✅ **Settings complete!**\n\n**Ready to Verify**\nGreat! I have all the information needed:\n\n• **Source Code:** ✅\n• **Compiler Type:** ✅\n• **Contract Name:** ✅\n• **Compiler Version:** ✅\n• **EVM Version:** ✅\n• **Optimization:** Disabled\n\nClick the button below to start the verification process!",
+      //       <div className="mt-4 flex justify-center">
+      //         <Button
+      //           onClick={() => executeVerification()}
+      //           className="px-8 py-3 text-lg"
+      //           disabled={isProcessing}
+      //         >
+      //           {isProcessing ? (
+      //             <>
+      //               <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+      //               Verifying...
+      //             </>
+      //           ) : (
+      //             "🚀 Start Verification"
+      //           )}
+      //         </Button>
+      //       </div>
+      //     );
+      //   } else {
+      //     addMessage(
+      //       "ai",
+      //       "⚠️ **Please specify optimization**\n\nType `yes` if optimization was enabled, or `no` if it was disabled."
+      //     );
+      //   }
+      //   break;
 
-        addMessage(
-          "ai",
-          `✅ **Settings complete!**\n\n**Ready to Verify**\nPerfect! I have all the information needed:\n\n• **Source Code:** ✅\n• **Compiler Type:** ✅\n• **Contract Name:** ✅\n• **Compiler Version:** ✅\n• **EVM Version:** ✅\n• **Optimization:** Enabled (${runs} runs)\n\nClick the button below to start the verification process!`,
-          <div className="mt-4 flex justify-center">
-            <Button
-              onClick={() => executeVerification()}
-              className="px-8 py-3 text-lg"
-              disabled={isProcessing}
-            >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Verifying...
-                </>
-              ) : (
-                "🚀 Start Verification"
-              )}
-            </Button>
-          </div>
-        );
-        break;
+      // case 5.5:
+      //   const runs = parseInt(input.trim());
+      //   if (isNaN(runs) || runs < 1) {
+      //     addMessage(
+      //       "ai",
+      //       "⚠️ **Invalid number of runs**\n\nPlease enter a valid number (usually 200)."
+      //     );
+      //     return;
+      //   }
+
+      //   setVerificationSession((prev) =>
+      //     prev
+      //       ? {
+      //           ...prev,
+      //           step: 6,
+      //           data: { ...prev.data, runs },
+      //         }
+      //       : null
+      //   );
+
+      //   addMessage(
+      //     "ai",
+      //     `✅ **Settings complete!**\n\n**Ready to Verify**\nPerfect! I have all the information needed:\n\n• **Source Code:** ✅\n• **Compiler Type:** ✅\n• **Contract Name:** ✅\n• **Compiler Version:** ✅\n• **EVM Version:** ✅\n• **Optimization:** Enabled (${runs} runs)\n\nClick the button below to start the verification process!`,
+      //     <div className="mt-4 flex justify-center">
+      //       <Button
+      //         onClick={() => executeVerification()}
+      //         className="px-8 py-3 text-lg"
+      //         disabled={isProcessing}
+      //       >
+      //         {isProcessing ? (
+      //           <>
+      //             <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+      //             Verifying...
+      //           </>
+      //         ) : (
+      //           "🚀 Start Verification"
+      //         )}
+      //       </Button>
+      //     </div>
+      //   );
+      //   break;
     }
   };
 
@@ -1885,10 +1979,10 @@ export default function Home() {
     );
   };
 
-  const executeVerification = async () => {
-    if (!verificationSession) return;
+  const executeVerification = async (sessionData: any) => {
+    if (!sessionData) return;
 
-    const { address, network, data } = verificationSession;
+    const { address, network, data } = sessionData;
     const typingId = addTypingMessage();
     setIsProcessing(true);
 
@@ -1910,27 +2004,26 @@ export default function Home() {
           compilerType = "solidity-single";
       }
 
-      // Format source code based on type (single or multi)
-      // const formattedSourceCode = data.sourceCodes
-      //   ? data.sourceCodes
-      //   : data.sourceCode;
-
-      // console.log("Raw data.sourceCode:", data.sourceCode);
-      // console.log("Raw data.sourceCodes:", data.sourceCodes);
+      // Map license type to API value
+      const licenseTypeMapping = LICENSE_TYPES.find(
+        (lt) => lt.value === data.licenseType
+      );
+      const licenseTypeApiValue = licenseTypeMapping?.apiValue || 3; // Default to MIT (3)
 
       const verificationData = {
         contractAddress: address,
         compilerType,
-        sourceCode: data.sourceCode || "", // Just pass the source code directly
+        sourceCode: data.sourceCode || "",
         contractName: data.contractName!,
-        compilerVersion: data.compilerVersion || "v0.8.24+commit.e11b9ed9",
+        compilerVersion: data.compilerVersion!,
         optimizationUsed: data.optimizationUsed!,
         runs: Number(data.runs!),
         evmVersion: data.evmVersion ?? "shanghai",
-        licenseType: data.licenseType || LicenseType.MIT,
+        licenseType: licenseTypeApiValue,
       };
 
       console.log("Final verificationData:", verificationData);
+      console.log("data.compilerVersion", data.compilerVersion);
 
       const result = await verifyContract(network, verificationData);
       console.log("Result:", result);
@@ -1939,6 +2032,7 @@ export default function Home() {
 
       if (result.message === "OK") {
         // Try to get the ABI to confirm verification
+
         const abiResponse = await getAbi(network, address);
         console.log("abiResponse", abiResponse);
 
@@ -2099,7 +2193,7 @@ export default function Home() {
       } else {
         addMessage(
           "ai",
-          `❌ **Verification failed**\n\n**Error:** ${result.message}\n\nPlease check your contract details and try again. Common issues:\n• Wrong compiler version\n• Incorrect optimization settings\n• Source code doesn't match deployed bytecode\n\nWant to try again with different settings?`
+          `❌ **Verification failed**\n\n**Error:** ${result.result}\n\nPlease check your contract details and try again. Common issues:\n• Wrong compiler version\n• Incorrect optimization settings\n• Source code doesn't match deployed bytecode\n\nWant to try again with different settings?`
         );
       }
 
@@ -2143,6 +2237,31 @@ export default function Home() {
       );
     }
   }, [verificationSession?.step]);
+
+  // Create a helper function to update verification session safely
+  const updateVerificationSession = (
+    updates: Partial<{
+      step: number;
+      data: Partial<{
+        evmVersion: string;
+        optimizationUsed: "0" | "1";
+        runs: number;
+        licenseType: any;
+      }>;
+    }>
+  ) => {
+    setVerificationSession((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        ...updates,
+        data: {
+          ...prev.data,
+          ...updates.data,
+        },
+      };
+    });
+  };
 
   return (
     <div className="flex flex-col h-screen bg-background">
