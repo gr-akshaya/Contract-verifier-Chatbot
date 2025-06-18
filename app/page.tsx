@@ -609,7 +609,7 @@ export default function Home() {
           "ai",
           `🚀 **Starting verification for contract:** \`${address}\`\n\n**Network:** ${
             network === "mainnet" ? "Core Mainnet" : "Core Testnet"
-          }\n\nLet's gather the required information step by step. I'll guide you through each step with proper forms and dropdown menus.\n\n**Step 1 of 6: Source Code**\nPlease provide your contract's source code in one of the following ways:`,
+          }\n\nLet's gather the required information step by step. I'll guide you through each step with proper forms and dropdown menus.\n\n**Step 1 of 7: Source Code**\nPlease provide your contract's source code in one of the following ways:`,
           createVerificationStepComponent(1, { address, network })
         );
 
@@ -993,71 +993,65 @@ export default function Home() {
                   onChange={(e) => {
                     if (verificationSession && e.target.value) {
                       // Update the session with the compiler version
-                      setVerificationSession((prev) =>
-                        prev
+                      console.log("Previous data:", verificationSession.data);
+                      setVerificationSession((prev) => {
+                        const newState = prev
                           ? {
                               ...prev,
+                              step: 5,
                               data: {
                                 ...prev.data,
                                 compilerVersion: e.target.value,
                               },
                             }
-                          : null
-                      );
+                          : null;
+                        console.log("After update - New state:", newState);
+                        return newState;
+                      });
 
                       addMessage("user", `Selected: ${e.target.value}`);
 
-                      // Don't proceed to next step automatically
-                      // Instead, just update the UI to show both selections are needed
+                      // Add AI response for EVM version selection
                       addMessage(
                         "ai",
-                        "✅ **Compiler version set!**\n\nPlease also select an EVM version to continue.",
+                        "✅ **Compiler version set!**\n\n**Step 5 of 6: EVM Version**\nPlease select the EVM version used during compilation:",
                         <Card className="w-full max-w-3xl mx-auto mt-4">
                           <CardHeader>
-                            <CardTitle>⚙️ Compiler Settings</CardTitle>
+                            <CardTitle>⚙️ EVM Version</CardTitle>
                           </CardHeader>
                           <CardContent className="space-y-4">
                             <div>
-                              <label className="text-sm font-medium mb-2 block">
-                                EVM Version
-                              </label>
                               <select
                                 className="w-full p-3 border rounded-md bg-background text-sm"
-                                onChange={(evmE) => {
-                                  if (
-                                    verificationSession &&
-                                    evmE.target.value
-                                  ) {
+                                onChange={(ev) => {
+                                  if (ev.target.value) {
+                                    console.log(
+                                      "Previous data:",
+                                      verificationSession.data
+                                    );
                                     setVerificationSession((prev) =>
                                       prev
                                         ? {
                                             ...prev,
+                                            step: 6,
                                             data: {
                                               ...prev.data,
-                                              evmVersion: evmE.target.value,
+                                              evmVersion: ev.target.value,
                                             },
                                           }
                                         : null
                                     );
 
+                                    // Add user message
                                     addMessage(
                                       "user",
-                                      `Selected EVM: ${evmE.target.value}`
+                                      `Selected EVM version: ${ev.target.value}`
                                     );
 
-                                    // Now proceed to next step since both selections are made
-                                    setVerificationSession((prev) =>
-                                      prev
-                                        ? {
-                                            ...prev,
-                                            step: 5,
-                                          }
-                                        : null
-                                    );
-
+                                    // Add AI response for optimization settings
                                     addMessage(
                                       "ai",
-                                      "✅ **Compiler settings set!**\n\n**Step 5 of 6: Optimization & License Settings**\nPlease configure the optimization and license settings:",
+                                      "✅ **EVM version set!**\n\n**Step 6 of 6: Optimization & License Settings**\nPlease configure the optimization and license settings:",
                                       <Card className="w-full max-w-3xl mx-auto mt-4">
                                         <CardHeader>
                                           <CardTitle>
@@ -1072,10 +1066,10 @@ export default function Home() {
                                             </label>
                                             <select
                                               className="w-full p-3 border rounded-md bg-background text-sm"
-                                              onChange={(optE) => {
-                                                if (optE.target.value) {
+                                              onChange={(e) => {
+                                                if (e.target.value) {
                                                   const isEnabled =
-                                                    optE.target.value === "1";
+                                                    e.target.value === "1";
                                                   setVerificationSession(
                                                     (prev) =>
                                                       prev
@@ -1084,7 +1078,7 @@ export default function Home() {
                                                             data: {
                                                               ...prev.data,
                                                               optimizationUsed:
-                                                                optE.target
+                                                                e.target
                                                                   .value as
                                                                   | "0"
                                                                   | "1",
@@ -1103,13 +1097,10 @@ export default function Home() {
                                                             type="number"
                                                             placeholder="200"
                                                             className="w-full p-2 border rounded-md bg-background"
-                                                            onChange={(
-                                                              runsE
-                                                            ) => {
+                                                            onChange={(e) => {
                                                               if (
-                                                                // verificationSession &&
-                                                                runsE.target
-                                                                  .value
+                                                                verificationSession &&
+                                                                e.target.value
                                                               ) {
                                                                 setVerificationSession(
                                                                   (prev) =>
@@ -1119,7 +1110,7 @@ export default function Home() {
                                                                           data: {
                                                                             ...prev.data,
                                                                             runs: parseInt(
-                                                                              runsE
+                                                                              e
                                                                                 .target
                                                                                 .value
                                                                             ),
@@ -1150,6 +1141,30 @@ export default function Home() {
                                                             }
                                                           : null
                                                     );
+                                                    addMessage(
+                                                      "ai",
+                                                      "✅ **Settings complete!**\n\n**Ready to Verify**\nGreat! I have all the information needed:\n\n• **Source Code:** ✅\n• **Compiler Type:** ✅\n• **Contract Name:** ✅\n• **Compiler Version:** ✅\n• **EVM Version:** ✅\n• **Optimization:** Disabled\n\nClick the button below to start the verification process!",
+                                                      <div className="mt-4 flex justify-center">
+                                                        <Button
+                                                          onClick={() =>
+                                                            executeVerification()
+                                                          }
+                                                          className="px-8 py-3 text-lg"
+                                                          disabled={
+                                                            isProcessing
+                                                          }
+                                                        >
+                                                          {isProcessing ? (
+                                                            <>
+                                                              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                                              Verifying...
+                                                            </>
+                                                          ) : (
+                                                            "🚀 Start Verification"
+                                                          )}
+                                                        </Button>
+                                                      </div>
+                                                    );
                                                   }
                                                 }
                                               }}
@@ -1173,53 +1188,24 @@ export default function Home() {
                                             </label>
                                             <select
                                               className="w-full p-3 border rounded-md bg-background text-sm"
-                                              onChange={(licE) => {
+                                              onChange={(e) => {
                                                 if (
-                                                  // verificationSession &&
-                                                  licE.target.value
+                                                  verificationSession &&
+                                                  e.target.value
                                                 ) {
                                                   setVerificationSession(
                                                     (prev) =>
                                                       prev
                                                         ? {
                                                             ...prev,
-                                                            step: 6,
                                                             data: {
                                                               ...prev.data,
-                                                              licenseType: licE
+                                                              licenseType: e
                                                                 .target
                                                                 .value as any,
                                                             },
                                                           }
                                                         : null
-                                                  );
-
-                                                  // Show final step
-                                                  addMessage(
-                                                    "user",
-                                                    `Selected license: ${licE.target.value}`
-                                                  );
-                                                  addMessage(
-                                                    "ai",
-                                                    "✅ **Settings complete!**\n\n**Step 6 of 6: Ready to Verify**\nGreat! I have all the information needed:\n\n• **Source Code:** ✅\n• **Compiler Type:** ✅\n• **Contract Name:** ✅\n• **Compiler Version:** ✅\n• **License:** ✅\n\nClick the button below to start the verification process!",
-                                                    <div className="mt-4 flex justify-center">
-                                                      <Button
-                                                        onClick={() =>
-                                                          executeVerification()
-                                                        }
-                                                        className="px-8 py-3 text-lg"
-                                                        disabled={isProcessing}
-                                                      >
-                                                        {isProcessing ? (
-                                                          <>
-                                                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                                            Verifying...
-                                                          </>
-                                                        ) : (
-                                                          "🚀 Start Verification"
-                                                        )}
-                                                      </Button>
-                                                    </div>
                                                   );
                                                 }
                                               }}
@@ -1259,164 +1245,12 @@ export default function Home() {
                                 defaultValue=""
                               >
                                 <option value="" disabled>
-                                  Select compiler version...
-                                </option>
-                                <option value="v0.8.28+commit.7893614a">
-                                  v0.8.28+commit.7893614a
-                                </option>
-                                <option value="v0.8.27+commit.40a35a09">
-                                  v0.8.27+commit.40a35a09
-                                </option>
-                                <option value="v0.8.26+commit.8a97fa7a">
-                                  v0.8.26+commit.8a97fa7a
-                                </option>
-                                <option value="v0.8.25+commit.b61c2a91">
-                                  v0.8.25+commit.b61c2a91
-                                </option>
-                                <option value="v0.8.24+commit.e11b9ed9">
-                                  v0.8.24+commit.e11b9ed9
-                                </option>
-                                <option value="v0.8.23+commit.f704f362">
-                                  v0.8.23+commit.f704f362
-                                </option>
-                                <option value="v0.8.22+commit.4fc1097e">
-                                  v0.8.22+commit.4fc1097e
-                                </option>
-                                <option value="v0.8.21+commit.d9974bed">
-                                  v0.8.21+commit.d9974bed
-                                </option>
-                                <option value="v0.8.20+commit.a1b79de6">
-                                  v0.8.20+commit.a1b79de6
-                                </option>
-                                <option value="v0.8.19+commit.7dd6d414">
-                                  v0.8.19+commit.7dd6d414
-                                </option>
-                                <option value="v0.8.18+commit.87f61d96">
-                                  v0.8.18+commit.87f61d96
-                                </option>
-                                <option value="v0.8.17+commit.8df45f5f">
-                                  v0.8.17+commit.8df45f5f
-                                </option>
-                                <option value="v0.8.16+commit.07c72cc2">
-                                  v0.8.16+commit.07c72cc2
-                                </option>
-                                <option value="v0.8.15+commit.e14f2714">
-                                  v0.8.15+commit.e14f2714
-                                </option>
-                                <option value="v0.8.14+commit.80d49f37">
-                                  v0.8.14+commit.80d49f37
-                                </option>
-                                <option value="v0.8.13+commit.abaa5c0e">
-                                  v0.8.13+commit.abaa5c0e
-                                </option>
-                                <option value="v0.8.12+commit.f00d7308">
-                                  v0.8.12+commit.f00d7308
-                                </option>
-                                <option value="v0.8.11+commit.d7f03943">
-                                  v0.8.11+commit.d7f03943
-                                </option>
-                                <option value="v0.8.10+commit.fc410830">
-                                  v0.8.10+commit.fc410830
-                                </option>
-                                <option value="v0.8.9+commit.e5eed63a">
-                                  v0.8.9+commit.e5eed63a
-                                </option>
-                                <option value="v0.8.8+commit.dddeac2f">
-                                  v0.8.8+commit.dddeac2f
-                                </option>
-                                <option value="v0.8.7+commit.e28d00a7">
-                                  v0.8.7+commit.e28d00a7
-                                </option>
-                                <option value="v0.8.6+commit.11564f7e">
-                                  v0.8.6+commit.11564f7e
-                                </option>
-                                <option value="v0.8.5+commit.a4f2e591">
-                                  v0.8.5+commit.a4f2e591
-                                </option>
-                                <option value="v0.8.4+commit.c7e474f2">
-                                  v0.8.4+commit.c7e474f2
-                                </option>
-                                <option value="v0.8.3+commit.8d00100c">
-                                  v0.8.3+commit.8d00100c
-                                </option>
-                                <option value="v0.8.2+commit.661d1103">
-                                  v0.8.2+commit.661d1103
-                                </option>
-                                <option value="v0.8.1+commit.df193b15">
-                                  v0.8.1+commit.df193b15
-                                </option>
-                                <option value="v0.8.0+commit.c7dfd78e">
-                                  v0.8.0+commit.c7dfd78e
-                                </option>
-                              </select>
-                              <div className="text-sm text-muted-foreground">
-                                💡 Recommended versions: v0.8.24+commit.e11b9ed9
-                              </div>
-                            </div>
-                            <div>
-                              <select
-                                className="w-full p-3 border rounded-md bg-background text-sm"
-                                onChange={(e) => {
-                                  if (verificationSession && e.target.value) {
-                                    setVerificationSession((prev) =>
-                                      prev
-                                        ? {
-                                            ...prev,
-                                            data: {
-                                              ...prev.data,
-                                              evmVersion: e.target.value,
-                                            },
-                                          }
-                                        : null
-                                    );
-                                  }
-                                }}
-                                defaultValue=""
-                              >
-                                <option value="" disabled>
                                   Select EVM version...
                                 </option>
                                 <option value="cancun">Cancun</option>
                                 <option value="shanghai">Shanghai</option>
                                 <option value="paris">Paris</option>
                               </select>
-                              <div className="text-sm text-muted-foreground">
-                                💡 Recommended version: shanghai
-                              </div>
-                            </div>
-                            <div className="flex justify-end mt-4">
-                              <button
-                                className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-                                onClick={() => {
-                                  if (
-                                    verificationSession?.data.compilerVersion &&
-                                    verificationSession?.data.evmVersion
-                                  ) {
-                                    setVerificationSession((prev) =>
-                                      prev
-                                        ? {
-                                            ...prev,
-                                            step: 5,
-                                          }
-                                        : null
-                                    );
-                                    addMessage(
-                                      "user",
-                                      `Selected: Compiler ${verificationSession.data.compilerVersion}, EVM ${verificationSession.data.evmVersion}`
-                                    );
-                                    addMessage(
-                                      "ai",
-                                      "✅ **Compiler settings set!**\n\n**Step 5 of 6: Optimization & License Settings**\nPlease configure the optimization and license settings:"
-                                    );
-                                  }
-                                }}
-                                disabled={
-                                  !verificationSession?.data.compilerVersion ||
-                                  !verificationSession?.data.evmVersion
-                                }
-                              >
-                                Continue
-                              </button>
                             </div>
                           </CardContent>
                         </Card>
@@ -1520,71 +1354,6 @@ export default function Home() {
                   💡 Recommended versions: v0.8.24+commit.e11b9ed9
                 </div>
               </div>
-              <div>
-                <select
-                  className="w-full p-3 border rounded-md bg-background text-sm"
-                  onChange={(e) => {
-                    if (verificationSession && e.target.value) {
-                      setVerificationSession((prev) =>
-                        prev
-                          ? {
-                              ...prev,
-                              data: {
-                                ...prev.data,
-                                evmVersion: e.target.value,
-                              },
-                            }
-                          : null
-                      );
-                    }
-                  }}
-                  defaultValue=""
-                >
-                  <option value="" disabled>
-                    Select EVM version...
-                  </option>
-                  <option value="cancun">Cancun</option>
-                  <option value="shanghai">Shanghai</option>
-                  <option value="paris">Paris</option>
-                </select>
-                <div className="text-sm text-muted-foreground">
-                  💡 Recommended version: shanghai
-                </div>
-              </div>
-              <div className="flex justify-end mt-4">
-                <button
-                  className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={() => {
-                    if (
-                      verificationSession?.data.compilerVersion &&
-                      verificationSession?.data.evmVersion
-                    ) {
-                      setVerificationSession((prev) =>
-                        prev
-                          ? {
-                              ...prev,
-                              step: 5,
-                            }
-                          : null
-                      );
-                      addMessage(
-                        "user",
-                        `Selected: Compiler ${verificationSession.data.compilerVersion}, EVM ${verificationSession.data.evmVersion}`
-                      );
-                      addMessage(
-                        "ai",
-                        "✅ **Compiler settings set!**\n\n**Step 5 of 6: Optimization & License Settings**\nPlease configure the optimization and license settings:"
-                      );
-                    }
-                  }}
-                  disabled={
-                    !verificationSession?.data.compilerVersion ||
-                    !verificationSession?.data.evmVersion
-                  }
-                >
-                  Continue
-                </button>
-              </div>
             </CardContent>
           </Card>
         );
@@ -1611,43 +1380,162 @@ export default function Home() {
 
         addMessage(
           "ai",
-          "✅ **Compiler version set!**\n\n**Step 5 of 6: Optimization & License Settings**\nPlease configure the optimization and license settings:",
+          "✅ **Compiler version set!**\n\n**Step 5 of 6: EVM Version**\nPlease select the EVM version used during compilation:",
           <Card className="w-full max-w-3xl mx-auto mt-4">
             <CardHeader>
-              <CardTitle>⚙️ Configuration Settings</CardTitle>
+              <CardTitle>⚙️ EVM Version</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4">
               <div>
-                <label className="text-sm font-medium mb-2 block">
-                  Was optimization enabled during compilation?
-                </label>
                 <select
                   className="w-full p-3 border rounded-md bg-background text-sm"
                   onChange={(e) => {
                     if (e.target.value) {
-                      const isEnabled = e.target.value === "1";
                       setVerificationSession((prev) =>
                         prev
                           ? {
                               ...prev,
+                              step: 6,
                               data: {
                                 ...prev.data,
-                                optimizationUsed: e.target.value as "0" | "1",
+                                evmVersion: e.target.value,
                               },
                             }
                           : null
                       );
 
-                      if (isEnabled) {
-                        addMessage(
-                          "ai",
-                          "**Optimization enabled!** How many optimization runs were used?",
-                          <Card className="w-full max-w-md mx-auto mt-2">
-                            <CardContent className="pt-4">
-                              <input
-                                type="number"
-                                placeholder="200"
-                                className="w-full p-2 border rounded-md bg-background"
+                      // Add user message
+                      addMessage(
+                        "user",
+                        `Selected EVM version: ${e.target.value}`
+                      );
+
+                      // Add AI response for optimization settings
+                      addMessage(
+                        "ai",
+                        "✅ **EVM version set!**\n\n**Step 6 of 6: Optimization & License Settings**\nPlease configure the optimization and license settings:",
+                        <Card className="w-full max-w-3xl mx-auto mt-4">
+                          <CardHeader>
+                            <CardTitle>⚙️ Configuration Settings</CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-6">
+                            <div>
+                              <label className="text-sm font-medium mb-2 block">
+                                Was optimization enabled during compilation?
+                              </label>
+                              <select
+                                className="w-full p-3 border rounded-md bg-background text-sm"
+                                onChange={(e) => {
+                                  if (e.target.value) {
+                                    const isEnabled = e.target.value === "1";
+                                    setVerificationSession((prev) =>
+                                      prev
+                                        ? {
+                                            ...prev,
+                                            data: {
+                                              ...prev.data,
+                                              optimizationUsed: e.target
+                                                .value as "0" | "1",
+                                            },
+                                          }
+                                        : null
+                                    );
+
+                                    if (isEnabled) {
+                                      addMessage(
+                                        "ai",
+                                        "**Optimization enabled!** How many optimization runs were used?",
+                                        <Card className="w-full max-w-md mx-auto mt-2">
+                                          <CardContent className="pt-4">
+                                            <input
+                                              type="number"
+                                              placeholder="200"
+                                              className="w-full p-2 border rounded-md bg-background"
+                                              onChange={(e) => {
+                                                if (
+                                                  verificationSession &&
+                                                  e.target.value
+                                                ) {
+                                                  setVerificationSession(
+                                                    (prev) =>
+                                                      prev
+                                                        ? {
+                                                            ...prev,
+                                                            data: {
+                                                              ...prev.data,
+                                                              runs: parseInt(
+                                                                e.target.value
+                                                              ),
+                                                            },
+                                                          }
+                                                        : null
+                                                  );
+                                                }
+                                              }}
+                                            />
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                              Default is usually 200
+                                            </p>
+                                          </CardContent>
+                                        </Card>
+                                      );
+                                    } else {
+                                      setVerificationSession((prev) =>
+                                        prev
+                                          ? {
+                                              ...prev,
+                                              data: {
+                                                ...prev.data,
+                                                runs: 200,
+                                              },
+                                            }
+                                          : null
+                                      );
+                                      addMessage(
+                                        "ai",
+                                        "✅ **Settings complete!**\n\n**Ready to Verify**\nGreat! I have all the information needed:\n\n• **Source Code:** ✅\n• **Compiler Type:** ✅\n• **Contract Name:** ✅\n• **Compiler Version:** ✅\n• **EVM Version:** ✅\n• **Optimization:** Disabled\n\nClick the button below to start the verification process!",
+                                        <div className="mt-4 flex justify-center">
+                                          <Button
+                                            onClick={() =>
+                                              executeVerification()
+                                            }
+                                            className="px-8 py-3 text-lg"
+                                            disabled={isProcessing}
+                                          >
+                                            {isProcessing ? (
+                                              <>
+                                                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                                Verifying...
+                                              </>
+                                            ) : (
+                                              "🚀 Start Verification"
+                                            )}
+                                          </Button>
+                                        </div>
+                                      );
+                                    }
+                                  }
+                                }}
+                                defaultValue=""
+                              >
+                                <option value="" disabled>
+                                  Select optimization setting...
+                                </option>
+                                <option value="0">
+                                  No - Optimization was disabled
+                                </option>
+                                <option value="1">
+                                  Yes - Optimization was enabled
+                                </option>
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="text-sm font-medium mb-2 block">
+                                License Type
+                              </label>
+                              <select
+                                className="w-full p-3 border rounded-md bg-background text-sm"
                                 onChange={(e) => {
                                   if (verificationSession && e.target.value) {
                                     setVerificationSession((prev) =>
@@ -1656,77 +1544,47 @@ export default function Home() {
                                             ...prev,
                                             data: {
                                               ...prev.data,
-                                              runs: parseInt(e.target.value),
+                                              licenseType: e.target
+                                                .value as any,
                                             },
                                           }
                                         : null
                                     );
                                   }
                                 }}
-                              />
-                              <p className="text-xs text-muted-foreground mt-1">
-                                Default is usually 200
-                              </p>
-                            </CardContent>
-                          </Card>
-                        );
-                      } else {
-                        setVerificationSession((prev) =>
-                          prev
-                            ? {
-                                ...prev,
-                                data: { ...prev.data, runs: 200 },
-                              }
-                            : null
-                        );
-                      }
+                                defaultValue="MIT"
+                              >
+                                <option value="MIT">MIT License</option>
+                                <option value="Apache-2.0">Apache 2.0</option>
+                                <option value="GNU GPLv3">
+                                  GNU General Public License v3.0
+                                </option>
+                                <option value="GNU GPLv2">
+                                  GNU General Public License v2.0
+                                </option>
+                                <option value="BSD-3-Clause">
+                                  BSD 3-Clause License
+                                </option>
+                                <option value="BSD-2-Clause">
+                                  BSD 2-Clause License
+                                </option>
+                                <option value="None">No License</option>
+                                <option value="Unlicense">The Unlicense</option>
+                              </select>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
                     }
                   }}
                   defaultValue=""
                 >
                   <option value="" disabled>
-                    Select optimization setting...
+                    Select EVM version...
                   </option>
-                  <option value="0">No - Optimization was disabled</option>
-                  <option value="1">Yes - Optimization was enabled</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-2 block">
-                  License Type
-                </label>
-                <select
-                  className="w-full p-3 border rounded-md bg-background text-sm"
-                  onChange={(e) => {
-                    if (verificationSession && e.target.value) {
-                      setVerificationSession((prev) =>
-                        prev
-                          ? {
-                              ...prev,
-                              data: {
-                                ...prev.data,
-                                licenseType: e.target.value as any,
-                              },
-                            }
-                          : null
-                      );
-                    }
-                  }}
-                  defaultValue="MIT"
-                >
-                  <option value="MIT">MIT License</option>
-                  <option value="Apache-2.0">Apache 2.0</option>
-                  <option value="GNU GPLv3">
-                    GNU General Public License v3.0
-                  </option>
-                  <option value="GNU GPLv2">
-                    GNU General Public License v2.0
-                  </option>
-                  <option value="BSD-3-Clause">BSD 3-Clause License</option>
-                  <option value="BSD-2-Clause">BSD 2-Clause License</option>
-                  <option value="None">No License</option>
-                  <option value="Unlicense">The Unlicense</option>
+                  <option value="cancun">Cancun</option>
+                  <option value="shanghai">Shanghai</option>
+                  <option value="paris">Paris</option>
                 </select>
               </div>
             </CardContent>
@@ -1770,7 +1628,7 @@ export default function Home() {
           );
           addMessage(
             "ai",
-            "✅ **Settings complete!**\n\n**Step 6 of 6: Ready to Verify**\nGreat! I have all the information needed:\n\n• **Source Code:** ✅\n• **Compiler Type:** ✅\n• **Contract Name:** ✅\n• **Compiler Version:** ✅\n• **Optimization:** Disabled\n\nClick the button below to start the verification process!",
+            "✅ **Settings complete!**\n\n**Ready to Verify**\nGreat! I have all the information needed:\n\n• **Source Code:** ✅\n• **Compiler Type:** ✅\n• **Contract Name:** ✅\n• **Compiler Version:** ✅\n• **EVM Version:** ✅\n• **Optimization:** Disabled\n\nClick the button below to start the verification process!",
             <div className="mt-4 flex justify-center">
               <Button
                 onClick={() => executeVerification()}
@@ -1818,7 +1676,7 @@ export default function Home() {
 
         addMessage(
           "ai",
-          `✅ **Settings complete!**\n\n**Step 6 of 6: Ready to Verify**\nPerfect! I have all the information needed:\n\n• **Source Code:** ✅\n• **Compiler Type:** ✅\n• **Contract Name:** ✅\n• **Compiler Version:** ✅\n• **Optimization:** Enabled (${runs} runs)\n\nClick the button below to start the verification process!`,
+          `✅ **Settings complete!**\n\n**Ready to Verify**\nPerfect! I have all the information needed:\n\n• **Source Code:** ✅\n• **Compiler Type:** ✅\n• **Contract Name:** ✅\n• **Compiler Version:** ✅\n• **EVM Version:** ✅\n• **Optimization:** Enabled (${runs} runs)\n\nClick the button below to start the verification process!`,
           <div className="mt-4 flex justify-center">
             <Button
               onClick={() => executeVerification()}
@@ -2394,39 +2252,6 @@ export default function Home() {
                 </div>
               ))}
             </div>
-            {/* Add back button container
-            {verificationSession && verificationSession.step > 1 && (
-              <div>
-                <div className="max-w-6xl mx-auto px-6 md:px-12 py-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      if (verificationSession) {
-                        setVerificationSession({
-                          ...verificationSession,
-                          step: verificationSession.step - 1,
-                        });
-                        addMessage(
-                          "ai",
-                          `Going back to Step ${
-                            verificationSession.step - 1
-                          }...`,
-                          createVerificationStepComponent(
-                            verificationSession.step - 1,
-                            verificationSession
-                          )
-                        );
-                      }
-                    }}
-                    className="flex items-center gap-2"
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                    Back to Previous Step
-                  </Button>
-                </div>
-              </div>
-            )} */}
           </ScrollArea>
         </div>
 
