@@ -1296,14 +1296,12 @@ export default function Home() {
                                                             </option>
                                                             <option value="BSD-2-Clause">
                                                               BSD 2-clause
-                                                              "Simplified"
-                                                              license
+                                                              Simplified license
                                                               (BSD-2-Clause)
                                                             </option>
                                                             <option value="BSD-3-Clause">
-                                                              BSD 3-clause "New"
-                                                              Or "Revised"
-                                                              license
+                                                              BSD 3-clause New
+                                                              Or Revised license
                                                               (BSD-3-Clause)
                                                             </option>
                                                             <option value="MPL-2.0">
