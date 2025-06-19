@@ -466,7 +466,7 @@ export default function Home() {
                       // Finally add the AI response
                       addMessage(
                         "ai",
-                        `✅ **Compiler type set:** ${compilerDescription}\n\n**Step 3 of 6: Contract Name**\nWhat's the name of your main contract? (This should match the contract name in your source code)\n\nExample: \`MyToken\`, \`SwapContract\`, etc.`
+                        `✅ **Compiler type set:** ${compilerDescription}\n\n**Step 3 of 6: Constructor Arguments**\nAre there any constructor arguments? If so, please provide them, otherwise, type 'no' or 'na' to continue.`
                       );
                     }
                   }}
@@ -937,7 +937,7 @@ export default function Home() {
                       // Finally add the AI response
                       addMessage(
                         "ai",
-                        `✅ **Compiler type set:** ${compilerDescription}\n\n**Step 3 of 6: Contract Name**\nWhat's the name of your main contract? (This should match the contract name in your source code)\n\nExample: \`MyToken\`, \`SwapContract\`, etc.`
+                        `✅ **Compiler type set:** ${compilerDescription}\n\n**Step 3 of 6: Constructor Arguments**\nAre there any constructor arguments? If so, please provide them; otherwise, type no' or 'na' to continue.`
                       );
                     }
                   }}
@@ -972,7 +972,7 @@ export default function Home() {
         if (!input.trim()) {
           addMessage(
             "ai",
-            "⚠️ **Contract name is required**\n\nPlease provide the name of your main contract."
+            "⚠️ **Constructor Arguments is required**\n\nPlease provide if any else type 'no' to continue."
           );
           return;
         }
@@ -982,14 +982,14 @@ export default function Home() {
             ? {
                 ...prev,
                 step: 4,
-                data: { ...prev.data, contractName: input.trim() },
+                data: { ...prev.data, constructorArguments: input.trim() },
               }
             : null
         );
 
         addMessage(
           "ai",
-          "✅ **Contract name set!**\n\n**Step 4 of 6: Compiler Version**\nWhich Solidity compiler version did you use?\n\nPlease select from the dropdown below:",
+          "✅ **Constructor Arguments set!**\n\n**Step 4 of 6: Compiler Version**\nWhich Solidity compiler version did you use?\n\nPlease select from the dropdown below:",
           <Card className="w-full max-w-3xl mx-auto mt-4">
             <CardHeader>
               <CardTitle>🔧 Compiler Version</CardTitle>
@@ -1216,7 +1216,7 @@ export default function Home() {
                                                                       () => {
                                                                         addMessage(
                                                                           "ai",
-                                                                          "✅ **All settings complete!**\n\n**Ready to Verify**\nPerfect! I have all the information needed:\n\n• **Source Code:** ✅\n• **Compiler Type:** ✅\n• **Contract Name:** ✅\n• **Compiler Version:** ✅\n• **EVM Version:** ✅\n• **Optimization:** " +
+                                                                          "✅ **All settings complete!**\n\n**Ready to Verify**\nPerfect! I have all the information needed:\n\n• **Source Code:** ✅\n• **Compiler Type:** ✅\n• **Constructor Arguments :** ✅\n• **Compiler Version:** ✅\n• **EVM Version:** ✅\n• **Optimization:** " +
                                                                             (isEnabled
                                                                               ? "Enabled"
                                                                               : "Disabled") +
@@ -2057,6 +2057,7 @@ export default function Home() {
         runs: Number(data.runs!),
         evmVersion: data.evmVersion ?? "shanghai",
         licenseType: licenseTypeApiValue,
+        constructorArguments: data.constructorArguments!,
       };
 
       console.log("Final verificationData:", verificationData);
@@ -2069,141 +2070,12 @@ export default function Home() {
 
       if (result.message === "OK") {
         // Try to get the ABI to confirm verification
-
+        await new Promise((r) => setTimeout(r, 3000));
         const abiResponse = await getAbi(network, address);
         console.log("abiResponse", abiResponse);
 
         if (abiResponse.status === "1") {
-          // Contract is verified and we have the ABI
-          addMessage(
-            "ai",
-            "Verification request submitted successfully! 🎉\n\n",
-            <div className="mt-4">
-              <Card className="w-full max-w-2xl">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                      <Code className="w-5 h-5" />
-                      Contract Information
-                    </CardTitle>
-                    <Badge variant={"default"}>
-                      <>
-                        <CheckCircle className="w-3 h-3 mr-1" />
-                        Verified
-                      </>
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">
-                        Network
-                      </label>
-                      <p className="text-sm">{network}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">
-                        Contract Name
-                      </label>
-                      <p className="text-sm">
-                        {data.contractName || "Unknown"}
-                      </p>
-                    </div>
-                    <>
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">
-                          Compiler Version
-                        </label>
-                        <p className="text-sm">
-                          {data.compilerVersion || "Unknown"}
-                        </p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">
-                          Optimization
-                        </label>
-                        <p className="text-sm">
-                          {data.optimizationUsed === "1"
-                            ? "Enabled"
-                            : "Disabled"}
-                        </p>
-                      </div>
-                    </>
-                  </div>
-
-                  <Separator />
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-sm font-medium text-muted-foreground">
-                        Contract Address
-                      </label>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="cursor-pointer"
-                        onClick={() => {
-                          navigator.clipboard.writeText(address);
-                          toast.success("Address copied to clipboard");
-                        }}
-                      >
-                        <Copy className="w-3 h-3" />
-                      </Button>
-                    </div>
-                    <p className="text-sm font-mono bg-muted p-2 rounded">
-                      {address}
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-sm font-medium text-muted-foreground">
-                        ABI
-                      </label>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="cursor-pointer"
-                        onClick={() => {
-                          navigator.clipboard.writeText(abiResponse.result);
-                          toast.success("ABI copied to clipboard");
-                        }}
-                      >
-                        <Copy className="w-3 h-3 cursor-pointer" />
-                      </Button>
-                    </div>
-                    <div className="bg-muted p-3 rounded max-h-60 overflow-y-auto">
-                      <pre className="text-xs whitespace-pre-wrap">
-                        {JSON.stringify(
-                          JSON.parse(abiResponse.result),
-                          null,
-                          2
-                        )}
-                      </pre>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2 pt-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const explorerUrl =
-                          network === "mainnet"
-                            ? `https://scan.coredao.org/address/${address}`
-                            : `https://scan.test2.btcs.network/address/${address}`;
-                        window.open(explorerUrl, "_blank");
-                      }}
-                    >
-                      <ExternalLink className="w-3 h-3 mr-1" />
-                      View on Explorer
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          );
+          handleContractLookup(address, network);
         } else {
           // Verification submitted but not yet processed
           addMessage(
