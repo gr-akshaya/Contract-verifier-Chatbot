@@ -763,7 +763,6 @@ export default function Home() {
                               fileName: string;
                             }>
                           ) => {
-                            // Filter out empty or invalid files
                             const validFiles = processedFiles.filter(
                               (file) =>
                                 file.code &&
@@ -778,26 +777,70 @@ export default function Home() {
                               return;
                             }
 
-                            setVerificationSession((prev: any) =>
-                              prev
-                                ? {
-                                    ...prev,
-                                    data: {
-                                      ...prev.data,
-                                      compilerType:
-                                        validFiles.length > 1
-                                          ? "solidity-multi"
-                                          : "solidity-single",
-                                      sourceCodes: validFiles,
-                                    },
-                                  }
-                                : null
-                            );
+                            if (validFiles.length === 1) {
+                              // Single file: treat as single-file input
+                              setVerificationSession((prev: any) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      data: {
+                                        ...prev.data,
+                                        compilerType: "solidity-single",
+                                        sourceCode: validFiles[0].code,
+                                      },
+                                    }
+                                  : null
+                              );
+                              handleVerificationInput(validFiles[0].code);
+                            } else {
+                              // Multi-file: convert to Standard JSON Input
+                              const sources: Record<
+                                string,
+                                { content: string }
+                              > = {};
+                              validFiles.forEach((file) => {
+                                // Use just the filename as the key (or include a folder if needed)
+                                sources[file.fileName] = { content: file.code };
+                              });
 
-                            const consolidatedCode = processedFiles
-                              .map((f) => `// File: ${f.fileName}\n${f.code}`)
-                              .join("\n\n");
-                            handleVerificationInput(consolidatedCode);
+                              const standardJsonInput = {
+                                language: "Solidity",
+                                sources,
+                                settings: {
+                                  optimizer: { enabled: false, runs: 200 },
+                                  outputSelection: {
+                                    "*": {
+                                      "*": [
+                                        "abi",
+                                        "evm.bytecode",
+                                        "evm.deployedBytecode",
+                                        "metadata",
+                                      ],
+                                    },
+                                  },
+                                },
+                              };
+
+                              setVerificationSession((prev: any) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      data: {
+                                        ...prev.data,
+                                        compilerType: "solidity-json",
+                                        sourceCode: JSON.stringify(
+                                          standardJsonInput,
+                                          null,
+                                          2
+                                        ),
+                                      },
+                                    }
+                                  : null
+                              );
+                              handleVerificationInput(
+                                JSON.stringify(standardJsonInput, null, 2)
+                              );
+                            }
                           }
                         );
                       }
@@ -2033,9 +2076,11 @@ export default function Home() {
       let compilerType: "solidity-single" | "solidity-multi" | "solidity-json";
       switch (data.compilerType) {
         case "solidity-single":
+          compilerType = "solidity-single";
+          break;
         case "solidity-multi":
         case "solidity-json":
-          compilerType = data.compilerType;
+          compilerType = "solidity-json";
           break;
         default:
           compilerType = "solidity-single";
