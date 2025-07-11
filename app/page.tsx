@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import MultiFileUploadComponent from "@/components/contract-verification/MultiFileUploadComponent";
 import {
   Send,
   Bot,
@@ -300,9 +301,65 @@ export default function Home() {
                 </Button>
               </div>
               <div className="bg-muted p-3 rounded max-h-60 overflow-y-auto">
-                <pre className="text-xs whitespace-pre-wrap">
-                  {contractData.SourceCode.substring(0, 1000)}...
-                </pre>
+                {(() => {
+                  // Try to parse as JSON Standard Input
+                  let parsed: any = null;
+                  try {
+                    // Remove leading/trailing braces if present (Etherscan-style)
+
+                    let code = contractData.SourceCode.trim();
+                    // Remove leading/trailing quotes if present
+                    if (
+                      (code.startsWith('"') && code.endsWith('"')) ||
+                      (code.startsWith("'") && code.endsWith("'"))
+                    ) {
+                      code = code.slice(1, -1);
+                    }
+
+                    // Robustly remove extra braces and whitespace
+                    code = code
+                      .replace(/^\s*{\s*{+/, "{")
+                      .replace(/}+}\s*$/, "}");
+                    parsed = JSON.parse(code);
+                  } catch (e) {
+                    parsed = null;
+                  }
+                  if (
+                    parsed &&
+                    typeof parsed === "object" &&
+                    parsed.sources &&
+                    typeof parsed.sources === "object"
+                  ) {
+                    // Multi-file: show each file
+                    return (
+                      <div>
+                        {Object.entries(parsed.sources).map(
+                          ([fileName, fileObj]: [string, any]) => (
+                            <div key={fileName} className="mb-4">
+                              <div className="font-bold text-xs mb-1">
+                                {fileName}
+                              </div>
+                              <pre className="text-xs whitespace-pre-wrap bg-background p-2 rounded">
+                                {(fileObj as any).content?.substring(0, 1000) ||
+                                  ""}
+                                {((fileObj as any).content?.length || 0) > 1000
+                                  ? "..."
+                                  : ""}
+                              </pre>
+                            </div>
+                          )
+                        )}
+                      </div>
+                    );
+                  } else {
+                    // Single file: show as before
+                    return (
+                      <pre className="text-xs whitespace-pre-wrap">
+                        {contractData.SourceCode.substring(0, 1000)}...
+                      </pre>
+                    );
+                  }
+                })()}
               </div>
             </div>
           )}
@@ -729,119 +786,39 @@ export default function Home() {
                   onClick={() => {
                     const input = document.createElement("input");
                     input.type = "file";
-                    // multiple files allowed
-                    input.multiple = true;
+                    // Only allow one file
+                    input.multiple = false;
                     input.accept = ".sol,.json";
                     input.onchange = (e) => {
                       const files = (e.target as HTMLInputElement).files;
-                      if (files) {
-                        const processFiles = Array.from(files).map((file) => {
-                          return new Promise<{
-                            code: string;
-                            fileName: string;
-                          }>((resolve) => {
-                            const reader = new FileReader();
-                            reader.onload = (e) => {
-                              const content = e.target?.result as string;
-                              addMessage(
-                                "user",
-                                `📁 Uploaded file: ${file.name}`
-                              );
-                              resolve({
-                                code: content,
-                                fileName: file.name,
-                              });
-                            };
-                            reader.readAsText(file);
-                          });
-                        });
-
-                        Promise.all(processFiles).then(
-                          (
-                            processedFiles: Array<{
-                              code: string;
-                              fileName: string;
-                            }>
-                          ) => {
-                            const validFiles = processedFiles.filter(
-                              (file) =>
-                                file.code &&
-                                file.fileName.toLowerCase().endsWith(".sol")
-                            );
-
-                            if (validFiles.length === 0) {
-                              addMessage(
-                                "ai",
-                                "⚠️ No valid Solidity files were found in the upload."
-                              );
-                              return;
-                            }
-
-                            if (validFiles.length === 1) {
-                              // Single file: treat as single-file input
-                              setVerificationSession((prev: any) =>
-                                prev
-                                  ? {
-                                      ...prev,
-                                      data: {
-                                        ...prev.data,
-                                        compilerType: "solidity-single",
-                                        sourceCode: validFiles[0].code,
-                                      },
-                                    }
-                                  : null
-                              );
-                              handleVerificationInput(validFiles[0].code);
-                            } else {
-                              // Multi-file: convert to Standard JSON Input
-                              const sources: Record<
-                                string,
-                                { content: string }
-                              > = {};
-                              validFiles.forEach((file) => {
-                                // Use just the filename as the key (or include a folder if needed)
-                                sources[file.fileName] = { content: file.code };
-                              });
-
-                              const standardJsonInput = {
-                                language: "Solidity",
-                                sources,
-                                settings: {
-                                  optimizer: { enabled: false, runs: 200 },
-                                  outputSelection: {
-                                    "*": {
-                                      "*": [
-                                        "abi",
-                                        "evm.bytecode",
-                                        "evm.deployedBytecode",
-                                        "metadata",
-                                      ],
-                                    },
+                      if (files && files.length === 1) {
+                        const file = files[0];
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                          const content = e.target?.result as string;
+                          addMessage("user", `📁 Uploaded file: ${file.name}`);
+                          // Process as single file
+                          setVerificationSession((prev: any) =>
+                            prev
+                              ? {
+                                  ...prev,
+                                  data: {
+                                    ...prev.data,
+                                    compilerType: file.name.endsWith(".json")
+                                      ? "solidity-json"
+                                      : "solidity-single",
+                                    sourceCode: content,
                                   },
-                                },
-                              };
-
-                              setVerificationSession((prev: any) =>
-                                prev
-                                  ? {
-                                      ...prev,
-                                      data: {
-                                        ...prev.data,
-                                        compilerType: "solidity-json",
-                                        sourceCode: JSON.stringify(
-                                          standardJsonInput,
-                                          null,
-                                          2
-                                        ),
-                                      },
-                                    }
-                                  : null
-                              );
-                              handleVerificationInput(
-                                JSON.stringify(standardJsonInput, null, 2)
-                              );
-                            }
-                          }
+                                }
+                              : null
+                          );
+                          handleVerificationInput(content);
+                        };
+                        reader.readAsText(file);
+                      } else {
+                        addMessage(
+                          "ai",
+                          "⚠️ Please select exactly one .sol or .json file."
                         );
                       }
                     };
@@ -855,10 +832,58 @@ export default function Home() {
                   variant="outline"
                   className="h-20 flex flex-col items-center justify-center"
                   onClick={() => {
+                    // Show a modal or card for multi-file upload
                     addMessage("user", "📋 I'll use multiple files");
+                    // Show a custom component for multi-file upload
                     addMessage(
                       "ai",
-                      "Great! For multiple files, please combine them or provide them as a JSON input. You can also zip multiple .sol files and upload them."
+                      undefined,
+                      <MultiFileUploadComponent
+                        onConfirm={(files) => {
+                          // files: Array<{ fileName: string, code: string }>
+                          const sources: Record<string, { content: string }> =
+                            {};
+                          files.forEach((file) => {
+                            sources[file.fileName] = { content: file.code };
+                          });
+                          const standardJsonInput = {
+                            language: "Solidity",
+                            sources,
+                            settings: {
+                              optimizer: { enabled: false, runs: 200 },
+                              outputSelection: {
+                                "*": {
+                                  "*": [
+                                    "abi",
+                                    "evm.bytecode",
+                                    "evm.deployedBytecode",
+                                    "metadata",
+                                  ],
+                                },
+                              },
+                            },
+                          };
+                          setVerificationSession((prev: any) =>
+                            prev
+                              ? {
+                                  ...prev,
+                                  data: {
+                                    ...prev.data,
+                                    compilerType: "solidity-json",
+                                    sourceCode: JSON.stringify(
+                                      standardJsonInput,
+                                      null,
+                                      2
+                                    ),
+                                  },
+                                }
+                              : null
+                          );
+                          handleVerificationInput(
+                            JSON.stringify(standardJsonInput, null, 2)
+                          );
+                        }}
+                      />
                     );
                   }}
                 >
@@ -1511,364 +1536,6 @@ export default function Home() {
           </Card>
         );
         break;
-
-      // case 4:
-      //   if (!input.trim().startsWith("v0.")) {
-      //     addMessage(
-      //       "ai",
-      //       "⚠️ **Invalid compiler version format**\n\nPlease use the full compiler version format like `v0.8.20+commit.a1b79de6`"
-      //     );
-      //     return;
-      //   }
-
-      //   setVerificationSession((prev) =>
-      //     prev
-      //       ? {
-      //           ...prev,
-      //           step: 5,
-      //           data: { ...prev.data, compilerVersion: input.trim() },
-      //         }
-      //       : null
-      //   );
-
-      //   addMessage(
-      //     "ai",
-      //     "✅ **Compiler version set!**\n\n**Step 5 of 6: EVM Version**\nPlease select the EVM version used during compilation:",
-      //     <Card className="w-full max-w-3xl mx-auto mt-4">
-      //       <CardHeader>
-      //         <CardTitle>⚙️ EVM Version</CardTitle>
-      //       </CardHeader>
-      //       <CardContent className="space-y-4">
-      //         <div>
-      //           <select
-      //             className="w-full p-3 border rounded-md bg-background text-sm"
-      //             onChange={(e) => {
-      //               if (e.target.value) {
-      //                 setVerificationSession((prev) =>
-      //                   prev
-      //                     ? {
-      //                         ...prev,
-      //                         step: 6,
-      //                         data: {
-      //                           ...prev.data,
-      //                           evmVersion: e.target.value,
-      //                         },
-      //                       }
-      //                     : null
-      //                 );
-
-      //                 // Add user message
-      //                 addMessage(
-      //                   "user",
-      //                   `Selected EVM version: ${e.target.value}`
-      //                 );
-
-      //                 // Add AI response for optimization settings
-      //                 addMessage(
-      //                   "ai",
-      //                   "✅ **EVM version set!**\n\n**Step 6 of 7: Optimization Settings**\nWas optimization enabled during compilation?",
-      //                   <Card className="w-full max-w-3xl mx-auto mt-4">
-      //                     <CardHeader>
-      //                       <CardTitle>⚙️ Optimization Settings</CardTitle>
-      //                     </CardHeader>
-      //                     <CardContent className="space-y-4">
-      //                       <div>
-      //                         <label className="text-sm font-medium mb-2 block">
-      //                           Was optimization enabled during compilation?
-      //                         </label>
-      //                         <select
-      //                           className="w-full p-3 border rounded-md bg-background text-sm"
-      //                           onChange={(e) => {
-      //                             if (e.target.value) {
-      //                               const isEnabled = e.target.value === "1";
-      //                               setVerificationSession((prev) =>
-      //                                 prev
-      //                                   ? {
-      //                                       ...prev,
-      //                                       data: {
-      //                                         ...prev.data,
-      //                                         optimizationUsed: e.target
-      //                                           .value as "0" | "1",
-      //                                       },
-      //                                     }
-      //                                   : null
-      //                               );
-
-      //                               if (isEnabled) {
-      //                                 addMessage(
-      //                                   "ai",
-      //                                   "**Optimization enabled!** How many optimization runs were used?",
-      //                                   <Card className="w-full max-w-md mx-auto mt-2">
-      //                                     <CardContent className="pt-4">
-      //                                       <input
-      //                                         type="number"
-      //                                         placeholder="200"
-      //                                         className="w-full p-2 border rounded-md bg-background"
-      //                                         onChange={(e) => {
-      //                                           if (e.target.value) {
-      //                                             setVerificationSession(
-      //                                               (prev) =>
-      //                                                 prev
-      //                                                   ? {
-      //                                                       ...prev,
-      //                                                       data: {
-      //                                                         ...prev.data,
-      //                                                         runs: parseInt(
-      //                                                           e.target.value
-      //                                                         ),
-      //                                                       },
-      //                                                     }
-      //                                                   : null
-      //                                             );
-      //                                           }
-      //                                         }}
-      //                                       />
-      //                                       <p className="text-xs text-muted-foreground mt-1">
-      //                                         Default is usually 200
-      //                                       </p>
-      //                                     </CardContent>
-      //                                   </Card>
-      //                                 );
-      //                               }
-
-      //                               // Add AI response for license step
-      //                               addMessage(
-      //                                 "ai",
-      //                                 "✅ **Optimization settings complete!**\n\n**Step 7 of 7: License Type**\nPlease select the license type for your contract:",
-      //                                 <Card className="w-full max-w-3xl mx-auto mt-4">
-      //                                   <CardHeader>
-      //                                     <CardTitle>📄 License Type</CardTitle>
-      //                                   </CardHeader>
-      //                                   <CardContent className="space-y-4">
-      //                                     <div>
-      //                                       <label className="text-sm font-medium mb-2 block">
-      //                                         Select the license type for your
-      //                                         contract
-      //                                       </label>
-      //                                       <select
-      //                                         className="w-full p-3 border rounded-md bg-background text-sm"
-      //                                         onChange={(e) => {
-      //                                           if (e.target.value) {
-      //                                             setVerificationSession(
-      //                                               (prev) => {
-      //                                                 if (!prev) return null;
-      //                                                 return {
-      //                                                   ...prev,
-      //                                                   data: {
-      //                                                     ...prev.data,
-      //                                                     licenseType: e.target
-      //                                                       .value as any,
-      //                                                   },
-      //                                                 };
-      //                                               }
-      //                                             );
-
-      //                                             addMessage(
-      //                                               "user",
-      //                                               `Selected license: ${e.target.value}`
-      //                                             );
-
-      //                                             // Final step - show verification ready message
-      //                                             addMessage(
-      //                                               "ai",
-      //                                               "✅ **All settings complete!**\n\n**Ready to Verify**\nPerfect! I have all the information needed:\n\n• **Source Code:** ✅\n• **Compiler Type:** ✅\n• **Contract Name:** ✅\n• **Compiler Version:** ✅\n• **EVM Version:** ✅\n• **Optimization:** " +
-      //                                                 (isEnabled
-      //                                                   ? "Enabled"
-      //                                                   : "Disabled") +
-      //                                                 "\n• **License:** ✅\n\nClick the button below to start the verification process!",
-      //                                               <div className="mt-4 flex justify-center">
-      //                                                 <Button
-      //                                                   onClick={() =>
-      //                                                     executeVerification()
-      //                                                   }
-      //                                                   className="px-8 py-3 text-lg"
-      //                                                   disabled={isProcessing}
-      //                                                 >
-      //                                                   {isProcessing ? (
-      //                                                     <>
-      //                                                       <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-      //                                                       Verifying...
-      //                                                     </>
-      //                                                   ) : (
-      //                                                     "🚀 Start Verification"
-      //                                                   )}
-      //                                                 </Button>
-      //                                               </div>
-      //                                             );
-      //                                           }
-      //                                         }}
-      //                                         defaultValue=""
-      //                                       >
-      //                                         <option value="" disabled>
-      //                                           Select license type...
-      //                                         </option>
-      //                                         <option value="MIT">
-      //                                           MIT License
-      //                                         </option>
-      //                                         <option value="Apache-2.0">
-      //                                           Apache 2.0
-      //                                         </option>
-      //                                         <option value="GNU GPLv3">
-      //                                           GNU General Public License v3.0
-      //                                         </option>
-      //                                         <option value="GNU GPLv2">
-      //                                           GNU General Public License v2.0
-      //                                         </option>
-      //                                         <option value="BSD-3-Clause">
-      //                                           BSD 3-Clause License
-      //                                         </option>
-      //                                         <option value="BSD-2-Clause">
-      //                                           BSD 2-Clause License
-      //                                         </option>
-      //                                         <option value="None">
-      //                                           No License
-      //                                         </option>
-      //                                         <option value="Unlicense">
-      //                                           The Unlicense
-      //                                         </option>
-      //                                       </select>
-      //                                     </div>
-      //                                   </CardContent>
-      //                                 </Card>
-      //                               );
-      //                             }
-      //                           }}
-      //                           defaultValue=""
-      //                         >
-      //                           <option value="" disabled>
-      //                             Select optimization setting...
-      //                           </option>
-      //                           <option value="0">
-      //                             No - Optimization was disabled
-      //                           </option>
-      //                           <option value="1">
-      //                             Yes - Optimization was enabled
-      //                           </option>
-      //                         </select>
-      //                       </div>
-      //                     </CardContent>
-      //                   </Card>
-      //                 );
-      //               }
-      //             }}
-      //             defaultValue=""
-      //           >
-      //             <option value="" disabled>
-      //               Select EVM version...
-      //             </option>
-      //             <option value="cancun">Cancun</option>
-      //             <option value="shanghai">Shanghai</option>
-      //             <option value="paris">Paris</option>
-      //           </select>
-      //         </div>
-      //       </CardContent>
-      //     </Card>
-      //   );
-      //   break;
-
-      // case 5:
-      //   const lowerInput = input.toLowerCase();
-      //   if (
-      //     lowerInput.includes("yes") ||
-      //     lowerInput === "y" ||
-      //     lowerInput === "1"
-      //   ) {
-      //     addMessage(
-      //       "ai",
-      //       "**Optimization enabled!** How many optimization runs were used? (Default is usually 200)"
-      //     );
-      //     setVerificationSession((prev) =>
-      //       prev
-      //         ? {
-      //             ...prev,
-      //             step: 5.5,
-      //             data: { ...prev.data, optimizationUsed: "1" },
-      //           }
-      //         : null
-      //     );
-      //   } else if (
-      //     lowerInput.includes("no") ||
-      //     lowerInput === "n" ||
-      //     lowerInput === "0"
-      //   ) {
-      //     setVerificationSession((prev) =>
-      //       prev
-      //         ? {
-      //             ...prev,
-      //             step: 6,
-      //             data: { ...prev.data, optimizationUsed: "0", runs: 200 },
-      //           }
-      //         : null
-      //     );
-      //     addMessage(
-      //       "ai",
-      //       "✅ **Settings complete!**\n\n**Ready to Verify**\nGreat! I have all the information needed:\n\n• **Source Code:** ✅\n• **Compiler Type:** ✅\n• **Contract Name:** ✅\n• **Compiler Version:** ✅\n• **EVM Version:** ✅\n• **Optimization:** Disabled\n\nClick the button below to start the verification process!",
-      //       <div className="mt-4 flex justify-center">
-      //         <Button
-      //           onClick={() => executeVerification()}
-      //           className="px-8 py-3 text-lg"
-      //           disabled={isProcessing}
-      //         >
-      //           {isProcessing ? (
-      //             <>
-      //               <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-      //               Verifying...
-      //             </>
-      //           ) : (
-      //             "🚀 Start Verification"
-      //           )}
-      //         </Button>
-      //       </div>
-      //     );
-      //   } else {
-      //     addMessage(
-      //       "ai",
-      //       "⚠️ **Please specify optimization**\n\nType `yes` if optimization was enabled, or `no` if it was disabled."
-      //     );
-      //   }
-      //   break;
-
-      // case 5.5:
-      //   const runs = parseInt(input.trim());
-      //   if (isNaN(runs) || runs < 1) {
-      //     addMessage(
-      //       "ai",
-      //       "⚠️ **Invalid number of runs**\n\nPlease enter a valid number (usually 200)."
-      //     );
-      //     return;
-      //   }
-
-      //   setVerificationSession((prev) =>
-      //     prev
-      //       ? {
-      //           ...prev,
-      //           step: 6,
-      //           data: { ...prev.data, runs },
-      //         }
-      //       : null
-      //   );
-
-      //   addMessage(
-      //     "ai",
-      //     `✅ **Settings complete!**\n\n**Ready to Verify**\nPerfect! I have all the information needed:\n\n• **Source Code:** ✅\n• **Compiler Type:** ✅\n• **Contract Name:** ✅\n• **Compiler Version:** ✅\n• **EVM Version:** ✅\n• **Optimization:** Enabled (${runs} runs)\n\nClick the button below to start the verification process!`,
-      //     <div className="mt-4 flex justify-center">
-      //       <Button
-      //         onClick={() => executeVerification()}
-      //         className="px-8 py-3 text-lg"
-      //         disabled={isProcessing}
-      //       >
-      //         {isProcessing ? (
-      //           <>
-      //             <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-      //             Verifying...
-      //           </>
-      //         ) : (
-      //           "🚀 Start Verification"
-      //         )}
-      //       </Button>
-      //     </div>
-      //   );
-      //   break;
     }
   };
 
