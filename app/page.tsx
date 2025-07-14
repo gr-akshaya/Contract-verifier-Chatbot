@@ -322,6 +322,7 @@ export default function Home() {
                       .replace(/}+}\s*$/, "}");
                     parsed = JSON.parse(code);
                   } catch (e) {
+                    console.error("Failed to parse source code:", e);
                     parsed = null;
                   }
                   if (
@@ -1842,6 +1843,7 @@ export default function Home() {
   );
 
   // Add an effect to monitor verification session step changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!verificationSession) return;
 
