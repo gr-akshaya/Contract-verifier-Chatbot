@@ -1664,7 +1664,71 @@ export default function Home() {
         "• Just paste any contract address and I'll look it up\n" +
         "• Use `verify <address>` to start contract verification\n" +
         "• Specify network with keywords like 'testnet' or 'mainnet'\n" +
-        "• Example: `verify 0x123... on testnet`"
+        "• Example: `verify 0x123...`\n\n" +
+        "Are you facing issues while verifying a contract?",
+      <div className="mt-4 flex justify-center">
+        <Button
+          variant="outline"
+          onClick={handleVerificationHelp}
+          className="px-6 py-2"
+        >
+          Yes
+        </Button>
+      </div>
+    );
+  };
+
+  const handleVerificationHelp = () => {
+    addMessage(
+      "ai",
+      undefined,
+      <div>
+        <div className="mb-2">
+          <span>
+            🔍 <strong>Troubleshooting Verification</strong>
+          </span>
+          <p className="mt-2">
+            Verify the compiler version is <strong>0.8.24</strong> and the EVM
+            version used is <strong>Shanghai</strong>, and then proceed with
+            verification.
+          </p>
+          <p className="mt-2">
+            If you are still facing issues, reach out to us on{" "}
+            <a
+              href="https://discord.com/invite/coredaoofficial"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline"
+            >
+              Discord
+            </a>{" "}
+            or{" "}
+            <a
+              href="https://t.me/CoreDAOTelegram"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline"
+            >
+              Telegram
+            </a>
+            .
+          </p>
+        </div>
+        <div className="mt-4 flex justify-center">
+          <Button
+            variant="outline"
+            onClick={() => {
+              addMessage(
+                "ai",
+                "To proceed, please paste `verify <contract address>` in the network name (e.g., `verify 0x123... on mainnet` or `verify 0x123... on testnet`)."
+              );
+            }}
+            className="px-6 py-2"
+          >
+            No, I'll try again
+          </Button>
+        </div>
+      </div>
     );
   };
 
