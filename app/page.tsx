@@ -841,11 +841,19 @@ export default function Home() {
                           files.forEach((file) => {
                             sources[file.fileName] = { content: file.code };
                           });
+
+                          const optimizerEnabled =
+                            verificationSession?.data?.optimizationUsed === "1"
+                              ? true
+                              : false;
                           const standardJsonInput = {
                             language: "Solidity",
                             sources,
                             settings: {
-                              optimizer: { enabled: false, runs: 200 },
+                              optimizer: {
+                                enabled: optimizerEnabled,
+                                runs: verificationSession?.data?.runs || 200,
+                              },
                               outputSelection: {
                                 "*": {
                                   "*": [
@@ -1742,6 +1750,16 @@ export default function Home() {
       );
       const licenseTypeApiValue = licenseTypeMapping?.apiValue || 3; // Default to MIT (3)
 
+      // Format constructor arguments as a quoted, comma-separated string
+      let constructorArguments = data.constructorArguments || "";
+      if (constructorArguments) {
+        // Split by comma, trim, wrap each in double quotes, then join
+        constructorArguments = constructorArguments
+          .split(",")
+          .map((arg: string) => `"${arg.trim()}"`)
+          .join(",");
+      }
+
       const verificationData = {
         contractAddress: address,
         compilerType,
@@ -1752,10 +1770,10 @@ export default function Home() {
         runs: Number(data.runs!),
         evmVersion: data.evmVersion ?? "shanghai",
         licenseType: licenseTypeApiValue,
-        constructorArguments: data.constructorArguments!,
+        constructorArguments,
       };
 
-      //console.log("Final verificationData:", verificationData);
+      console.log("Final verificationData:", verificationData);
       //console.log("data.compilerVersion", data.compilerVersion);
 
       const result = await verifyContract(network, verificationData);
