@@ -1817,7 +1817,9 @@ export default function Home() {
         if (args.length === 1) {
           constructorArguments = args[0]; // single argument, no extra quotes
         } else if (args.length > 1) {
-          constructorArguments = args.map((arg) => `"${arg}"`).join(",");
+          constructorArguments = args
+            .map((arg: string) => `"${arg}"`)
+            .join(",");
         } else {
           constructorArguments = null;
         }
