@@ -726,17 +726,11 @@ export default function Home() {
                               ) => {
                                 const textarea = e.currentTarget.parentElement
                                   ?.previousElementSibling as HTMLTextAreaElement;
-                                console.log("vm");
+
                                 if (textarea) {
                                   const sourceCode = textarea.value;
 
                                   if (sourceCode.trim().length > 50) {
-                                    // Log the first few characters to check the input
-                                    console.log(
-                                      "Submitting code:",
-                                      sourceCode.substring(0, 100) + "..."
-                                    );
-
                                     // Add a user message to show the code is being processed
                                     addMessage(
                                       "user",
@@ -915,7 +909,6 @@ export default function Home() {
   };
 
   const handleVerificationInput = async (input: string) => {
-    console.log("Handling verification input:", input);
     const step = verificationSession?.step || 1;
 
     // Add back button handling
@@ -971,8 +964,8 @@ export default function Home() {
                 <select
                   className="w-full p-3 border rounded-md bg-background text-sm"
                   onChange={(e) => {
-                    console.log("target value", e.target.value);
-                    console.log("verificationSession", verificationSession);
+                    // console.log("target value", e.target.value);
+                    // console.log("verificationSession", verificationSession);
                     if (e.target.value) {
                       let compilerDescription: string;
                       if (e.target.value === "solidity-single") {
@@ -1070,7 +1063,7 @@ export default function Home() {
                   onChange={(e) => {
                     if (verificationSession && e.target.value) {
                       // Update the session with the compiler version
-                      console.log("Previous data:", verificationSession.data);
+                      //console.log("Previous data:", verificationSession.data);
                       setVerificationSession((prev) => {
                         if (!prev) return null;
 
@@ -1082,7 +1075,7 @@ export default function Home() {
                             compilerVersion: e.target.value,
                           },
                         };
-                        console.log("After update - New state:", newState);
+                        //console.log("After update - New state:", newState);
                         return newState;
                       });
 
@@ -1105,7 +1098,7 @@ export default function Home() {
                                     setVerificationSession((prev) => {
                                       if (!prev) return null;
 
-                                      console.log("Previous data:", prev.data);
+                                      //console.log("Previous data:", prev.data);
                                       return {
                                         ...prev,
                                         step: 6, // Move to optimization step
@@ -1148,10 +1141,6 @@ export default function Home() {
                                                   setVerificationSession(
                                                     (prev) => {
                                                       if (!prev) return null;
-                                                      console.log(
-                                                        "line 1074,",
-                                                        prev.data
-                                                      );
                                                       return {
                                                         ...prev,
                                                         step: 7, // Move to license step
@@ -1197,10 +1186,7 @@ export default function Home() {
                                                                   (prev) => {
                                                                     if (!prev)
                                                                       return null;
-                                                                    console.log(
-                                                                      "line 1119",
-                                                                      prev.data
-                                                                    );
+
                                                                     return {
                                                                       ...prev,
                                                                       data: {
@@ -1253,10 +1239,6 @@ export default function Home() {
                                                                   (prev) => {
                                                                     if (!prev)
                                                                       return null;
-                                                                    console.log(
-                                                                      "line 1171",
-                                                                      prev.data
-                                                                    );
 
                                                                     const updatedSession =
                                                                       {
@@ -1773,11 +1755,11 @@ export default function Home() {
         constructorArguments: data.constructorArguments!,
       };
 
-      console.log("Final verificationData:", verificationData);
-      console.log("data.compilerVersion", data.compilerVersion);
+      //console.log("Final verificationData:", verificationData);
+      //console.log("data.compilerVersion", data.compilerVersion);
 
       const result = await verifyContract(network, verificationData);
-      console.log("Result:", result);
+      //console.log("Result:", result);
 
       removeTypingMessage(typingId);
 
@@ -1785,7 +1767,7 @@ export default function Home() {
         // Try to get the ABI to confirm verification
         await new Promise((r) => setTimeout(r, 3000));
         const abiResponse = await getAbi(network, address);
-        console.log("abiResponse", abiResponse);
+        // console.log("abiResponse", abiResponse);
 
         if (abiResponse.status === "1") {
           handleContractLookup(address, network);
@@ -1843,23 +1825,9 @@ export default function Home() {
   );
 
   // Add an effect to monitor verification session step changes
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!verificationSession) return;
-
-    // Only run this effect when step changes and is greater than 1 (after source code submission)
-    const { step } = verificationSession;
-    console.log("Verification session step changed:", step);
-
-    // This ensures the UI always updates after a step change, serving as a fallback mechanism
-    if (step === 2) {
-      // We've just received source code and moved to step 2, ensure UI shows compiler selection
-      const sourceCodeLength = verificationSession.data.sourceCode?.length || 0;
-      console.log(
-        `Source code received (${sourceCodeLength} chars), showing compiler selection options`
-      );
-    }
-  }, [verificationSession?.step]);
+  }, [verificationSession]);
 
   return (
     <div className="flex flex-col h-screen bg-background">
