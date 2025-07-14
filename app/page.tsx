@@ -1725,7 +1725,7 @@ export default function Home() {
             }}
             className="px-6 py-2"
           >
-            No, I'll try again
+            No, I&apos;ll try again
           </Button>
         </div>
       </div>
