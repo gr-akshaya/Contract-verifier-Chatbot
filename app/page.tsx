@@ -321,8 +321,7 @@ export default function Home() {
                       .replace(/^\s*{\s*{+/, "{")
                       .replace(/}+}\s*$/, "}");
                     parsed = JSON.parse(code);
-                  } catch (e) {
-                    console.error("Failed to parse source code:", e);
+                  } catch {
                     parsed = null;
                   }
                   if (
@@ -835,55 +834,106 @@ export default function Home() {
                       undefined,
                       <MultiFileUploadComponent
                         onConfirm={(files) => {
-                          // files: Array<{ fileName: string, code: string }>
-                          const sources: Record<string, { content: string }> =
-                            {};
-                          files.forEach((file) => {
-                            sources[file.fileName] = { content: file.code };
-                          });
-
-                          const optimizerEnabled =
-                            verificationSession?.data?.optimizationUsed === "1"
-                              ? true
-                              : false;
-                          const standardJsonInput = {
-                            language: "Solidity",
-                            sources,
-                            settings: {
-                              optimizer: {
-                                enabled: optimizerEnabled,
-                                runs: verificationSession?.data?.runs || 200,
-                              },
-                              outputSelection: {
-                                "*": {
-                                  "*": [
-                                    "abi",
-                                    "evm.bytecode",
-                                    "evm.deployedBytecode",
-                                    "metadata",
-                                  ],
-                                },
-                              },
-                            },
-                          };
+                          // Store files and advance to the next step
                           setVerificationSession((prev: any) =>
                             prev
                               ? {
                                   ...prev,
+                                  step: 2, // Move to compiler type selection
                                   data: {
                                     ...prev.data,
                                     compilerType: "solidity-json",
-                                    sourceCode: JSON.stringify(
-                                      standardJsonInput,
-                                      null,
-                                      2
-                                    ),
+                                    multiFileSources: files,
                                   },
                                 }
                               : null
                           );
-                          handleVerificationInput(
-                            JSON.stringify(standardJsonInput, null, 2)
+                          addMessage(
+                            "ai",
+                            "✅ **Files uploaded!**\n\n**Step 2 of 6: Compiler Type**\nWhat type of source code are you providing?",
+                            <Card className="w-full max-w-3xl mx-auto mt-4">
+                              <CardHeader>
+                                <CardTitle>
+                                  📝 Compiler Type Selection
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent className="space-y-4">
+                                <div>
+                                  <label className="text-sm font-medium mb-2 block">
+                                    Select the compiler type that matches your
+                                    source code
+                                  </label>
+                                  <select
+                                    className="w-full p-3 border rounded-md bg-background text-sm"
+                                    onChange={(e) => {
+                                      if (e.target.value) {
+                                        let compilerDescription: string;
+                                        if (
+                                          e.target.value === "solidity-single"
+                                        ) {
+                                          compilerDescription =
+                                            "Single Solidity File";
+                                        } else if (
+                                          e.target.value === "solidity-multi"
+                                        ) {
+                                          compilerDescription =
+                                            "Multiple Solidity Files";
+                                        } else {
+                                          compilerDescription =
+                                            "Solidity Standard JSON Input";
+                                        }
+
+                                        setVerificationSession((prev) =>
+                                          prev
+                                            ? {
+                                                ...prev,
+                                                step: 3,
+                                                data: {
+                                                  ...prev.data,
+                                                  compilerType: e.target
+                                                    .value as
+                                                    | "solidity-single"
+                                                    | "solidity-multi"
+                                                    | "solidity-json",
+                                                },
+                                              }
+                                            : null
+                                        );
+
+                                        addMessage(
+                                          "user",
+                                          `Selected: ${compilerDescription}`
+                                        );
+
+                                        addMessage(
+                                          "ai",
+                                          `✅ **Compiler type set:** ${compilerDescription}\n\n**Step 3 of 6: Constructor Arguments**\nAre there any constructor arguments? If so, please provide them; otherwise, type 'no' or 'na' to continue.`
+                                        );
+                                      }
+                                    }}
+                                    defaultValue="solidity-json"
+                                  >
+                                    <option value="solidity-single">
+                                      Single Solidity File (most common)
+                                    </option>
+                                    <option value="solidity-multi">
+                                      Multiple Solidity Files (with imports)
+                                    </option>
+                                    <option value="solidity-json">
+                                      Solidity Standard JSON Input (from
+                                      Hardhat/Truffle)
+                                    </option>
+                                  </select>
+                                </div>
+                                <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg">
+                                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                                    💡 **Tip:** If you&apos;re not sure, choose
+                                    &quot;Single Solidity File&quot; - it&apos;s
+                                    the most common option.
+                                  </p>
+                                </div>
+                              </CardContent>
+                            </Card>
                           );
                         }}
                       />
@@ -1752,18 +1802,64 @@ export default function Home() {
 
       // Format constructor arguments as a quoted, comma-separated string
       let constructorArguments = data.constructorArguments || "";
-      if (constructorArguments) {
-        // Split by comma, trim, wrap each in double quotes, then join
-        constructorArguments = constructorArguments
+      if (
+        typeof constructorArguments === "string" &&
+        ["no", "na"].includes(constructorArguments.trim().toLowerCase())
+      ) {
+        constructorArguments = null;
+      } else if (constructorArguments) {
+        // Split by comma, trim each, and only wrap in quotes if more than one argument
+        const args = constructorArguments
           .split(",")
-          .map((arg: string) => `"${arg.trim()}"`)
-          .join(",");
+          .map((arg: string) => arg.trim())
+          .filter((arg: string) => arg.length > 0);
+
+        if (args.length === 1) {
+          constructorArguments = args[0]; // single argument, no extra quotes
+        } else if (args.length > 1) {
+          constructorArguments = args.map((arg) => `"${arg}"`).join(",");
+        } else {
+          constructorArguments = null;
+        }
+      }
+
+      // --- Build Standard JSON Input for multi-file upload with latest optimizer settings ---
+      let sourceCode = data.sourceCode || "";
+      if (compilerType === "solidity-json" && data.multiFileSources) {
+        const sources: Record<string, { content: string }> = {};
+        data.multiFileSources.forEach(
+          (file: { fileName: string; code: string }) => {
+            sources[file.fileName] = { content: file.code };
+          }
+        );
+        const optimizerEnabled = data.optimizationUsed === "1";
+        const standardJsonInput = {
+          language: "Solidity",
+          sources,
+          settings: {
+            optimizer: {
+              enabled: optimizerEnabled,
+              runs: data.runs || 200,
+            },
+            outputSelection: {
+              "*": {
+                "*": [
+                  "abi",
+                  "evm.bytecode",
+                  "evm.deployedBytecode",
+                  "metadata",
+                ],
+              },
+            },
+          },
+        };
+        sourceCode = JSON.stringify(standardJsonInput, null, 2);
       }
 
       const verificationData = {
         contractAddress: address,
         compilerType,
-        sourceCode: data.sourceCode || "",
+        sourceCode, // <-- use the built JSON input
         contractName: data.contractName!,
         compilerVersion: data.compilerVersion!,
         optimizationUsed: data.optimizationUsed!,
