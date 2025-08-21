@@ -3,7 +3,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Header from "@/components/layout/Header";
-import FooterInput from "@/components/layout/AnotherFooter";
+import FooterInput from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
