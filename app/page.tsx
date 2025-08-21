@@ -3,6 +3,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Header from "@/components/layout/Header";
+import FooterInput from "@/components/layout/AnotherFooter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -2120,37 +2121,12 @@ export default function Home() {
           </ScrollArea>
         </div>
 
-        <div className="shrink-0 border-t border-border bg-background sticky bottom-0">
-          <div className="max-w-6xl mx-auto px-6 md:px-12 py-4">
-            <div className="flex items-center gap-2">
-              <Input
-                type="text"
-                placeholder="Paste contract address, type 'lookup', 'help', or ask me anything..."
-                value={userInput}
-                onChange={(e) => setUserInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleUserInput()}
-                className="flex-grow"
-                disabled={isProcessing}
-              />
-              <Button
-                onClick={handleUserInput}
-                disabled={isProcessing || !userInput.trim()}
-              >
-                {isProcessing ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Send size={18} />
-                )}
-                <span className="ml-2">
-                  {isProcessing ? "Processing..." : "Send"}
-                </span>
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground mt-2 text-center">
-              Core Smart Contract Verifier AI © {new Date().getFullYear()}
-            </p>
-          </div>
-        </div>
+        <FooterInput
+          userInput={userInput}
+          setUserInput={setUserInput}
+          handleUserInput={handleUserInput}
+          isProcessing={isProcessing}
+        />
       </main>
     </div>
   );

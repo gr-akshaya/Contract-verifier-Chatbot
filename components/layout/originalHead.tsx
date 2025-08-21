@@ -12,12 +12,23 @@ export default function Header() {
             alt=""
             width={32}
             height={32}
-            className="h-8 w-24 dark:block text-primary"
+            className="h-8 w-24 hidden dark:block text-primary"
           />
-          <h1 className="text-xl font-headline font-semibold">
-            <span className="text-white">Smart Contract Verifier</span>
-          </h1>
+          <Image
+            src="/Core_logo.svg"
+            alt=""
+            width={32}
+            height={32}
+            className="h-8 w-24 dark:hidden block text-primary"
+          />
         </Link>
+
+        <div className="flex items-center gap-4">
+          <h1 className="text-xl font-headline font-semibold ">
+            Smart Contract Verifier
+          </h1>
+          <ThemeToggleButton />
+        </div>
       </div>
     </header>
   );
