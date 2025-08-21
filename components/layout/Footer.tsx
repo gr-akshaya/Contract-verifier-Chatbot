@@ -42,7 +42,7 @@ export default function FooterInput({
             className="absolute right-0 top-1/2 -translate-y-1/2 p-0 rounded-full
                        h-12 w-12 flex items-center justify-center bg-white"
             // slight inline min sizes to be certain across UI libs:
-            style={{ minWidth: 50, minHeight: 50 }}
+            style={{ minWidth: 48, minHeight: 48 }}
           >
             {isProcessing ? (
               <Loader2 className="w-4 h-4 animate-spin" />

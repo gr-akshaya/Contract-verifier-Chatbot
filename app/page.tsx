@@ -1655,17 +1655,18 @@ export default function Home() {
 
   const showAvailableCommands = (): void => {
     const commandList = AVAILABLE_COMMANDS.map(
-      (cmd) => `• \`${cmd.command}\` - ${cmd.description}`
-    ).join("\n");
-
+      (cmd) =>
+        `• <span class="command-highlight">${cmd.command}</span> - ${cmd.description}`
+    ).join("<br>");
+  
     addMessage(
       "ai",
-      `📚 **Available Commands:**\n\n${commandList}\n\n` +
-        "**Quick Tips:**\n" +
-        "• Just paste any contract address and I'll look it up\n" +
-        "• Use `verify <address>` to start contract verification\n" +
-        "• Specify network with keywords like 'testnet' or 'mainnet'\n" +
-        "• Example: `verify 0x123...`\n\n" +
+      `📚 <strong>Available Commands:</strong><br><br>${commandList}<br><br>` +
+        `<strong>Quick Tips:</strong><br>` +
+        "• Just paste any contract address and I'll look it up<br>" +
+        "• Use <span class='command-highlight'>verify &lt;address&gt;</span> to start contract verification<br>" +
+        "• Specify network with keywords like 'testnet' or 'mainnet'<br>" +
+        "• Example: <span class='command-highlight'>verify 0x123...</span><br><br>" +
         "Are you facing issues while verifying a contract?",
       <div className="mt-4 flex justify-center">
         <Button
@@ -1678,6 +1679,14 @@ export default function Home() {
       </div>
     );
   };
+  
+  const AVAILABLE_COMMANDS = [
+    { command: "verify", description: "Verify a new smart contract" },
+    { command: "lookup", description: "Look up an existing contract" },
+    { command: "help", description: "Show available commands" },
+    { command: "clear", description: "Clear chat history" },
+  ];
+  
 
   const handleVerificationHelp = () => {
     addMessage(
