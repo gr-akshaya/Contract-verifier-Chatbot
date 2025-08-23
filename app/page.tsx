@@ -1655,76 +1655,68 @@ export default function Home() {
 
   const showAvailableCommands = (): void => {
     const commandList = AVAILABLE_COMMANDS.map(
-      (cmd) =>
-        `• <span class="command-highlight">${cmd.command}</span> - ${cmd.description}`
-    ).join("<br>");
-  
+      (cmd) => `• \`${cmd.command}\` - ${cmd.description}`
+    ).join("\n");
+
     addMessage(
       "ai",
-      `📚 <strong>Available Commands:</strong><br><br>${commandList}<br><br>` +
-        `<strong>Quick Tips:</strong><br>` +
-        "• Just paste any contract address and I'll look it up<br>" +
-        "• Use <span class='command-highlight'>verify &lt;address&gt;</span> to start contract verification<br>" +
-        "• Specify network with keywords like 'testnet' or 'mainnet'<br>" +
-        "• Example: <span class='command-highlight'>verify 0x123...</span><br><br>" +
+      `📚 **Available Commands:**\n\n${commandList}\n\n` +
+        "**Quick Tips:**\n" +
+        "• Just paste any contract address and I'll look it up\n" +
+        "• Use `verify <address>` to start contract verification\n" +
+        "• Specify network with keywords like 'testnet' or 'mainnet'\n" +
+        "• Example: `verify 0x123...`\n\n" +
         "Are you facing issues while verifying a contract?",
-      <div className="mt-4 flex justify-center">
+      <div className="mt-4 ">
         <Button
           variant="outline"
           onClick={handleVerificationHelp}
-          className="px-6 py-2"
+          className="w-full px-6 py-2 rounded-full text-black hover:text-black"
+          style={{ background: "white" }}
         >
           Yes
         </Button>
       </div>
     );
   };
-  
-  const AVAILABLE_COMMANDS = [
-    { command: "verify", description: "Verify a new smart contract" },
-    { command: "lookup", description: "Look up an existing contract" },
-    { command: "help", description: "Show available commands" },
-    { command: "clear", description: "Clear chat history" },
-  ];
-  
 
   const handleVerificationHelp = () => {
     addMessage(
       "ai",
       undefined,
-      <div>
-        <div className="mb-2">
-          <span>
-            🔍 <strong>Troubleshooting Verification</strong>
-          </span>
-          <p className="mt-2">
-            Verify the compiler version is <strong>0.8.24</strong> and the EVM
-            version used is <strong>Shanghai</strong>, and then proceed with
-            verification.
-          </p>
-          <p className="mt-2">
-            If you are still facing issues, reach out to us on{" "}
-            <a
-              href="https://discord.com/invite/coredaoofficial"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 underline"
-            >
-              Discord
-            </a>{" "}
-            or{" "}
-            <a
-              href="https://t.me/CoreDAOTelegram"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 underline"
-            >
-              Telegram
-            </a>
-            .
-          </p>
-        </div>
-        <div className="mt-4 flex justify-center">
+      <div className="bg-card text-card-foreground rounded-xl p-4 max-w-md mx-auto">
+        {/* Heading */}
+        <h3 className="font-semibold flex items-center gap-2 mb-6">
+          <span>🔍</span> Troubleshooting Verification
+        </h3>
+  
+        {/* Writeup */}
+        <p className="mb-3">
+          Verify the compiler version is <strong>0.8.24</strong> and the EVM
+          version used is <strong>Shanghai</strong>, and then proceed with
+          verification.<br/>
+          If you are still facing issues, reach out to us <br/>on{" "}
+          <a
+            href="https://discord.com/invite/coredaoofficial"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-orange-400 underline"
+          >
+            Discord
+          </a>{" "}
+          or{" "}
+          <a
+            href="https://t.me/CoreDAOTelegram"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-orange-400 underline"
+          >
+            Telegram.
+          </a>
+        </p>
+
+        {/* Button */}
+        <div className="mt-7">
           <Button
             variant="outline"
             onClick={() => {
@@ -1733,7 +1725,8 @@ export default function Home() {
                 "To proceed, please paste `verify <contract address>` in the network name (e.g., `verify 0x123... on mainnet` or `verify 0x123... on testnet`)."
               );
             }}
-            className="px-6 py-2"
+            className="w-full px-6 py-2 rounded-full text-black hover:text-black"
+            style={{ background: "white" }}
           >
             No, I&apos;ll try again
           </Button>
@@ -1741,7 +1734,7 @@ export default function Home() {
       </div>
     );
   };
-
+  
   const handleVerifyCommand = async (input: string): Promise<void> => {
     const address = extractContractAddress(input);
 
@@ -1965,24 +1958,98 @@ export default function Home() {
           // Verification submitted but not yet processed
           addMessage(
             "ai",
-            `✅ **Verification submitted!**\n\nYour contract verification request has been submitted successfully. The verification process may take a few moments to complete.\n\n**GUID:** \`${result.result}\`\n\nYou can check the verification status on the block explorer:`,
-            <div className="mt-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const explorerUrl =
-                    network === "mainnet"
-                      ? `https://scan.coredao.org/address/${address}`
-                      : `https://scan.test2.btcs.network/address/${address}`;
-                  window.open(explorerUrl, "_blank");
-                }}
-              >
-                <ExternalLink className="w-3 h-3 mr-1" />
-                View on Explorer
-              </Button>
+            undefined,
+            <div className="bg-card text-card-foreground rounded-2xl p-5 shadow-md max-w-2xl mx-auto">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="flex items-center text-lg font-semibold gap-2">
+                  <span className="text-xl">💻</span> Contract information
+                </h3>
+                <span className="flex items-center text-green-500 text-sm font-medium">
+                  <span className="w-2 h-2 rounded-full bg-green-500 mr-1"></span>
+                  Verified
+                </span>
+              </div>
+          
+              {/* Grid Info */}
+              <div className="grid grid-cols-2 gap-y-2 text-sm mb-4">
+                <div className="text-muted-foreground">Network</div>
+                <div>{network === "mainnet" ? "Core Mainnet" : "Core Testnet"}</div>
+          
+                <div className="text-muted-foreground">Contract name</div>
+                <div>{data.contractName}</div>
+          
+                <div className="text-muted-foreground">Compiler version</div>
+                <div>{data.compilerVersion}</div>
+          
+                <div className="text-muted-foreground">Optimization</div>
+                <div>{data.optimizationUsed === "1" ? "Enabled" : "Disabled"}</div>
+              </div>
+          
+              {/* Contract address */}
+              <div className="mb-4">
+                <div className="text-sm text-muted-foreground mb-1">Contract address</div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={address}
+                    className="w-full bg-muted text-foreground px-3 py-2 rounded-md text-sm"
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => navigator.clipboard.writeText(address)}
+                  >
+                    {/* <Clipboard className="w-4 h-4" /> */}
+                  </Button>
+                </div>
+              </div>
+          
+              {/* Source code */}
+              <div className="mb-6">
+                <div className="text-sm text-muted-foreground mb-1">Source code</div>
+                <div className="bg-black text-white text-xs font-mono p-3 rounded-md max-h-56 overflow-y-auto">
+                  <pre>{data.sourceCode.slice(0, 300)}{data.sourceCode.length > 300 ? "..." : ""}</pre>
+                </div>
+              </div>
+          
+              {/* Buttons */}
+              <div className="flex justify-between gap-3 mb-3">
+                <Button
+                  variant="secondary"
+                  className="flex-1 rounded-full py-2"
+                  onClick={() => {
+                    const explorerUrl =
+                      network === "mainnet"
+                        ? `https://scan.coredao.org/address/${address}`
+                        : `https://scan.test2.btcs.network/address/${address}`;
+                    window.open(explorerUrl, "_blank");
+                  }}
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  View on explorer
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="flex-1 rounded-full py-2"
+                  onClick={() => {
+                    // TODO: Replace with actual ABI response when available
+                    navigator.clipboard.writeText("ABI JSON HERE");
+                  }}
+                >
+                  {/* <Clipboard className="w-4 h-4 mr-2" /> */}
+                  Copy ABI
+                </Button>
+              </div>
+          
+              {/* Timestamp */}
+              <div className="flex justify-end text-xs text-muted-foreground">
+                {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              </div>
             </div>
           );
+          
         }
       } else {
         addMessage(

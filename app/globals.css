@@ -3,11 +3,16 @@
 
 @custom-variant dark (&:is(.dark *));
 
+.chat-scroll-area code {
+  background-color: #000; 
+}
+
 .chat-scroll-area {
   height: calc(100vh - 160px);
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: rgba(155, 155, 155, 0.5) transparent;
+  /* background: red; */
 }
 
 .chat-scroll-area::-webkit-scrollbar {
@@ -24,14 +29,21 @@
   border: none;
 }
 
+.dark .chat-scroll-area .message,
+.dark .chat-scroll-area .bg-card {
+  background-color: #2d2d2d;
+  color: #f9fafb;
+}
+
+
+
+
 .preserve-whitespace {
   white-space: pre;
   word-wrap: normal;
   overflow-x: auto;
   tab-size: 2;
 }
-
-
 
 
 @theme inline {
@@ -186,4 +198,78 @@
 
 [data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--border) / 0.8);
+}
+
+
+/* ============ Chat background glows (fixed to viewport corners) ============ */
+
+html {
+  isolation: isolate;
+}
+
+/* Blue glow — anchored to top-left */
+html::before {
+  content: "";
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+  width: 650px;
+  height: 1000px;
+  top: -600px;
+  left: -400px;
+  border-radius: 9999px;
+
+  background: radial-gradient(
+    ellipse at center,
+    rgba(56, 132, 255, 0.75) 0%,
+    rgba(56, 132, 255, 0.40) 40%,
+    rgba(56, 132, 255, 0.15) 65%,
+    rgba(56, 132, 255, 0.0) 80%
+  );
+  filter: blur(100px);
+  mix-blend-mode: screen;
+}
+
+/* Orange glow — anchored to bottom-right */
+html::after {
+  content: "";
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+  width: 1000px;
+  height: 1200px;
+  bottom: -500px;
+  right: -400px;
+  border-radius: 9999px;
+
+  background: radial-gradient(
+    ellipse at center,
+    rgba(233, 113, 34, 1) 0%,   /* #E97122 with softer alpha */
+    rgba(233, 113, 34, 0) 35%,
+    rgba(233, 113, 34, 0) 55%,
+    rgba(233, 113, 34, 0.0) 70%
+  );
+  filter: blur(300px);
+  mix-blend-mode: screen;
+}
+
+/* Subtle vignette for depth */
+@media (prefers-color-scheme: dark) {
+  body::before {
+    content: "";
+    position: fixed;
+    inset: -10%;
+    pointer-events: none;
+    z-index: 0;
+    background: radial-gradient(
+      120% 120% at 50% 50%,
+      rgba(0,0,0,0) 60%,
+      rgba(0,0,0,0.35) 100%
+    );
+  }
+}
+
+/* Let glows show through */
+.chat-scroll-area {
+  background: transparent !important;
 }
