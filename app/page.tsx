@@ -27,6 +27,7 @@ import {
   FolderOpen,
   ArrowLeft,
 } from "lucide-react";
+import { CheckCircle2, FileJson } from "lucide-react";
 import { getSourceCode, verifyContract, getAbi } from "@/lib/coredao";
 import { NETWORKS, LICENSE_TYPES } from "@/lib/constants";
 import {
@@ -1846,7 +1847,7 @@ export default function Home() {
         "ai",
         "🚀 **Starting verification process...**\n\nThis may take a few moments. Please wait..."
       );
-
+    
       // Map compilerType to API value
       let compilerType: "solidity-single" | "solidity-multi" | "solidity-json";
       switch (data.compilerType) {
@@ -1860,13 +1861,13 @@ export default function Home() {
         default:
           compilerType = "solidity-single";
       }
-
+    
       // Map license type to API value
       const licenseTypeMapping = LICENSE_TYPES.find(
         (lt) => lt.value === data.licenseType
       );
       const licenseTypeApiValue = licenseTypeMapping?.apiValue || 3; // Default to MIT (3)
-
+    
       // Format constructor arguments as a quoted, comma-separated string
       let constructorArguments = data.constructorArguments || "";
       if (
@@ -1875,23 +1876,20 @@ export default function Home() {
       ) {
         constructorArguments = null;
       } else if (constructorArguments) {
-        // Split by comma, trim each, and only wrap in quotes if more than one argument
         const args = constructorArguments
           .split(",")
           .map((arg: string) => arg.trim())
           .filter((arg: string) => arg.length > 0);
-
+    
         if (args.length === 1) {
-          constructorArguments = args[0]; // single argument, no extra quotes
+          constructorArguments = args[0];
         } else if (args.length > 1) {
-          constructorArguments = args
-            .map((arg: string) => `"${arg}"`)
-            .join(",");
+          constructorArguments = args.map((arg: string) => `"${arg}"`).join(",");
         } else {
           constructorArguments = null;
         }
       }
-
+    
       // --- Build Standard JSON Input for multi-file upload with latest optimizer settings ---
       let sourceCode = data.sourceCode || "";
       if (compilerType === "solidity-json" && data.multiFileSources) {
@@ -1912,24 +1910,37 @@ export default function Home() {
             },
             outputSelection: {
               "*": {
-                "*": [
-                  "abi",
-                  "evm.bytecode",
-                  "evm.deployedBytecode",
-                  "metadata",
-                ],
+                "*": ["abi", "evm.bytecode", "evm.deployedBytecode", "metadata"],
               },
             },
           },
         };
         sourceCode = JSON.stringify(standardJsonInput, null, 2);
       }
-
+    
+      // --- Ensure contractName is set ---
+      let contractName = data.contractName;
+    
+      if (!contractName) {
+        // Try to extract from source code (first "contract X {" match)
+        const match = sourceCode.match(/contract\s+(\w+)/);
+        if (match) {
+          contractName = match[1];
+        } else if (data.multiFileSources && data.multiFileSources.length > 0) {
+          // fallback: use first file name
+          contractName = data.multiFileSources[0].fileName.replace(/\.sol$/, "");
+        } else {
+          contractName = "UnknownContract";
+        }
+      }
+    
+      console.log("Final contractName:", contractName);
+    
       const verificationData = {
         contractAddress: address,
         compilerType,
-        sourceCode, // <-- use the built JSON input
-        contractName: data.contractName!,
+        sourceCode,
+        contractName,
         compilerVersion: data.compilerVersion!,
         optimizationUsed: data.optimizationUsed!,
         runs: Number(data.runs!),
@@ -1937,88 +1948,111 @@ export default function Home() {
         licenseType: licenseTypeApiValue,
         constructorArguments,
       };
-
+    
       console.log("Final verificationData:", verificationData);
-      //console.log("data.compilerVersion", data.compilerVersion);
-
+    
       const result = await verifyContract(network, verificationData);
-      //console.log("Result:", result);
-
+    
       removeTypingMessage(typingId);
-
+    
       if (result.message === "OK") {
-        // Try to get the ABI to confirm verification
         await new Promise((r) => setTimeout(r, 3000));
         const abiResponse = await getAbi(network, address);
-        // console.log("abiResponse", abiResponse);
-
+    
         if (abiResponse.status === "1") {
           handleContractLookup(address, network);
         } else {
-          // Verification submitted but not yet processed
           addMessage(
             "ai",
             undefined,
-            <div className="bg-card text-card-foreground rounded-2xl p-5 shadow-md max-w-2xl mx-auto">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="flex items-center text-lg font-semibold gap-2">
-                  <span className="text-xl">💻</span> Contract information
-                </h3>
-                <span className="flex items-center text-green-500 text-sm font-medium">
-                  <span className="w-2 h-2 rounded-full bg-green-500 mr-1"></span>
+            <div className="rounded-2xl p-6 text-foreground relative"
+              style={{ width: 690, background: "rgba(148, 163, 184, 0.12)" }}>
+              <div className="flex items-start justify-between mb-6">
+                <h3 className="text-lg font-semibold">Contract information</h3>
+                <div className="flex items-center gap-2 bg-black text-green-500 px-3 py-1 rounded-full text-sm font-medium">
+                  <CheckCircle2 className="w-4 h-4" />
                   Verified
-                </span>
+                </div>
               </div>
-          
-              {/* Grid Info */}
-              <div className="grid grid-cols-2 gap-y-2 text-sm mb-4">
-                <div className="text-muted-foreground">Network</div>
-                <div>{network === "mainnet" ? "Core Mainnet" : "Core Testnet"}</div>
-          
-                <div className="text-muted-foreground">Contract name</div>
-                <div>{data.contractName}</div>
-          
-                <div className="text-muted-foreground">Compiler version</div>
-                <div>{data.compilerVersion}</div>
-          
-                <div className="text-muted-foreground">Optimization</div>
-                <div>{data.optimizationUsed === "1" ? "Enabled" : "Disabled"}</div>
+    
+              <div className="grid grid-cols-2 gap-6 mb-6">
+                <div className="flex flex-col">
+                  <span className="text-xs text-muted-foreground">Network</span>
+                  <span className="text-sm mt-1">
+                    {network === "mainnet" ? "Core Mainnet" : "Core Testnet"}
+                  </span>
+    
+                  <span className="text-xs text-muted-foreground mt-4">Compiler version</span>
+                  <span className="text-sm mt-1">{data.compilerVersion}</span>
+                </div>
+    
+                <div className="flex flex-col">
+                  <span className="text-xs text-muted-foreground">Contract name</span>
+                  <span className="text-sm mt-1">{contractName}</span>
+    
+                  <span className="text-xs text-muted-foreground mt-4">Optimization</span>
+                  <span className="text-sm mt-1">
+                    {data.optimizationUsed === "1" ? "Enabled" : "Disabled"}
+                  </span>
+                </div>
               </div>
-          
+              {/* Divider line before contract address */}
+              <div className="border-t border-white/10 my-6"></div>
+
               {/* Contract address */}
-              <div className="mb-4">
-                <div className="text-sm text-muted-foreground mb-1">Contract address</div>
-                <div className="flex items-center gap-2">
+              <div className="mb-6">
+                <div className="text-xs text-muted-foreground mb-2">Contract address</div>
+                <div className="relative">
                   <input
                     type="text"
                     readOnly
                     value={address}
-                    className="w-full bg-muted text-foreground px-3 py-2 rounded-md text-sm"
+                    className="w-full rounded-md bg-muted/60 px-3 py-2 text-sm pr-10 border-none outline-none"
                   />
-                  <Button
-                    variant="ghost"
-                    size="icon"
+                  <button
+                    type="button"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-md hover:bg-foreground/5"
                     onClick={() => navigator.clipboard.writeText(address)}
+                    aria-label="Copy contract address"
+                    title="Copy"
                   >
-                    {/* <Clipboard className="w-4 h-4" /> */}
-                  </Button>
+                    <Copy className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
-          
+
               {/* Source code */}
               <div className="mb-6">
-                <div className="text-sm text-muted-foreground mb-1">Source code</div>
-                <div className="bg-black text-white text-xs font-mono p-3 rounded-md max-h-56 overflow-y-auto">
-                  <pre>{data.sourceCode.slice(0, 300)}{data.sourceCode.length > 300 ? "..." : ""}</pre>
+                <div className="text-xs text-muted-foreground mb-2">Source code</div>
+
+                <div className="rounded-md bg-muted/60 p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-muted-foreground">{contractName}</span>
+                    <button
+                      type="button"
+                      className="p-2 rounded-md hover:bg-foreground/5"
+                      onClick={() => navigator.clipboard.writeText(data.sourceCode)}
+                      aria-label="Copy source code"
+                      title="Copy"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="rounded-md bg-black text-white text-xs font-mono p-3 max-h-56 overflow-y-auto">
+                    <pre className="whitespace-pre-wrap">
+                      {data.sourceCode.slice(0, 600)}
+                      {data.sourceCode.length > 600 ? "..." : ""}
+                    </pre>
+                  </div>
                 </div>
               </div>
-          
-              {/* Buttons */}
-              <div className="flex justify-between gap-3 mb-3">
-                <Button
-                  variant="secondary"
-                  className="flex-1 rounded-full py-2"
+
+              {/* Action buttons */}
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  className="w-full rounded-full py-2 px-4 inline-flex items-center justify-center gap-2 bg-muted/60 hover:bg-muted/70"
                   onClick={() => {
                     const explorerUrl =
                       network === "mainnet"
@@ -2027,37 +2061,29 @@ export default function Home() {
                     window.open(explorerUrl, "_blank");
                   }}
                 >
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  View on explorer
-                </Button>
-                <Button
-                  variant="secondary"
-                  className="flex-1 rounded-full py-2"
-                  onClick={() => {
-                    // TODO: Replace with actual ABI response when available
-                    navigator.clipboard.writeText("ABI JSON HERE");
-                  }}
+                  <span className="text-sm">View on explorer</span>
+                  <ExternalLink className="w-4 h-4" />
+                </button>
+
+                <button
+                  type="button"
+                  className="w-full rounded-full py-2 px-4 inline-flex items-center justify-center gap-2 bg-muted/60 hover:bg-muted/70"
+                  onClick={() => navigator.clipboard.writeText("ABI JSON HERE")}
                 >
-                  {/* <Clipboard className="w-4 h-4 mr-2" /> */}
-                  Copy ABI
-                </Button>
-              </div>
-          
-              {/* Timestamp */}
-              <div className="flex justify-end text-xs text-muted-foreground">
-                {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  <span className="text-sm">Copy ABI</span>
+                  <Copy className="w-4 h-4" />
+                </button>
               </div>
             </div>
           );
-          
         }
       } else {
         addMessage(
           "ai",
-          `❌ **Verification failed**\n\n**Error:** ${result.result}\n\nPlease check your contract details and try again. Common issues:\n• Wrong compiler version\n• Incorrect optimization settings\n• Source code doesn't match deployed bytecode\n\nWant to try again with different settings?`
+          `❌ **Verification failed**\n\n**Error:** ${result.result}\n\nPlease check your contract details and try again.`
         );
       }
-
+    
       setVerificationSession(null);
     } catch (error) {
       removeTypingMessage(typingId);
