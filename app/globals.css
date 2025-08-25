@@ -3,6 +3,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
+
 .chat-scroll-area code {
   background-color: #000; 
 }
@@ -49,7 +50,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: 'Lexend';
   --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -161,6 +162,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans);
   }
 }
 
@@ -201,76 +203,105 @@
 }
 
 
-/* ============ Chat background glows (fixed to viewport corners) ============ */
+/* ===== Hero background (black + teal/cyan TL glow + orange BR glow) ===== */
 
-html {
-  isolation: isolate;
+:root {
+  /* tweak these to taste */
+  --glow-cyan-rgb: 64, 181, 255;   /* #40B5FF (teal/cyan) */
+  --glow-orange-rgb: 255, 146, 58; /* #FF923A (warm orange) */
+
+  /* subtle base shades so the center reads as black but not flat */
+  --bg-deep-1: #0b0f14;
+  --bg-deep-2: #08090c;
 }
 
-/* Blue glow — anchored to top-left */
-html::before {
-  content: "";
-  position: fixed;
-  pointer-events: none;
-  z-index: 0;
-  width: 650px;
-  height: 1000px;
-  top: -600px;
-  left: -400px;
-  border-radius: 9999px;
-
-  background: radial-gradient(
-    ellipse at center,
-    rgba(56, 132, 255, 0.75) 0%,
-    rgba(56, 132, 255, 0.40) 40%,
-    rgba(56, 132, 255, 0.15) 65%,
-    rgba(56, 132, 255, 0.0) 80%
-  );
-  filter: blur(100px);
-  mix-blend-mode: screen;
+/* Base near-black with a faint cool lift top-left */
+body {
+  background:
+    radial-gradient(1200px 900px at -10% -10%,
+      rgba(var(--glow-cyan-rgb), 0.14) 0%,
+      rgba(var(--glow-cyan-rgb), 0.06) 25%,
+      rgba(var(--glow-cyan-rgb), 0) 40%
+    ),
+    linear-gradient(to bottom right, var(--bg-deep-1) 0%, var(--bg-deep-2) 40%, #000 100%);
 }
 
-/* Orange glow — anchored to bottom-right */
+/* Common canvas for glows */
+html::before,
 html::after {
   content: "";
   position: fixed;
   pointer-events: none;
-  z-index: 0;
-  width: 1000px;
-  height: 1200px;
-  bottom: -500px;
-  right: -400px;
+  z-index: 0;           /* behind app content */
   border-radius: 9999px;
-
-  background: radial-gradient(
-    ellipse at center,
-    rgba(233, 113, 34, 1) 0%,   /* #E97122 with softer alpha */
-    rgba(233, 113, 34, 0) 35%,
-    rgba(233, 113, 34, 0) 55%,
-    rgba(233, 113, 34, 0.0) 70%
-  );
-  filter: blur(300px);
   mix-blend-mode: screen;
 }
 
-/* Subtle vignette for depth */
+/* Teal/Cyan glow — top-left */
+html::before {
+  width: 80vmin;
+  height: 80vmin;
+  top: -20vmin;
+  left: -25vmin;
+  background: radial-gradient(circle at 50% 50%,
+    rgba(var(--glow-cyan-rgb), 0.85) 0%,
+    rgba(var(--glow-cyan-rgb), 0.45) 28%,
+    rgba(var(--glow-cyan-rgb), 0.18) 52%,
+    rgba(var(--glow-cyan-rgb), 0) 70%
+  );
+  filter: blur(80px);
+}
+
+/* Orange glow — bottom-right (warm amber, soft, elongated) */
+/* ==== ORANGE GLOW (fixed positioning to sit above input area) ==== */
+html::after {
+  content: "";
+  position: fixed;
+  z-index: 0;
+  pointer-events: none;
+
+  /* Reduce size slightly from Figma's raw numbers */
+  width: 720px;     /* down from 1010px */
+  height: 880px;    /* down from 1243px */
+  border-radius: 9999px;
+  transform: rotate(90deg);
+
+  /* Re-anchored closer to bottom-right */
+  bottom: 40px;     /* positions glow just above the input bar */
+  right: 120px;     /* tucks glow toward right edge */
+
+  /* Smooth radial falloff in #E97122 */
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    rgba(233, 113, 34, 0.45) 0%,
+    rgba(233, 113, 34, 0.22) 38%,
+    rgba(233, 113, 34, 0.1) 58%,
+    rgba(233, 113, 34, 0.0) 72%
+  );
+
+  filter: blur(85px);
+  mix-blend-mode: screen;
+  opacity: 1;
+}
+
+
+
+
+/* Optional dark vignette for depth */
 @media (prefers-color-scheme: dark) {
   body::before {
     content: "";
     position: fixed;
-    inset: -10%;
+    inset: -12%;
     pointer-events: none;
     z-index: 0;
-    background: radial-gradient(
-      120% 120% at 50% 50%,
-      rgba(0,0,0,0) 60%,
-      rgba(0,0,0,0.35) 100%
+    background: radial-gradient(120% 120% at 50% 50%,
+      rgba(0, 0, 0, 0) 60%,
+      rgba(0, 0, 0, 0.35) 100%
     );
   }
 }
 
-/* Let glows show through */
-.chat-scroll-area {
-  background: transparent !important;
-}
+/* Let glows show through chat area */
+.chat-scroll-area { background: transparent !important; }
 

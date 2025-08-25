@@ -47,6 +47,16 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;500&display=swap"
           rel="stylesheet"
         />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Lexend:wght@300&display=swap"
+          rel="stylesheet"
+        />
+
+        <link
+          href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300&display=swap"
+          rel="stylesheet"
+        />
+
       </head>
       <body className="font-body antialiased min-h-screen flex flex-col">
         {children}
