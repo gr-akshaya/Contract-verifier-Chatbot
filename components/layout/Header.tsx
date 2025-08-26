@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ThemeToggleButton } from "./ThemeToggleButton";
 import Image from "next/image";
 
 export default function Header() {

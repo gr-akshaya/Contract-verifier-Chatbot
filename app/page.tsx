@@ -6,18 +6,14 @@ import Header from "@/components/layout/Header";
 import FooterInput from "@/components/layout/Footer";
 import NetworkSelector from "../components/layout/NetworkOption";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import MultiFileUploadComponent from "@/components/contract-verification/MultiFileUploadComponent";
 import {
-  Send,
   Bot,
-  CheckCircle,
+  CheckCircle2,
   XCircle,
   ExternalLink,
   Copy,
@@ -28,7 +24,6 @@ import {
   FolderOpen,
   ArrowLeft,
 } from "lucide-react";
-import { CheckCircle2, FileJson } from "lucide-react";
 import { getSourceCode, verifyContract, getAbi } from "@/lib/coredao";
 import { NETWORKS, LICENSE_TYPES } from "@/lib/constants";
 import {
@@ -649,46 +644,6 @@ export default function Home() {
       </Card>
     );
   };
-
-  // ✅ Reusable helper to handle missing network
-const ensureNetworkSelected = async (
-  network: Network | undefined,
-  onSelect: (selectedNetwork: Network) => void
-) => {
-  if (network) return network;
-
-  addMessage(
-    "ai",
-    "🌐 **Select a network**\n\nYou didn’t specify a network. Please choose one to continue:",
-    <Card className="w-full max-w-md mx-auto mt-4">
-      <CardHeader>
-        <CardTitle>Choose Network</CardTitle>
-      </CardHeader>
-      <CardContent className="flex gap-4">
-        <Button
-          variant="outline"
-          onClick={() => {
-            addMessage("user", "Mainnet");
-            onSelect("mainnet");
-          }}
-        >
-          Core Mainnet
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() => {
-            addMessage("user", "Testnet");
-            onSelect("testnet2");
-          }}
-        >
-          Core Testnet
-        </Button>
-      </CardContent>
-    </Card>
-  );
-
-  return undefined; // pause until user selects
-};
 
   const startVerificationFlow = async (address: string, network: Network) => {
     console.log("Verifyy")
