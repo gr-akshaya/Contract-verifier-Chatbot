@@ -4,6 +4,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Header from "@/components/layout/Header";
 import FooterInput from "@/components/layout/Footer";
+import NetworkSelector from "../components/layout/NetworkOption";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -72,34 +73,6 @@ export default function Home() {
     >;
   } | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-
-  // Reusable prompt function
-  const promptForNetwork = (): Promise<string | null> => {
-    return new Promise((resolve) => {
-      addMessage(
-        "ai",
-        undefined,
-        <div className="p-4 rounded-2xl bg-muted/60">
-          <p className="mb-3 font-medium">🌐 Please select the network:</p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => resolve("mainnet")}
-              className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700"
-            >
-              Mainnet
-            </button>
-            <button
-              onClick={() => resolve("testnet")}
-              className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
-            >
-              Testnet
-            </button>
-          </div>
-        </div>
-      );
-    });
-  };
-  
 
 
   const addMessage = (
@@ -210,13 +183,17 @@ export default function Home() {
     return matches ? matches[0] : null;
   };
 
-  const detectNetwork = (input: string): Network => {
+  const detectNetwork = (input: string): Network | undefined => {
     const lowerInput = input.toLowerCase();
     if (lowerInput.includes("testnet") || lowerInput.includes("test")) {
       return "testnet2";
     }
-    return "mainnet";
+    if (lowerInput.includes("mainnet") || lowerInput.includes("main")) {
+      return "mainnet";
+    }
+    return undefined; // 👈 nothing specified
   };
+  
 
   const formatContractInfo = (
     contractData: GetSourceCodeResponse["result"][0],
@@ -673,8 +650,50 @@ export default function Home() {
     );
   };
 
+  // ✅ Reusable helper to handle missing network
+const ensureNetworkSelected = async (
+  network: Network | undefined,
+  onSelect: (selectedNetwork: Network) => void
+) => {
+  if (network) return network;
+
+  addMessage(
+    "ai",
+    "🌐 **Select a network**\n\nYou didn’t specify a network. Please choose one to continue:",
+    <Card className="w-full max-w-md mx-auto mt-4">
+      <CardHeader>
+        <CardTitle>Choose Network</CardTitle>
+      </CardHeader>
+      <CardContent className="flex gap-4">
+        <Button
+          variant="outline"
+          onClick={() => {
+            addMessage("user", "Mainnet");
+            onSelect("mainnet");
+          }}
+        >
+          Core Mainnet
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => {
+            addMessage("user", "Testnet");
+            onSelect("testnet2");
+          }}
+        >
+          Core Testnet
+        </Button>
+      </CardContent>
+    </Card>
+  );
+
+  return undefined; // pause until user selects
+};
+
   const startVerificationFlow = async (address: string, network: Network) => {
+    console.log("Verifyy")
     const typingId = addTypingMessage();
+
     try {
       const sourceCodeResponse = await getSourceCode(network, address);
       removeTypingMessage(typingId);
@@ -1786,23 +1805,51 @@ export default function Home() {
   
   const handleVerifyCommand = async (input: string): Promise<void> => {
     const address = extractContractAddress(input);
-
+  
     if (!address) {
       showVerifyUsageMessage();
       return;
     }
-
+  
     const network = detectNetwork(input);
+  
+    if (network === undefined) {
+      addMessage(
+        "ai",
+        "Please choose a network to proceed with verification:",
+        <NetworkSelector
+          address={address}
+          onSelect={(chosenNetwork) => {
+            const networkName =
+              chosenNetwork === "mainnet" ? "Core Mainnet" : "Core Testnet";
+  
+            addMessage(
+              "ai",
+              `🔍 **Starting verification for:** \`${address}\`\n\n` +
+                `Checking contract status on **${networkName}**...`
+            );
+  
+            startVerificationFlow(address, chosenNetwork);
+          }}
+        />
+      );
+  
+      return;
+    }
+  
+    // case where network was auto-detected
     const networkName = network === "mainnet" ? "Core Mainnet" : "Core Testnet";
-
+  
     addMessage(
       "ai",
       `🔍 **Starting verification for:** \`${address}\`\n\n` +
         `Checking contract status on **${networkName}**...`
     );
-
+  
     await startVerificationFlow(address, network);
   };
+  
+  
 
   const showVerifyUsageMessage = (): void => {
     addMessage(
@@ -1858,6 +1905,31 @@ export default function Home() {
     input: string
   ): Promise<void> => {
     const network = detectNetwork(input);
+
+    if (network === undefined) {
+      addMessage(
+        "ai",
+        "Please choose a network to proceed with verification:",
+        <NetworkSelector
+          address={address}
+          onSelect={(chosenNetwork) => {
+            const networkName =
+              chosenNetwork === "mainnet" ? "Core Mainnet" : "Core Testnet";
+  
+              addMessage(
+                "ai",
+                `🔍 **Looking up contract...**\n\n` +
+                  `Searching for \`${address}\` on **${networkName}**`
+              );
+  
+              handleContractLookup(address, chosenNetwork);
+          }}
+        />
+      );
+  
+      return;
+    }
+    
     const networkName = network === "mainnet" ? "Core Mainnet" : "Core Testnet";
 
     addMessage(

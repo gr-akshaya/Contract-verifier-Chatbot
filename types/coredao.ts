@@ -1,4 +1,4 @@
-export type Network = "mainnet" | "testnet2";
+export type Network = "mainnet" | "testnet2" | undefined;
 
 export type CompilerType =
   | "solidity-single"

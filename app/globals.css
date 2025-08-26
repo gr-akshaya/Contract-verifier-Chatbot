@@ -205,6 +205,8 @@
 
 /* ===== Hero background (black + teal/cyan TL glow + orange BR glow) ===== */
 
+html { isolation: isolate; }
+
 :root {
   /* tweak these to taste */
   --glow-cyan-rgb: 64, 181, 255;   /* #40B5FF (teal/cyan) */
@@ -252,37 +254,33 @@ html::before {
   filter: blur(80px);
 }
 
-/* Orange glow — bottom-right (warm amber, soft, elongated) */
-/* ==== ORANGE GLOW (fixed positioning to sit above input area) ==== */
+
+/* Orange glow — bottom-right (warmer + softer + elongated) */
 html::after {
-  content: "";
-  position: fixed;
-  z-index: 0;
+  content: "";                 /* required for pseudo-element to render */
+  position: fixed;             /* anchor to viewport */
+  display: block;
   pointer-events: none;
+  z-index: 0;
 
-  /* Reduce size slightly from Figma's raw numbers */
-  width: 720px;     /* down from 1010px */
-  height: 880px;    /* down from 1243px */
+  width: 110vmin;
+  height: 70vmin;
+  right: -35vmin;              /* push slightly off-screen */
+  bottom: -25vmin;
   border-radius: 9999px;
-  transform: rotate(90deg);
 
-  /* Re-anchored closer to bottom-right */
-  bottom: 40px;     /* positions glow just above the input bar */
-  right: 120px;     /* tucks glow toward right edge */
-
-  /* Smooth radial falloff in #E97122 */
   background: radial-gradient(
     ellipse at 50% 50%,
-    rgba(233, 113, 34, 0.45) 0%,
-    rgba(233, 113, 34, 0.22) 38%,
-    rgba(233, 113, 34, 0.1) 58%,
-    rgba(233, 113, 34, 0.0) 72%
+    rgba(255, 120, 50, 0.55) 0%,
+    rgba(255, 140, 60, 0.28) 35%,
+    rgba(255, 120, 50, 0.12) 60%,
+    rgba(0, 0, 0, 0) 85%
   );
 
-  filter: blur(85px);
+  filter: blur(140px);
   mix-blend-mode: screen;
-  opacity: 1;
 }
+
 
 
 
