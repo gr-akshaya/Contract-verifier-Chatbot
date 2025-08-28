@@ -1373,7 +1373,7 @@ export default function Home() {
                                                                                   Verifying...
                                                                                 </>
                                                                               ) : (
-                                                                                "🚀 Start Verification"
+                                                                                "Start Verification"
                                                                               )}
                                                                             </Button>
                                                                           </div>
