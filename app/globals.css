@@ -46,6 +46,14 @@
   tab-size: 2;
 }
 
+.font-lexend {
+  font-family: var(--font-lexend);
+}
+
+.font-dm-mono {
+  font-family: var(--font-dm-mono);
+}
+
 
 @theme inline {
   --color-background: var(--background);

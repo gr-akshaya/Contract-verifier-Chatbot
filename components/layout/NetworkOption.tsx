@@ -21,13 +21,13 @@ const NetworkSelector: React.FC<NetworkSelectorProps> = ({ address, onSelect }) 
       <div className="flex gap-3">
         <Button
           onClick={() => onSelect("mainnet")}
-          className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg py-2 shadow hover:opacity-90 transition"
+          className="flex-1 py-2 px-4 bg-muted/100 hover:bg-muted/70 text-white rounded-lg"
         >
           🌐 Core Mainnet
         </Button>
         <Button
           onClick={() => onSelect("testnet2")}
-          className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg py-2 shadow hover:opacity-90 transition"
+          className="flex-1 py-2 px-4 bg-muted/100 hover:bg-muted/70 text-white rounded-lg"
         >
           🧪 Core Testnet
         </Button>

@@ -24,7 +24,7 @@ import {
 import { Loader2, Search } from "lucide-react";
 import { NETWORKS } from "@/lib/constants";
 import { getSourceCode, getAbi } from "@/lib/coredao";
-import type { Network, GetSourceCodeResponse } from "@/types/coredao";
+import type {GetSourceCodeResponse } from "@/types/coredao";
 import { toast } from "sonner";
 
 const LookupSchema = z.object({

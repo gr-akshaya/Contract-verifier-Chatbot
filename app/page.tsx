@@ -321,7 +321,7 @@ export default function Home() {
           <div className="rounded-md bg-black text-white text-xs font-mono p-3 max-h-56 overflow-y-auto" 
              style={{
               fontFamily: "'DM Mono', monospace",
-              fontWeight: 300,
+              fontWeight: 500,
               fontStyle: "normal", // "Light" = weight, not style
               fontSize: "14px",
               lineHeight: "140%",
@@ -2114,7 +2114,16 @@ export default function Home() {
                     </button>
                   </div>
 
-                  <div className="rounded-md bg-black text-white text-xs font-mono p-3 max-h-56 overflow-y-auto">
+                  <div className="rounded-md bg-black text-white text-xs font-mono p-3 max-h-56 overflow-y-auto"
+                        style={{
+                          fontFamily: "'DM Mono', monospace",
+                          fontWeight: 500,
+                          fontStyle: "normal", // "Light" = weight, not style
+                          fontSize: "14px",
+                          lineHeight: "140%",
+                          letterSpacing: "0",
+                          whiteSpace: "pre-wrap", // preserves code formatting
+                        }}>
                     <pre className="whitespace-pre-wrap">
                       {data.sourceCode.slice(0, 600)}
                       {data.sourceCode.length > 600 ? "..." : ""}

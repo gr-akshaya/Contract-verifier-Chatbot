@@ -174,7 +174,7 @@ export const OPTIMIZATION_OPTIONS: { value: "0" | "1"; label: string }[] = [
   { value: "1", label: "Yes" },
 ];
 
-export const COREDAO_API_ENDPOINTS: Record<Network, string> = {
+export const COREDAO_API_ENDPOINTS: { [key in Exclude<Network, undefined>]?: string } = {
   mainnet: "https://openapi.coredao.org/api",
   testnet2: "https://api.test2.btcs.network/api",
 };
