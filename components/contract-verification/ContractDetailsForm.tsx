@@ -67,7 +67,7 @@ import {
 import { toast } from "sonner";
 
 const FormSchema = z.object({
-  network: z.enum(NETWORKS.map((n) => n.value) as [Network, ...Network[]]),
+  network: z.enum(["mainnet", "testnet2"]).optional(),
   contractAddress: z
     .string()
     .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid contract address"),
@@ -491,7 +491,7 @@ export default function ContractDetailsForm({
                         className="flex items-center space-x-2"
                       >
                         <RadioGroupItem
-                          value={networkItem.value}
+                          value={networkItem.value as string}
                           id={`verify-${networkItem.value}`}
                         />
                         <Label

@@ -23,7 +23,7 @@ export enum LicenseType {
 }
 
 export type VerificationDetails = {
-  network: Network;
+  network?: Network;
   contractAddress: string;
   compilerType: CompilerType;
   sourceCode: string;
