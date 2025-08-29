@@ -9,12 +9,12 @@ type NetworkSelectorProps = {
 
 const NetworkSelector: React.FC<NetworkSelectorProps> = ({ address, onSelect }) => {
   return (
-    <div className="w-full max-w-md bg-[#1c1c1c] border border-white/10 rounded-xl p-4 shadow-md">
+    <div className="w-full max-w-md bg-[#1c1c1c] border border-white/10 rounded-xl p-8 shadow-md">
       <p className="text-sm text-gray-300 mb-3">
         Please choose a network to verify:
       </p>
 
-      <div className="bg-black/60 text-gray-200 font-mono text-xs p-2 rounded-lg mb-4 overflow-hidden text-ellipsis">
+      <div className="bg-black/60 text-gray-200 font-mono text-xs p-3 rounded-lg mb-4 overflow-hidden text-ellipsis">
         {address}
       </div>
 
@@ -23,13 +23,13 @@ const NetworkSelector: React.FC<NetworkSelectorProps> = ({ address, onSelect }) 
           onClick={() => onSelect("mainnet")}
           className="flex-1 py-2 px-4 bg-muted/100 hover:bg-muted/70 text-white rounded-lg"
         >
-          🌐 Core Mainnet
+          Core Mainnet
         </Button>
         <Button
           onClick={() => onSelect("testnet2")}
           className="flex-1 py-2 px-4 bg-muted/100 hover:bg-muted/70 text-white rounded-lg"
         >
-          🧪 Core Testnet
+          Core Testnet
         </Button>
       </div>
     </div>

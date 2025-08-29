@@ -124,7 +124,7 @@ export default function Home() {
     } else {
       addMessage(
         "ai",
-        "🚀 **Welcome to Core Smart Contract Verifier!**\n\n** What I can do for you:**\n\n🔍 **Contract Lookup** - Drop any contract address & get instant insights!\n⚡ **Contract Verification** - I'll guide you through verification step-by-step\n🧠 **Smart Features** - Auto-detection of contracts and easy verification process\n\n**🚀 Try these:**\n  • Paste: `0x8C9d5AeA15C2A6eF94bC3C8317B889bED6E8Bf8d`\n  • Type: `verify 0x123...` \n  • Type: `help` for command list\n\n*Ready to verify your contracts? Let's go!* 🎊"
+        "**Welcome to Core Smart Contract Verifier!**\n\n** What I can do for you:**\n\n🔍 **Contract Lookup** - Drop any contract address & get instant insights!\n⚡ **Contract Verification** - I'll guide you through verification step-by-step\n🧠 **Smart Features** - Auto-detection of contracts and easy verification process\n\n**Try these:**\n  • Paste: `0x8C9d5AeA15C2A6eF94bC3C8317B889bED6E8Bf8d`\n  • Type: `verify 0x123...` \n  • Type: `help` for command list\n\n*Ready to verify your contracts? Let's go!* 🎊"
       );
     }
   }, []);
@@ -447,7 +447,7 @@ export default function Home() {
         } else {
           addMessage(
             "ai",
-            `🚀 **Want to verify this contract?**\n\nI found your contract, but it's not verified yet. Verification makes your smart contract more trustworthy and transparent. Here's what you can do:\n\n• Type \`verify ${address}\` to start verification\n• Make sure you have the exact source code and compiler settings\n\nReady to verify? Just type \`verify ${address}\`!`
+            `**Want to verify this contract?**\n\nI found your contract, but it's not verified yet. Verification makes your smart contract more trustworthy and transparent. Here's what you can do:\n\n• Type \`verify ${address}\` to start verification\n• Make sure you have the exact source code and compiler settings\n\nReady to verify? Just type \`verify ${address}\`!`
           );
         }
       } else {
@@ -696,7 +696,7 @@ export default function Home() {
 
         addMessage(
           "ai",
-          `🚀 **Starting verification for contract:** \`${address}\`\n\n**Network:** ${
+          `**Starting verification for contract:** \`${address}\`\n\n**Network:** ${
             network === "mainnet" ? "Core Mainnet" : "Core Testnet"
           }\n\nLet's gather the required information step by step. I'll guide you through each step with proper forms and dropdown menus.\n\n**Step 1 of 7: Source Code**\nPlease provide your contract's source code in one of the following ways:`,
           createVerificationStepComponent(1, { address, network })
@@ -1920,7 +1920,7 @@ export default function Home() {
     try {
       addMessage(
         "ai",
-        "🚀 **Starting verification process...**\n\nThis may take a few moments. Please wait..."
+        "**Starting verification process...**\n\nThis may take a few moments. Please wait..."
       );
     
       // Map compilerType to API value
