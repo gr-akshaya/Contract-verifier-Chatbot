@@ -7,22 +7,22 @@ export const metadata: Metadata = {
   description: "Core Blockchain's Smart Contract Verification Assistant",
 };
 
-const ThemeInitializer = () => {
-  const script = `
-    (function() {
-      try {
-        const theme = localStorage.getItem('theme');
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        if (theme === 'dark' || (!theme && prefersDark)) {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-        }
-      } catch (_) {}
-    })();
-  `;
-  return <script dangerouslySetInnerHTML={{ __html: script }} />;
-};
+// const ThemeInitializer = () => {
+//   const script = `
+//     (function() {
+//       try {
+//         const theme = localStorage.getItem('theme');
+//         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+//         if (theme === 'dark' || (!theme && prefersDark)) {
+//           document.documentElement.classList.add('dark');
+//         } else {
+//           document.documentElement.classList.remove('dark');
+//         }
+//       } catch (_) {}
+//     })();
+//   `;
+//   return <script dangerouslySetInnerHTML={{ __html: script }} />;
+// };
 
 export default function RootLayout({
   children,
@@ -32,7 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
-        <ThemeInitializer />
+        {/* <ThemeInitializer /> */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
