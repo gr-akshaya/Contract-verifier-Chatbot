@@ -1,5 +1,22 @@
 "use client";
 
+/**
+ * AI Suggestions Card Component
+ *
+ * This component displays AI-powered suggestions for smart contract verification,
+ * including compiler settings and code improvements. It provides:
+ * - Compiler version recommendations
+ * - EVM version suggestions
+ * - Optimization settings
+ * - Code vulnerability fixes and optimizations
+ *
+ * Features:
+ * - Loading state with skeleton animation
+ * - Accordion layout for organized display
+ * - Badge components for settings display
+ * - Conditional rendering based on available suggestions
+ */
+
 import type { AISuggestion } from "@/types/coredao";
 import {
   Card,
@@ -17,6 +34,9 @@ import {
 import { Lightbulb, Wrench, Settings2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
+/**
+ * Props interface for AISuggestionsCard component
+ */
 interface AISuggestionsCardProps {
   suggestions: AISuggestion | null;
   isLoading: boolean;
@@ -26,6 +46,7 @@ const AISuggestionsCard: React.FC<AISuggestionsCardProps> = ({
   suggestions,
   isLoading,
 }) => {
+  // Show loading state with skeleton animation
   if (isLoading) {
     return (
       <Card className="shadow-lg">
@@ -39,6 +60,7 @@ const AISuggestionsCard: React.FC<AISuggestionsCardProps> = ({
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Skeleton loading animation */}
           <div className="space-y-2">
             <div className="h-4 bg-muted rounded w-3/4 animate-pulse"></div>
             <div className="h-4 bg-muted rounded w-1/2 animate-pulse"></div>
@@ -49,10 +71,12 @@ const AISuggestionsCard: React.FC<AISuggestionsCardProps> = ({
     );
   }
 
+  // Don't render if no suggestions available
   if (!suggestions || (!suggestions.fixes && !suggestions.compilerVersion)) {
     return null;
   }
 
+  // Check what types of suggestions are available
   const hasCompilerSuggestions =
     suggestions.compilerVersion ||
     suggestions.evmVersion ||

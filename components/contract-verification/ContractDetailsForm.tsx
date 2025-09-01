@@ -1,5 +1,24 @@
 "use client";
 
+/**
+ * Contract Details Form Component
+ *
+ * This is a comprehensive multi-step form component for smart contract verification.
+ * It handles the complete verification workflow including:
+ * - Contract address and network selection
+ * - Source code input with AI suggestions
+ * - Compiler settings configuration
+ * - Real-time verification status polling
+ *
+ * Features:
+ * - Multi-step form with validation
+ * - AI-powered suggestions for compiler settings
+ * - Real-time status updates and polling
+ * - Error handling and user feedback
+ * - Support for different compiler types
+ * - Integration with Core blockchain APIs
+ */
+
 import React, { useState, useCallback } from "react";
 import {
   useForm,
@@ -66,6 +85,7 @@ import {
 } from "@/ai/flows/suggest-fixes";
 import { toast } from "sonner";
 
+// Zod schema for form validation
 const FormSchema = z.object({
   network: z.enum(["mainnet", "testnet2"]).optional(),
   contractAddress: z
@@ -91,8 +111,12 @@ const FormSchema = z.object({
   constructorArguments: z.string().optional(),
 });
 
+// Form step types
 type Step = "address" | "source" | "compiler";
 
+/**
+ * Props interface for ContractDetailsForm component
+ */
 interface ContractDetailsFormProps {
   onCompletion: (
     error: string | null,
@@ -117,13 +141,14 @@ export default function ContractDetailsForm({
   onCompletion,
   onShowAISuggestions,
 }: ContractDetailsFormProps) {
+  // Component state management
   const [currentStep, setCurrentStep] = useState<Step>("address");
   const [isAISuggestionsLoading, setIsAISuggestionsLoading] = useState(false);
   const [aiSuggestions, setAISuggestions] = useState<AISuggestion | null>(null);
-
   const [isSubmittingForVerification, setIsSubmittingForVerification] =
     useState(false);
 
+  // React Hook Form setup with Zod validation
   const methods = useForm<VerificationDetails>({
     resolver: zodResolver(FormSchema),
     defaultValues: DEFAULT_VERIFICATION_DETAILS,
@@ -136,10 +161,14 @@ export default function ContractDetailsForm({
     trigger,
   } = methods;
 
+  // Watch form values for reactive behavior
   const sourceCode = watch("sourceCode");
   const optimizationUsed = watch("optimizationUsed");
   const compilerType = watch("compilerType");
 
+  /**
+   * Fetches AI suggestions for compiler settings and code improvements
+   */
   const handleGetAISuggestions = useCallback(async () => {
     if (!sourceCode) {
       toast("Source code empty", {

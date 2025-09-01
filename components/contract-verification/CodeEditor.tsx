@@ -1,5 +1,24 @@
 "use client";
 
+/**
+ * Code Editor Component
+ *
+ * This component provides a comprehensive code editor interface for smart contract
+ * source code input. It supports:
+ * - Drag and drop file upload
+ * - Base64 decoding for encoded source code
+ * - Contract name auto-detection
+ * - Multiple file type support (.sol, .json, .zip, .tar.gz)
+ * - Real-time contract name extraction
+ *
+ * Features:
+ * - File validation based on compiler type
+ * - Automatic contract name detection
+ * - Paste handling with formatting preservation
+ * - Error handling and user feedback
+ * - Support for different compiler types (single, multi, JSON)
+ */
+
 import React, { useState, useCallback } from "react";
 import { Upload, FileText, X, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,7 +29,11 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { extractContractName } from "@/lib/coredao";
 
-// Helper function to detect and decode Base64-encoded source code
+/**
+ * Helper function to detect and decode Base64-encoded source code
+ * @param str - String to check for Base64 encoding
+ * @returns true if string is Base64-encoded Solidity code
+ */
 const isBase64 = (str: string): boolean => {
   try {
     // Check if it's a valid Base64 string
@@ -31,6 +54,11 @@ const isBase64 = (str: string): boolean => {
   return false;
 };
 
+/**
+ * Decodes Base64-encoded source code and normalizes formatting
+ * @param content - Source code content to decode
+ * @returns Decoded and formatted source code
+ */
 const decodeSourceCodeIfNeeded = (content: string): string => {
   if (isBase64(content)) {
     try {
@@ -49,6 +77,9 @@ const decodeSourceCodeIfNeeded = (content: string): string => {
   return content;
 };
 
+/**
+ * Props interface for CodeEditor component
+ */
 interface CodeEditorProps {
   sourceCode: string;
   onSourceCodeChange: (value: string) => void;
@@ -70,10 +101,15 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   compilerType = "solidity-single",
   placeholder = "Paste your Solidity contract source code here...",
 }) => {
+  // Component state management
   const [isDragActive, setIsDragActive] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  /**
+   * Handles source code changes with auto-detection of contract name
+   * @param content - New source code content
+   */
   const handleSourceCodeChange = useCallback(
     (content: string) => {
       const decodedCode = decodeSourceCodeIfNeeded(content);
@@ -90,8 +126,13 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
     [onSourceCodeChange, onContractNameChange, contractName]
   );
 
+  /**
+   * Handles file upload with validation based on compiler type
+   * @param file - File to upload
+   */
   const handleFileUpload = useCallback(
     (file: File) => {
+      // Define valid extensions based on compiler type
       const validExtensions =
         compilerType === "solidity-json"
           ? [".json"]
@@ -99,6 +140,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
           ? [".sol", ".zip", ".tar.gz"]
           : [".sol"];
 
+      // Validate file extension
       if (
         !validExtensions.some((ext) => file.name.toLowerCase().endsWith(ext))
       ) {
@@ -117,6 +159,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
       setError(null);
       setFileName(file.name);
 
+      // Read file content
       const reader = new FileReader();
       reader.onload = (e) => {
         const content = e.target?.result as string;

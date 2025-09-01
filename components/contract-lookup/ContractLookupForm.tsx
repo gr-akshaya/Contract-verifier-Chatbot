@@ -1,5 +1,22 @@
 "use client";
 
+/**
+ * Contract Lookup Form Component
+ *
+ * This component provides a form interface for looking up verified smart contracts
+ * on the Core blockchain network. It allows users to:
+ * - Select the network (mainnet or testnet)
+ * - Enter a contract address
+ * - Fetch and display contract source code and ABI
+ *
+ * Features:
+ * - Form validation using Zod schema
+ * - Network selection with radio buttons
+ * - Contract address validation
+ * - Loading states and error handling
+ * - Toast notifications for user feedback
+ */
+
 import React, { useState } from "react";
 import {
   useForm,
@@ -24,9 +41,10 @@ import {
 import { Loader2, Search } from "lucide-react";
 import { NETWORKS } from "@/lib/constants";
 import { getSourceCode, getAbi } from "@/lib/coredao";
-import type {GetSourceCodeResponse } from "@/types/coredao";
+import type { GetSourceCodeResponse } from "@/types/coredao";
 import { toast } from "sonner";
 
+// Zod schema for form validation
 const LookupSchema = z.object({
   network: z.enum(["mainnet", "testnet2"]).optional(),
   contractAddress: z
@@ -36,6 +54,9 @@ const LookupSchema = z.object({
 
 type LookupFormData = z.infer<typeof LookupSchema>;
 
+/**
+ * Props interface for ContractLookupForm component
+ */
 interface ContractLookupFormProps {
   onCompletion: (
     error: string | null,
@@ -53,8 +74,10 @@ interface ContractLookupFormProps {
 export default function ContractLookupForm({
   onCompletion,
 }: ContractLookupFormProps) {
+  // Loading state for form submission
   const [isLoading, setIsLoading] = useState(false);
 
+  // React Hook Form setup with Zod validation
   const methods = useForm<LookupFormData>({
     resolver: zodResolver(LookupSchema),
     defaultValues: {
@@ -68,6 +91,10 @@ export default function ContractLookupForm({
     formState: { errors },
   } = methods;
 
+  /**
+   * Handles form submission for contract lookup
+   * Fetches both source code and ABI data in parallel
+   */
   const onSubmit: SubmitHandler<LookupFormData> = async (data) => {
     setIsLoading(true);
     onCompletion(null, {
@@ -78,6 +105,7 @@ export default function ContractLookupForm({
     });
 
     try {
+      // Fetch source code and ABI data in parallel for better performance
       const [sourceData, abiData] = await Promise.all([
         getSourceCode(data.network, data.contractAddress),
         getAbi(data.network, data.contractAddress),

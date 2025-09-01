@@ -1,5 +1,24 @@
 "use client";
 
+/**
+ * Verification Status Component
+ *
+ * This component displays the current status of contract verification operations.
+ * It provides comprehensive status information including:
+ * - Loading states and progress indicators
+ * - Success/failure status with appropriate icons
+ * - Detailed error messages and information
+ * - Contract details display for verified contracts
+ * - Source code and ABI viewing capabilities
+ *
+ * Features:
+ * - Dynamic status icons based on operation state
+ * - Accordion layout for organized information display
+ * - Scrollable content areas for large data
+ * - Conditional rendering based on verification status
+ * - Support for different operation types (lookup, verification)
+ */
+
 import type { GetSourceCodeResponse } from "@/types/coredao";
 import {
   Card,
@@ -27,6 +46,9 @@ import {
 } from "@/components/ui/accordion";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
+/**
+ * Props interface for VerificationStatus component
+ */
 interface VerificationStatusProps {
   isLoading: boolean;
   isPolling: boolean;
@@ -50,10 +72,14 @@ const VerificationStatus: React.FC<VerificationStatusProps> = ({
   guid,
   loadingOperationName,
 }) => {
+  // Don't render if no status information available
   if (!isLoading && !statusMessage && !errorMessage && isVerified === null) {
     return null;
   }
 
+  /**
+   * Returns appropriate status icon based on current state
+   */
   const getStatusIcon = () => {
     if (isLoading || isPolling)
       return <Loader2 className="h-6 w-6 animate-spin text-primary" />;
@@ -70,6 +96,9 @@ const VerificationStatus: React.FC<VerificationStatusProps> = ({
     return <Info className="h-6 w-6 text-blue-500" />;
   };
 
+  /**
+   * Returns appropriate status title based on current state
+   */
   const getStatusTitle = () => {
     const defaultLoadingOpName = "Processing";
     const currentLoadingOpName = loadingOperationName || defaultLoadingOpName;
