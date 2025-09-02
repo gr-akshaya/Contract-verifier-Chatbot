@@ -1806,14 +1806,14 @@ export default function Home() {
       <div className="bg-card text-card-foreground rounded-xl p-4 max-w-md mx-auto">
         {/* Heading */}
         <h3 className="font-semibold flex items-center gap-2 mb-6">
-          <span>🔍</span> Troubleshooting Verification
+          Troubleshooting Verification
         </h3>
 
         {/* Writeup */}
         <p className="mb-3">
-          Verify the compiler version is <strong>0.8.24</strong> and the EVM
-          version used is <strong>Shanghai</strong>, and then proceed with
-          verification.
+          Recommended compiler version is <strong>0.8.24</strong> and the EVM
+          version used is <strong>Shanghai</strong>. Please verify EVM and
+          compiler version and then proceed with verification.
           <br />
           If you are still facing issues, reach out to us <br />
           on{" "}
@@ -2137,159 +2137,23 @@ export default function Home() {
       console.log("Final verificationData:", verificationData);
 
       const result = await verifyContract(network, verificationData);
+      console.log("result:", result);
 
       removeTypingMessage(typingId);
 
       if (result.message === "OK") {
         await new Promise((r) => setTimeout(r, 3000));
         const abiResponse = await getAbi(network, address);
+        console.log("abiResponse:", abiResponse);
 
-        if (abiResponse.status === "1") {
+        if (abiResponse.message === "OK") {
           handleContractLookup(address, network);
         } else {
           addMessage(
             "ai",
-            undefined,
-            <div
-              className="rounded-2xl p-6 text-foreground relative"
-              style={{ width: 690, background: "rgba(148, 163, 184, 0.04)" }}
-            >
-              <div className="flex items-start justify-between mb-6">
-                <h3 className="text-lg font-semibold">
-                  <Code className="w-5 h-5" /> Contract information
-                </h3>
-                <div className="flex items-center gap-2 bg-black text-green-500 px-3 py-1 rounded-full text-sm font-medium">
-                  <CheckCircle2 className="w-4 h-4" />
-                  Verified
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-6 mb-6">
-                <div className="flex flex-col">
-                  <span className="text-xs text-muted-foreground">Network</span>
-                  <span className="text-sm mt-1">
-                    {network === "mainnet" ? "Core Mainnet" : "Core Testnet"}
-                  </span>
-
-                  <span className="text-xs text-muted-foreground mt-4">
-                    Compiler version
-                  </span>
-                  <span className="text-sm mt-1">{data.compilerVersion}</span>
-                </div>
-
-                <div className="flex flex-col">
-                  <span className="text-xs text-muted-foreground">
-                    Contract name
-                  </span>
-                  <span className="text-sm mt-1">{contractName}</span>
-
-                  <span className="text-xs text-muted-foreground mt-4">
-                    Optimization
-                  </span>
-                  <span className="text-sm mt-1">
-                    {data.optimizationUsed === "1" ? "Enabled" : "Disabled"}
-                  </span>
-                </div>
-              </div>
-              {/* Divider line before contract address */}
-              <div className="border-t border-white/10 my-6"></div>
-
-              {/* Contract address */}
-              <div className="mb-6">
-                <div className="text-xs text-muted-foreground mb-2">
-                  Contract address
-                </div>
-                <div className="relative">
-                  <input
-                    type="text"
-                    readOnly
-                    value={address}
-                    className="w-full rounded-md bg-muted/60 px-3 py-2 text-sm pr-10 border-none outline-none"
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-md hover:bg-foreground/5"
-                    onClick={() => navigator.clipboard.writeText(address)}
-                    aria-label="Copy contract address"
-                    title="Copy"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Source code */}
-              <div className="mb-6">
-                <div className="text-xs text-muted-foreground mb-2">
-                  Source code
-                </div>
-
-                <div className="rounded-md bg-muted/60 p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs text-muted-foreground">
-                      {contractName}
-                    </span>
-                    <button
-                      type="button"
-                      className="font-dm-mono p-2 rounded-md hover:bg-foreground/5"
-                      onClick={() =>
-                        navigator.clipboard.writeText(data.sourceCode)
-                      }
-                      aria-label="Copy source code"
-                      title="Copy"
-                    >
-                      <Copy className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  <div
-                    className="rounded-md bg-black text-white text-xs font-mono p-3 max-h-56 overflow-y-auto"
-                    style={{
-                      fontFamily: "'DM Mono', monospace",
-                      fontWeight: 500,
-                      fontStyle: "normal", // "Light" = weight, not style
-                      fontSize: "14px",
-                      lineHeight: "140%",
-                      letterSpacing: "0",
-                      whiteSpace: "pre-wrap", // preserves code formatting
-                    }}
-                  >
-                    <pre className="whitespace-pre-wrap">
-                      {data.sourceCode.slice(0, 600)}
-                      {data.sourceCode.length > 600 ? "..." : ""}
-                    </pre>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action buttons */}
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  className="w-full rounded-full py-2 px-4 inline-flex items-center justify-center gap-2 bg-muted/60 hover:bg-muted/70"
-                  onClick={() => {
-                    const explorerUrl =
-                      network === "mainnet"
-                        ? `https://scan.coredao.org/address/${address}`
-                        : `https://scan.test2.btcs.network/address/${address}`;
-                    window.open(explorerUrl, "_blank");
-                  }}
-                >
-                  <span className="text-sm">View on explorer</span>
-                  <ExternalLink className="w-4 h-4" />
-                </button>
-
-                <button
-                  type="button"
-                  className="w-full rounded-full py-2 px-4 inline-flex items-center justify-center gap-2 bg-muted/60 hover:bg-muted/70"
-                  onClick={() => navigator.clipboard.writeText("ABI JSON HERE")}
-                >
-                  <span className="text-sm">Copy ABI</span>
-                  <Copy className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+            `❌ **Verification failed**\n\n**Error:** ${abiResponse.result}\n\nPlease check your contract details and try again.`
           );
+          handleVerificationHelp();
         }
       } else {
         addMessage(
