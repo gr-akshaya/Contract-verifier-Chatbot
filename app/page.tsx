@@ -7,19 +7,16 @@ import FooterInput from "@/components/layout/Footer";
 import NetworkSelector from "../components/layout/NetworkOption";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import MultiFileUploadComponent from "@/components/contract-verification/MultiFileUploadComponent";
 import {
-  Bot,
   CheckCircle2,
   XCircle,
   ExternalLink,
   Copy,
   Code,
   Loader2,
-  User,
   Upload,
   FolderOpen,
   ArrowLeft,
