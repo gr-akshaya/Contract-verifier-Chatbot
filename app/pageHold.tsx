@@ -199,8 +199,10 @@ export default function Home() {
     const networkInfo = NETWORKS.find((n) => n.value === network);
 
     return (
-      <div className="contract-cards-wrapper">
-        <div className="contract-card">
+      <div
+    className="rounded-2xl p-6 text-foreground relative"
+    style={{ width: 690, background: "rgba(148, 163, 184, 0.04)" }}
+  >
     {/* Header */}
     <div className="flex items-start justify-between mb-6">
       <h3 className="text-lg font-semibold flex items-center gap-2">
@@ -413,8 +415,7 @@ export default function Home() {
         </button>
       )}
     </div>
-    </div>
-    </div>
+</div>
 
     );
   };
@@ -476,7 +477,7 @@ export default function Home() {
       switch (step) {
         case 1:
           return (
-            <div className="space-y-6 ">
+            <div className="space-y-6">
               <div>
                 <label className="text-sm font-medium">Contract Address</label>
                 <p className="text-sm font-mono bg-muted p-2 rounded">
@@ -576,8 +577,7 @@ export default function Home() {
     };
 
     return (
-      <div className="contract-cards-wrapper">
-        <Card className="contract-card no-background">
+      <Card className="w-full max-w-3xl mx-auto">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
@@ -642,7 +642,6 @@ export default function Home() {
           )}
         </CardContent>
       </Card>
-      </div>
     );
   };
 
@@ -707,24 +706,21 @@ export default function Home() {
         addMessage(
           "ai",
           undefined,
-          <div className="contract-cards-wrapper">
-          <Card className="contract-card no-background">
+          <Card className="w-full max-w-3xl mx-auto mt-4">
             <CardHeader>
-              <CardTitle>Source Code Input</CardTitle>
+              <CardTitle>📄 Source Code Input</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Button
                   variant="outline"
                   className="h-20 flex flex-col items-center justify-center"
-                  style={{ backgroundColor: "rgba(255, 255, 255, 0.2)"}} 
                   onClick={() => {
-                    addMessage("user", "I'll paste my source code");
+                    addMessage("user", "📝 I'll paste my source code");
                     addMessage(
                       "ai",
                       "Perfect! Please paste your complete Solidity source code below. Make sure it includes all contracts, imports, and dependencies:",
-                      <div className="contract-cards-wrapper">
-                        <Card className="contract-card no-background">
+                      <Card className="w-full max-w-3xl mx-auto mt-4">
                         <CardContent className="p-4">
                           <Textarea
                             placeholder="Paste your Solidity source code here..."
@@ -796,7 +792,6 @@ export default function Home() {
                           </div>
                         </CardContent>
                       </Card>
-                      </div>
                     );
                   }}
                 >
@@ -806,7 +801,6 @@ export default function Home() {
                 <Button
                   variant="outline"
                   className="h-20 flex flex-col items-center justify-center"
-                  style={{ backgroundColor: "rgba(255, 255, 255, 0.2)"}} 
                   onClick={() => {
                     const input = document.createElement("input");
                     input.type = "file";
@@ -855,7 +849,6 @@ export default function Home() {
                 <Button
                   variant="outline"
                   className="h-20 flex flex-col items-center justify-center"
-                  style={{ backgroundColor: "rgba(255, 255, 255, 0.2)"}} 
                   onClick={() => {
                     // Show a modal or card for multi-file upload
                     addMessage("user", "📋 I'll use multiple files");
@@ -977,7 +970,6 @@ export default function Home() {
               </div>
             </CardContent>
           </Card>
-          </div>
         );
       } else {
         addMessage(
@@ -1042,9 +1034,9 @@ export default function Home() {
         addMessage(
           "ai",
           "✅ **Source code received!**\n\n**Step 2 of 6: Compiler Type**\nWhat type of source code are you providing?",
-          <Card className="contract-card no-background">
+          <Card className="w-full max-w-3xl mx-auto mt-4">
             <CardHeader>
-              <CardTitle>Compiler Type Selection</CardTitle>
+              <CardTitle>📝 Compiler Type Selection</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -1053,7 +1045,6 @@ export default function Home() {
                 </label>
                 <select
                   className="w-full p-3 border rounded-md bg-background text-sm"
-                  // style={{ backgroundColor: "rgba(255, 255, 255, 0.2)" }} 
                   onChange={(e) => {
                     // console.log("target value", e.target.value);
                     // console.log("verificationSession", verificationSession);
@@ -1143,9 +1134,9 @@ export default function Home() {
         addMessage(
           "ai",
           "✅ **Constructor Arguments set!**\n\n**Step 4 of 6: Compiler Version**\nWhich Solidity compiler version did you use?\n\nPlease select from the dropdown below:",
-          <Card className="contract-card no-background">
+          <Card className="w-full max-w-3xl mx-auto mt-4">
             <CardHeader>
-              <CardTitle>Compiler Version</CardTitle>
+              <CardTitle>🔧 Compiler Version</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -1176,9 +1167,9 @@ export default function Home() {
                       addMessage(
                         "ai",
                         "✅ **Compiler version set!**\n\n**Step 5 of 6: EVM Version**\nPlease select the EVM version used during compilation:",
-                        <Card className="contract-card no-background">
+                        <Card className="w-full max-w-3xl mx-auto mt-4">
                           <CardHeader>
-                            <CardTitle>EVM Version</CardTitle>
+                            <CardTitle>⚙️ EVM Version</CardTitle>
                           </CardHeader>
                           <CardContent className="space-y-4">
                             <div>
@@ -1210,10 +1201,10 @@ export default function Home() {
                                     addMessage(
                                       "ai",
                                       "✅ **EVM version set!**\n\n**Step 6 of 7: Optimization Settings**\nWas optimization enabled during compilation?",
-                                      <Card className="contract-card no-background">
+                                      <Card className="w-full max-w-3xl mx-auto mt-4">
                                         <CardHeader>
                                           <CardTitle>
-                                            Optimization Settings
+                                            ⚙️ Optimization Settings
                                           </CardTitle>
                                         </CardHeader>
                                         <CardContent className="space-y-4">
@@ -1307,10 +1298,10 @@ export default function Home() {
                                                   addMessage(
                                                     "ai",
                                                     "✅ **Optimization settings complete!**\n\n**Step 7 of 7: License Type**\nPlease select the license type for your contract:",
-                                                    <Card className="contract-card no-background">
+                                                    <Card className="w-full max-w-3xl mx-auto mt-4">
                                                       <CardHeader>
                                                         <CardTitle>
-                                                          License Type
+                                                          📄 License Type
                                                         </CardTitle>
                                                       </CardHeader>
                                                       <CardContent className="space-y-4">
@@ -2049,8 +2040,8 @@ export default function Home() {
           addMessage(
             "ai",
             undefined,
-            <div className="contract-cards-wrapper">
-              <div className="contract-card">
+            <div className="rounded-2xl p-6 text-foreground relative"
+              style={{ width: 690, background: "rgba(148, 163, 184, 0.04)" }}>
               <div className="flex items-start justify-between mb-6">
                 <h3 className="text-lg font-semibold"><Code className="w-5 h-5" /> Contract information</h3>
                 <div className="flex items-center gap-2 bg-black text-green-500 px-3 py-1 rounded-full text-sm font-medium">
@@ -2167,8 +2158,7 @@ export default function Home() {
                   <Copy className="w-4 h-4" />
                 </button>
               </div>
-              </div>
-              </div>
+            </div>
           );
         }
       } else {
@@ -2224,6 +2214,13 @@ export default function Home() {
                   }`}
                 >
                   <div className={`flex items-end gap-2 max-w-[85%]`}>
+                    {msg.sender === "ai" && (
+                      <Avatar className="w-8 h-8 self-start">
+                        <AvatarFallback className="bg-primary text-primary-foreground">
+                          <Bot size={18} />
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
                     <div
                       className={`p-3 rounded-xl shadow-md ${
                         msg.sender === "user"
@@ -2296,6 +2293,13 @@ export default function Home() {
                         </p>
                       )}
                     </div>
+                    {msg.sender === "user" && (
+                      <Avatar className="w-8 h-8 self-start">
+                        <AvatarFallback className="bg-muted">
+                          <User size={18} />
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
                   </div>
                 </div>
               ))}

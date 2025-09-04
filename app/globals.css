@@ -5,7 +5,8 @@
 
 
 .chat-scroll-area code {
-  background-color: #000; 
+  background-color: rgba(65, 65, 65, 1);
+  ; 
 }
 
 .chat-scroll-area {
@@ -13,7 +14,8 @@
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: rgba(155, 155, 155, 0.5) transparent;
-  /* background: red; */
+  padding-bottom: 2rem;
+  width: 1050px;
 }
 
 .chat-scroll-area::-webkit-scrollbar {
@@ -32,8 +34,9 @@
 
 .dark .chat-scroll-area .message,
 .dark .chat-scroll-area .bg-card {
-  background-color: #2d2d2d;
+  background-color:rgba(0, 0, 0, 0.2);
   color: #f9fafb;
+  width: 584px;
 }
 
 
@@ -52,6 +55,69 @@
 
 .font-dm-mono {
   font-family: var(--font-dm-mono);
+}
+
+.user-chat-bubble {
+  font-family: var(--font-lexend);
+  width: 486px;
+  height: 85px;
+  border-radius: 16px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: rgba(255, 255, 255, 0.1); /* fallback to a light gray */
+  padding: 24px 24px 16px 24px; /* top right bottom left */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background-color:rgba(255, 255, 255, 0.1);
+  text-decoration-color: #e5e7eb;
+  opacity: 1;
+  box-sizing: border-box;
+}
+
+
+/* Contract card reusable style */
+.contract-card {
+  width: 584px; /* fixed width on desktop */
+  max-width: 100%; /* prevent overflow */
+  background: rgba(184, 148, 149, 0.04);
+  border-radius: 1rem; /* same as rounded-2xl */
+  padding: 1.5rem;     /* same as p-6 */
+  position: relative;
+  color: var(--foreground);
+  box-sizing: border-box;
+}
+
+/* Parent container for aligning multiple cards */
+.contract-cards-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;           /* spacing between cards */
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  
+}
+
+.contract-card.no-background {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+select {
+  color: white;             /* text color */
+  background-color: rgba(255, 255, 255, 0.2);  /* background for the dropdown itself */
+}
+
+/* style the dropdown options */
+select option {
+  color: white;
+  background-color: black;
 }
 
 
@@ -308,6 +374,10 @@ html::after {
   }
 }
 
-/* Let glows show through chat area */
 .chat-scroll-area { background: transparent !important; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
 

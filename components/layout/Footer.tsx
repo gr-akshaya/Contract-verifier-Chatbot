@@ -35,7 +35,7 @@ export default function FooterInput({
             onClick={handleUserInput}
             disabled={isProcessing || !userInput.trim()}
             aria-label="send"
-            className="absolute right-0 top-1/2 -translate-y-1/2 p-0 rounded-full
+            className="absolute right-1 top-1/2 -translate-y-1/2 p-0 rounded-full
                        h-12 w-12 flex items-center justify-center bg-white"
                       style={{ minWidth: 48, minHeight: 48 }}
             >
