@@ -1105,7 +1105,7 @@ export default function Home() {
       } else {
         addMessage(
           "ai",
-          `❌ **Contract not found**\n\nI couldn't find a contract at address \`${address}\` on ${
+          ` **Contract not found**\n\nI couldn't find a contract at address \`${address}\` on ${
             network === "mainnet" ? "Core Mainnet" : "Core Testnet"
           }.\n\nPlease make sure:\n• The contract address is correct\n• The contract is deployed\n• You're using the right network\n\nTry again with a different address or network.`
         );
@@ -1114,7 +1114,7 @@ export default function Home() {
       removeTypingMessage(typingId);
       addMessage(
         "ai",
-        `🚫 **Error checking contract**\n\nSorry, I couldn't check the contract status: ${
+        `**Error checking contract**\n\nSorry, I couldn't check the contract status: ${
           error instanceof Error ? error.message : "Unknown error"
         }\n\nPlease try again.`
       );
@@ -1489,7 +1489,7 @@ export default function Home() {
                                                                       () => {
                                                                         addMessage(
                                                                           "ai",
-                                                                          " **All settings complete!**\n\n**Ready to Verify**\nPerfect! I have all the information needed:\n\n• **Source Code:** \n• **Compiler Type:** \n• **Constructor Arguments :** \n• **Compiler Version:** \n• **EVM Version:** \n• **Optimization:** " +
+                                                                          " **All settings complete!**\n\n**Ready to Verify**\nPerfect! I have all the information needed:\n\n• **Source Code** \n• **Compiler Type** \n• **Constructor Arguments ** \n• **Compiler Version** \n• **EVM Version** \n• **Optimization** " +
                                                                             (isEnabled
                                                                               ? "Enabled"
                                                                               : "Disabled") +
@@ -1879,9 +1879,9 @@ export default function Home() {
 
         {/* Troubleshooting information */}
         <p className="mb-3">
-          Verify the compiler version is <strong>0.8.24</strong> and the EVM
-          version used is <strong>Shanghai</strong>, and then proceed with
-          verification.
+          Recommended compiler version is <strong>0.8.24</strong> and the EVM
+          version used is <strong>Shanghai</strong>. Please verify EVM and
+          compiler version and then proceed with verification.
           <br />
           If you are still facing issues, reach out to us <br />
           on{" "}
@@ -2246,158 +2246,9 @@ export default function Home() {
         } else {
           addMessage(
             "ai",
-            undefined,
-            <div className="contract-cards-wrapper">
-              <div className="contract-card">
-                <div className="flex items-start justify-between mb-6">
-                  <h3 className="text-lg font-semibold">
-                    <Code className="w-5 h-5" /> Contract information
-                  </h3>
-                  <div className="flex items-center gap-2 bg-black text-green-500 px-3 py-1 rounded-full text-sm font-medium">
-                    <CheckCircle2 className="w-4 h-4" />
-                    Verified
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-6 mb-6">
-                  <div className="flex flex-col">
-                    <span className="text-xs text-muted-foreground">
-                      Network
-                    </span>
-                    <span className="text-sm mt-1">
-                      {network === "mainnet" ? "Core Mainnet" : "Core Testnet"}
-                    </span>
-
-                    <span className="text-xs text-muted-foreground mt-4">
-                      Compiler version
-                    </span>
-                    <span className="text-sm mt-1">{data.compilerVersion}</span>
-                  </div>
-
-                  <div className="flex flex-col">
-                    <span className="text-xs text-muted-foreground">
-                      Contract name
-                    </span>
-                    <span className="text-sm mt-1">{contractName}</span>
-
-                    <span className="text-xs text-muted-foreground mt-4">
-                      Optimization
-                    </span>
-                    <span className="text-sm mt-1">
-                      {data.optimizationUsed === "1" ? "Enabled" : "Disabled"}
-                    </span>
-                  </div>
-                </div>
-                {/* Divider line before contract address */}
-                <div className="border-t border-white/10 my-6"></div>
-
-                {/* Contract address with copy functionality */}
-                <div className="mb-6">
-                  <div className="text-xs text-muted-foreground mb-2">
-                    Contract address
-                  </div>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      readOnly
-                      value={address}
-                      className="w-full rounded-md bg-muted/60 px-3 py-2 text-sm pr-10 border-none outline-none"
-                    />
-                    <button
-                      type="button"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-md hover:bg-foreground/5"
-                      onClick={() => navigator.clipboard.writeText(address)}
-                      aria-label="Copy contract address"
-                      title="Copy"
-                    >
-                      <Copy className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Source code display */}
-                <div className="mb-6">
-                  <div className="text-xs text-muted-foreground mb-2">
-                    Source code
-                  </div>
-
-                  <div className="rounded-md bg-muted/60 p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs text-muted-foreground">
-                        {contractName}
-                      </span>
-                      <button
-                        type="button"
-                        className="font-dm-mono p-2 rounded-md hover:bg-foreground/5"
-                        onClick={() =>
-                          navigator.clipboard.writeText(data.sourceCode)
-                        }
-                        aria-label="Copy source code"
-                        title="Copy"
-                      >
-                        <Copy className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    <div
-                      className="rounded-md bg-black text-white text-xs font-mono p-3 max-h-56 overflow-y-auto"
-                      style={{
-                        fontFamily: "'DM Mono', monospace",
-                        fontWeight: 500,
-                        fontStyle: "normal", // "Light" = weight, not style
-                        fontSize: "14px",
-                        lineHeight: "140%",
-                        letterSpacing: "0",
-                        whiteSpace: "pre-wrap", // preserves code formatting
-                      }}
-                    >
-                      <pre className="whitespace-pre-wrap">
-                        {data.sourceCode.slice(0, 600)}
-                        {data.sourceCode.length > 600 ? "..." : ""}
-                      </pre>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Action buttons */}
-                <div className="grid grid-cols-2 gap-3">
-                  {/* View on Explorer button */}
-                  <button
-                    type="button"
-                    className="w-full rounded-full py-2 px-4 inline-flex items-center justify-center gap-2 bg-muted/60 hover:bg-muted/70"
-                    onClick={() => {
-                      const explorerUrl =
-                        network === "mainnet"
-                          ? `https://scan.coredao.org/address/${address}`
-                          : `https://scan.test2.btcs.network/address/${address}`;
-                      window.open(explorerUrl, "_blank");
-                    }}
-                  >
-                    <span className="text-sm">View on explorer</span>
-                    <ExternalLink className="w-4 h-4" />
-                  </button>
-
-                  {/* Copy ABI button */}
-                  <button
-                    type="button"
-                    className="w-full rounded-full py-2 px-4 inline-flex items-center justify-center gap-2 bg-muted/60 hover:bg-muted/70"
-                    onClick={() =>
-                      navigator.clipboard.writeText("ABI JSON HERE")
-                    }
-                  >
-                    <span className="text-sm">Copy ABI</span>
-                    <Copy className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
+            ` **Verification failed**\n\n**Error:** ${result.result}\n\nPlease check your contract details and try again.`
           );
         }
-      } else {
-        addMessage(
-          "ai",
-          `❌ **Verification failed**\n\n**Error:** ${result.result}\n\nPlease check your contract details and try again.`
-        );
       }
 
       setVerificationSession(null);
@@ -2406,7 +2257,7 @@ export default function Home() {
       console.error("Verification error:", error);
       addMessage(
         "ai",
-        `🚫 **Verification error**\n\nSorry, there was an error: ${
+        `**Verification error**\n\nSorry, there was an error: ${
           error instanceof Error ? error.message : "Unknown error"
         }\n\nPlease try again or contact support if the issue persists.`
       );
