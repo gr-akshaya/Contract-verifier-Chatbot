@@ -549,7 +549,7 @@ export default function Home() {
       } else {
         addMessage(
           "ai",
-          `❌ **Contract not found**\n\nI couldn't find a contract at address \`${address}\` on ${
+          ` **Contract not found**\n\nI couldn't find a contract at address \`${address}\` on ${
             network === "mainnet" ? "Core Mainnet" : "Core Testnet"
           }.\n\n**Double-check:**\n• The address is correct\n• The contract is deployed on the right network\n• Try the other network (mainnet/testnet)\n\nWant to try a different address or network?`
         );
@@ -559,7 +559,7 @@ export default function Home() {
       console.error("Error looking up contract:", error);
       addMessage(
         "ai",
-        `🚫 **Lookup failed**\n\nSorry, I encountered an error while looking up the contract:\n\`${
+        ` **Lookup failed**\n\nSorry, I encountered an error while looking up the contract:\n\`${
           error instanceof Error ? error.message : "Unknown error"
         }\`\n\nPlease try again or check if the Core blockchain API is accessible.`
       );
@@ -649,7 +649,7 @@ export default function Home() {
                       // Add AI response for next step
                       addMessage(
                         "ai",
-                        `✅ **Compiler type set:** ${compilerDescription}\n\n**Step 3 of 6: Constructor Arguments**\nAre there any constructor arguments? If so, please provide them, otherwise, type 'no' or 'na' to continue.`
+                        ` **Compiler type set:** ${compilerDescription}\n\n**Step 3 of 6: Constructor Arguments**\nAre there any constructor arguments? If so, please provide them, otherwise, type 'no' or 'na' to continue.`
                       );
                     }
                   }}
@@ -665,7 +665,7 @@ export default function Home() {
               </div>
               <div className="bg-amber-50 dark:bg-amber-950 p-3 rounded-lg">
                 <p className="text-sm text-amber-700 dark:text-amber-300">
-                  📝 **Selected:**{" "}
+                  **Selected:**{" "}
                   {sessionData.compilerType === "solidity-single"
                     ? "Single Solidity File"
                     : sessionData.compilerType === "solidity-multi"
@@ -776,7 +776,7 @@ export default function Home() {
         if (isVerified) {
           addMessage(
             "ai",
-            `✅ **Contract already verified!**\n\nThe contract at \`${address}\` is already verified on ${
+            ` **Contract already verified!**\n\nThe contract at \`${address}\` is already verified on ${
               network === "mainnet" ? "Core Mainnet" : "Core Testnet"
             }.\n\n${
               contractData.ContractName
@@ -1004,7 +1004,7 @@ export default function Home() {
                             );
                             addMessage(
                               "ai",
-                              "✅ **Files uploaded!**\n\n**Step 2 of 6: Compiler Type**\nWhat type of source code are you providing?",
+                              " **Files uploaded!**\n\n**Step 2 of 6: Compiler Type**\nWhat type of source code are you providing?",
                               <Card className="w-full max-w-3xl mx-auto mt-4">
                                 <CardHeader>
                                   <CardTitle>
@@ -1061,7 +1061,7 @@ export default function Home() {
 
                                           addMessage(
                                             "ai",
-                                            `✅ **Compiler type set:** ${compilerDescription}\n\n**Step 3 of 6: Constructor Arguments**\nAre there any constructor arguments? If so, please provide them; otherwise, type 'no' or 'na' to continue.`
+                                            ` **Compiler type set:** ${compilerDescription}\n\n**Step 3 of 6: Constructor Arguments**\nAre there any constructor arguments? If so, please provide them; otherwise, type 'no' or 'na' to continue.`
                                           );
                                         }
                                       }}
@@ -1171,7 +1171,7 @@ export default function Home() {
         // Show compiler type selection
         addMessage(
           "ai",
-          "✅ **Source code received!**\n\n**Step 2 of 6: Compiler Type**\nWhat type of source code are you providing?",
+          " **Source code received!**\n\n**Step 2 of 6: Compiler Type**\nWhat type of source code are you providing?",
           <Card className="contract-card no-background">
             <CardHeader>
               <CardTitle>Compiler Type Selection</CardTitle>
@@ -1220,7 +1220,7 @@ export default function Home() {
                       // Add AI response for next step
                       addMessage(
                         "ai",
-                        `✅ **Compiler type set:** ${compilerDescription}\n\n**Step 3 of 6: Constructor Arguments**\nAre there any constructor arguments? If so, please provide them; otherwise, type no' or 'na' to continue.`
+                        ` **Compiler type set:** ${compilerDescription}\n\n**Step 3 of 6: Constructor Arguments**\nAre there any constructor arguments? If so, please provide them; otherwise, type no' or 'na' to continue.`
                       );
                     }
                   }}
@@ -1275,7 +1275,7 @@ export default function Home() {
         // Show compiler version selection
         addMessage(
           "ai",
-          "✅ **Constructor Arguments set!**\n\n**Step 4 of 6: Compiler Version**\nWhich Solidity compiler version did you use?\n\nPlease select from the dropdown below:",
+          " **Constructor Arguments set!**\n\n**Step 4 of 6: Compiler Version**\nWhich Solidity compiler version did you use?\n\nPlease select from the dropdown below:",
           <Card className="contract-card no-background">
             <CardHeader>
               <CardTitle>Compiler Version</CardTitle>
@@ -1306,7 +1306,7 @@ export default function Home() {
                       // Show EVM version selection
                       addMessage(
                         "ai",
-                        "✅ **Compiler version set!**\n\n**Step 5 of 6: EVM Version**\nPlease select the EVM version used during compilation:",
+                        " **Compiler version set!**\n\n**Step 5 of 6: EVM Version**\nPlease select the EVM version used during compilation:",
                         <Card className="contract-card no-background">
                           <CardHeader>
                             <CardTitle>EVM Version</CardTitle>
@@ -1340,7 +1340,7 @@ export default function Home() {
                                     // Add AI response for optimization step
                                     addMessage(
                                       "ai",
-                                      "✅ **EVM version set!**\n\n**Step 6 of 7: Optimization Settings**\nWas optimization enabled during compilation?",
+                                      " **EVM version set!**\n\n**Step 6 of 7: Optimization Settings**\nWas optimization enabled during compilation?",
                                       <Card className="contract-card no-background">
                                         <CardHeader>
                                           <CardTitle>
@@ -1437,7 +1437,7 @@ export default function Home() {
                                                   // Add AI response for license step
                                                   addMessage(
                                                     "ai",
-                                                    "✅ **Optimization settings complete!**\n\n**Step 7 of 7: License Type**\nPlease select the license type for your contract:",
+                                                    " **Optimization settings complete!**\n\n**Step 7 of 7: License Type**\nPlease select the license type for your contract:",
                                                     <Card className="contract-card no-background">
                                                       <CardHeader>
                                                         <CardTitle>
@@ -1489,11 +1489,11 @@ export default function Home() {
                                                                       () => {
                                                                         addMessage(
                                                                           "ai",
-                                                                          "✅ **All settings complete!**\n\n**Ready to Verify**\nPerfect! I have all the information needed:\n\n• **Source Code:** ✅\n• **Compiler Type:** ✅\n• **Constructor Arguments :** ✅\n• **Compiler Version:** ✅\n• **EVM Version:** ✅\n• **Optimization:** " +
+                                                                          " **All settings complete!**\n\n**Ready to Verify**\nPerfect! I have all the information needed:\n\n• **Source Code:** \n• **Compiler Type:** \n• **Constructor Arguments :** \n• **Compiler Version:** \n• **EVM Version:** \n• **Optimization:** " +
                                                                             (isEnabled
                                                                               ? "Enabled"
                                                                               : "Disabled") +
-                                                                            "\n• **License:** ✅\n\nClick the button below to start the verification process!",
+                                                                            "\n• **License:** \n\nClick the button below to start the verification process!",
                                                                           <div className="mt-4 flex justify-center">
                                                                             <Button
                                                                               onClick={() => {
@@ -1950,7 +1950,7 @@ export default function Home() {
 
             addMessage(
               "ai",
-              `🔍 **Starting verification for:** \`${address}\`\n\n` +
+              `**Starting verification for:** \`${address}\`\n\n` +
                 `Checking contract status on **${networkName}**...`
             );
 
