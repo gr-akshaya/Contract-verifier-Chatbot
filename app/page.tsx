@@ -1340,7 +1340,7 @@ export default function Home() {
                                     // Add AI response for optimization step
                                     addMessage(
                                       "ai",
-                                      " **EVM version set!**\n\n**Step 6 of 7: Optimization Settings**\nWas optimization enabled during compilation?",
+                                      " **EVM version set!**\n\n**Step 6 of 7: Optimization Settings**\n",
                                       <Card className="contract-card no-background">
                                         <CardHeader>
                                           <CardTitle>
@@ -1437,7 +1437,7 @@ export default function Home() {
                                                   // Add AI response for license step
                                                   addMessage(
                                                     "ai",
-                                                    " **Optimization settings complete!**\n\n**Step 7 of 7: License Type**\nPlease select the license type for your contract:",
+                                                    " **Optimization settings complete!**\n\n**Step 7 of 7: License Type**\n",
                                                     <Card className="contract-card no-background">
                                                       <CardHeader>
                                                         <CardTitle>

@@ -3,10 +3,8 @@
 
 @custom-variant dark (&:is(.dark *));
 
-
 .chat-scroll-area code {
   background-color: rgba(65, 65, 65, 1);
-  ; 
 }
 
 .chat-scroll-area {
@@ -34,13 +32,10 @@
 
 .dark .chat-scroll-area .message,
 .dark .chat-scroll-area .bg-card {
-  background-color:rgba(0, 0, 0, 0.2);
+  background-color: rgba(0, 0, 0, 0.2);
   color: #f9fafb;
   width: 584px;
 }
-
-
-
 
 .preserve-whitespace {
   white-space: pre;
@@ -69,12 +64,11 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  background-color:rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.1);
   text-decoration-color: #e5e7eb;
   opacity: 1;
   box-sizing: border-box;
 }
-
 
 /* Contract card reusable style */
 .contract-card {
@@ -82,7 +76,7 @@
   max-width: 100%; /* prevent overflow */
   background: rgba(184, 148, 149, 0.04);
   border-radius: 1rem; /* same as rounded-2xl */
-  padding: 1.5rem;     /* same as p-6 */
+  padding: 1.5rem; /* same as p-6 */
   position: relative;
   color: var(--foreground);
   box-sizing: border-box;
@@ -92,7 +86,7 @@
 .contract-cards-wrapper {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.5rem;           /* spacing between cards */
+  gap: 1.5rem; /* spacing between cards */
   justify-content: center;
   align-items: flex-start;
   width: 100%;
@@ -100,7 +94,6 @@
 
 /* Responsive tweaks */
 @media (max-width: 768px) {
-  
 }
 
 .contract-card.no-background {
@@ -110,8 +103,13 @@
 }
 
 select {
-  color: white;             /* text color */
-  background-color: rgba(255, 255, 255, 0.2);  /* background for the dropdown itself */
+  color: white; /* text color */
+  background-color: rgba(
+    255,
+    255,
+    255,
+    0.2
+  ); /* background for the dropdown itself */
 }
 
 /* style the dropdown options */
@@ -120,11 +118,10 @@ select option {
   background-color: black;
 }
 
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: 'Lexend';
+  --font-sans: "Lexend";
   --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -276,14 +273,15 @@ select option {
   background: hsl(var(--border) / 0.8);
 }
 
-
 /* ===== Hero background (black + teal/cyan TL glow + orange BR glow) ===== */
 
-html { isolation: isolate; }
+html {
+  isolation: isolate;
+}
 
 :root {
   /* tweak these to taste */
-  --glow-cyan-rgb: 64, 181, 255;   /* #40B5FF (teal/cyan) */
+  --glow-cyan-rgb: 64, 181, 255; /* #40B5FF (teal/cyan) */
   --glow-orange-rgb: 255, 146, 58; /* #FF923A (warm orange) */
 
   /* subtle base shades so the center reads as black but not flat */
@@ -293,13 +291,18 @@ html { isolation: isolate; }
 
 /* Base near-black with a faint cool lift top-left */
 body {
-  background:
-    radial-gradient(1200px 900px at -10% -10%,
+  background: radial-gradient(
+      1200px 900px at -10% -10%,
       rgba(var(--glow-cyan-rgb), 0.14) 0%,
       rgba(var(--glow-cyan-rgb), 0.06) 25%,
       rgba(var(--glow-cyan-rgb), 0) 40%
     ),
-    linear-gradient(to bottom right, var(--bg-deep-1) 0%, var(--bg-deep-2) 40%, #000 100%);
+    linear-gradient(
+      to bottom right,
+      var(--bg-deep-1) 0%,
+      var(--bg-deep-2) 40%,
+      #000 100%
+    );
 }
 
 /* Common canvas for glows */
@@ -308,7 +311,7 @@ html::after {
   content: "";
   position: fixed;
   pointer-events: none;
-  z-index: 0;           /* behind app content */
+  z-index: 0; /* behind app content */
   border-radius: 9999px;
   mix-blend-mode: screen;
 }
@@ -319,7 +322,8 @@ html::before {
   height: 80vmin;
   top: -20vmin;
   left: -25vmin;
-  background: radial-gradient(circle at 50% 50%,
+  background: radial-gradient(
+    circle at 50% 50%,
     rgba(var(--glow-cyan-rgb), 0.85) 0%,
     rgba(var(--glow-cyan-rgb), 0.45) 28%,
     rgba(var(--glow-cyan-rgb), 0.18) 52%,
@@ -328,18 +332,17 @@ html::before {
   filter: blur(80px);
 }
 
-
 /* Orange glow — bottom-right (warmer + softer + elongated) */
 html::after {
-  content: "";                 /* required for pseudo-element to render */
-  position: fixed;             /* anchor to viewport */
+  content: ""; /* required for pseudo-element to render */
+  position: fixed; /* anchor to viewport */
   display: block;
   pointer-events: none;
   z-index: 0;
 
   width: 110vmin;
   height: 70vmin;
-  right: -35vmin;              /* push slightly off-screen */
+  right: -35vmin; /* push slightly off-screen */
   bottom: -25vmin;
   border-radius: 9999px;
 
@@ -355,10 +358,6 @@ html::after {
   mix-blend-mode: screen;
 }
 
-
-
-
-
 /* Optional dark vignette for depth */
 @media (prefers-color-scheme: dark) {
   body::before {
@@ -367,17 +366,20 @@ html::after {
     inset: -12%;
     pointer-events: none;
     z-index: 0;
-    background: radial-gradient(120% 120% at 50% 50%,
+    background: radial-gradient(
+      120% 120% at 50% 50%,
       rgba(0, 0, 0, 0) 60%,
       rgba(0, 0, 0, 0.35) 100%
     );
   }
 }
 
-.chat-scroll-area { background: transparent !important; }
+.chat-scroll-area {
+  background: transparent !important;
+}
 
-html, body {
+html,
+body {
   height: 100%;
   overflow: hidden;
 }
-
