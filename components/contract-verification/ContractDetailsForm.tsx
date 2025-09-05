@@ -66,6 +66,10 @@ import {
 } from "@/ai/flows/suggest-fixes";
 import { toast } from "sonner";
 
+/**
+ * Zod schema for form validation
+ * Defines the structure and validation rules for contract verification data
+ */
 const FormSchema = z.object({
   network: z.enum(["mainnet", "testnet2"]).optional(),
   contractAddress: z
@@ -91,9 +95,20 @@ const FormSchema = z.object({
   constructorArguments: z.string().optional(),
 });
 
+/**
+ * Available steps in the multi-step form
+ */
 type Step = "address" | "source" | "compiler";
 
+/**
+ * Props interface for the ContractDetailsForm component
+ */
 interface ContractDetailsFormProps {
+  /**
+   * Callback function called when verification process completes
+   * @param error - Error message if verification failed, null if successful
+   * @param data - Verification status data including loading states and results
+   */
   onCompletion: (
     error: string | null,
     data?: {
@@ -107,23 +122,33 @@ interface ContractDetailsFormProps {
       guid?: string | null;
     }
   ) => void;
+  /**
+   * Callback function to show/hide AI suggestions
+   * @param suggestions - AI suggestions object or null
+   * @param isLoading - Whether AI suggestions are currently loading
+   */
   onShowAISuggestions: (
     suggestions: AISuggestion | null,
     isLoading: boolean
   ) => void;
 }
 
+/**
+ * Multi-step form component for contract verification
+ * Handles the complete flow from address input to verification submission
+ */
 export default function ContractDetailsForm({
   onCompletion,
   onShowAISuggestions,
 }: ContractDetailsFormProps) {
+  // Form state management
   const [currentStep, setCurrentStep] = useState<Step>("address");
   const [isAISuggestionsLoading, setIsAISuggestionsLoading] = useState(false);
   const [aiSuggestions, setAISuggestions] = useState<AISuggestion | null>(null);
-
   const [isSubmittingForVerification, setIsSubmittingForVerification] =
     useState(false);
 
+  // React Hook Form setup with Zod validation
   const methods = useForm<VerificationDetails>({
     resolver: zodResolver(FormSchema),
     defaultValues: DEFAULT_VERIFICATION_DETAILS,
@@ -136,11 +161,17 @@ export default function ContractDetailsForm({
     trigger,
   } = methods;
 
+  // Watch specific form fields for conditional logic
   const sourceCode = watch("sourceCode");
   const optimizationUsed = watch("optimizationUsed");
   const compilerType = watch("compilerType");
 
+  /**
+   * Fetches AI suggestions for compiler settings and code fixes
+   * Combines results from both compiler settings and fixes AI flows
+   */
   const handleGetAISuggestions = useCallback(async () => {
+    // Validate source code exists before making AI requests
     if (!sourceCode) {
       toast("Source code empty", {
         className: "bg-red-500 text-white",
@@ -148,11 +179,14 @@ export default function ContractDetailsForm({
       });
       return;
     }
+
+    // Set loading state and clear previous suggestions
     setIsAISuggestionsLoading(true);
     setAISuggestions(null);
     onShowAISuggestions(null, true);
 
     try {
+      // Make parallel requests to both AI flows
       const compilerSettingsPromise = suggestCompilerSettings({
         sourceCode,
       } as SuggestCompilerSettingsInput);
@@ -163,6 +197,7 @@ export default function ContractDetailsForm({
         fixesPromise,
       ]);
 
+      // Combine AI suggestions into a single object
       const combinedSuggestions: AISuggestion = {
         ...(compilerResult as SuggestCompilerSettingsOutput),
         optimizationUsed:
@@ -175,9 +210,12 @@ export default function ContractDetailsForm({
             : undefined,
         fixes: (fixesResult as SuggestFixesOutput).fixes,
       };
+
+      // Update state with combined suggestions
       setAISuggestions(combinedSuggestions);
       onShowAISuggestions(combinedSuggestions, false);
 
+      // Auto-fill form fields with AI suggestions if user hasn't touched them
       if (
         combinedSuggestions.compilerVersion &&
         !touchedFields.compilerVersion
@@ -225,13 +263,21 @@ export default function ContractDetailsForm({
     }
   }, [sourceCode, setValue, touchedFields, onShowAISuggestions]);
 
+  /**
+   * Polls verification status until completion or timeout
+   * @param guid - Verification transaction GUID
+   * @param selectedNetwork - Network where contract is deployed
+   * @param contractAddr - Contract address being verified
+   */
   const pollVerificationStatus = useCallback(
     (guid: string, selectedNetwork: Network, contractAddr: string) => {
       let attempts = 0;
-      const maxAttempts = 24;
+      const maxAttempts = 24; // Maximum polling attempts (2 minutes at 5s intervals)
 
       const intervalId = setInterval(() => {
         attempts++;
+
+        // Handle timeout after maximum attempts
         if (attempts > maxAttempts) {
           clearInterval(intervalId);
           onCompletion(
@@ -251,6 +297,7 @@ export default function ContractDetailsForm({
           return;
         }
 
+        // Check verification status
         (async () => {
           try {
             const statusRes = await checkVerificationStatus(
@@ -258,6 +305,7 @@ export default function ContractDetailsForm({
               guid
             );
 
+            // Handle successful verification
             if (statusRes.message.toLowerCase().includes("pass - verified")) {
               clearInterval(intervalId);
               toast("Verification Successful!", {
@@ -265,6 +313,7 @@ export default function ContractDetailsForm({
                 className: "bg-green-500 text-white",
               });
 
+              // Fetch verified source code and ABI
               const [sourceData, abiData] = await Promise.all([
                 getSourceCode(selectedNetwork, contractAddr),
                 getAbi(selectedNetwork, contractAddr),
@@ -283,7 +332,9 @@ export default function ContractDetailsForm({
                 verifiedAbi: abiData.status === "1" ? abiData.result : null,
                 guid,
               });
-            } else if (
+            }
+            // Handle verification failure
+            else if (
               statusRes.message
                 .toLowerCase()
                 .includes("fail - unable to verify") ||
@@ -307,7 +358,9 @@ export default function ContractDetailsForm({
                 description: errorDetail,
                 className: "bg-red-500 text-white",
               });
-            } else {
+            }
+            // Continue polling for pending verification
+            else {
               onCompletion(null, {
                 isLoading: true,
                 isPolling: true,
@@ -337,11 +390,15 @@ export default function ContractDetailsForm({
             });
           }
         })();
-      }, 5000);
+      }, 5000); // Poll every 5 seconds
     },
     [onCompletion]
   );
 
+  /**
+   * Handles form submission for contract verification
+   * @param data - Form data validated by Zod schema
+   */
   const onSubmit: SubmitHandler<VerificationDetails> = async (data) => {
     setIsSubmittingForVerification(true);
     onCompletion(null, {
@@ -352,9 +409,11 @@ export default function ContractDetailsForm({
       isVerified: null,
     });
 
+    // Find license type for API submission
     const license = LICENSE_TYPES.find((lt) => lt.value === data.licenseType);
 
     try {
+      // Submit verification request to CoreDAO API
       const response = await verifyContract(data.network, {
         contractAddress: data.contractAddress,
         compilerType: data.compilerType,
@@ -368,6 +427,7 @@ export default function ContractDetailsForm({
         constructorArguments: data.constructorArguments,
       });
 
+      // Handle successful submission
       if (response.data.success === true) {
         toast("Verification Submitted", {
           description: `Verification submitted successfully.`,
@@ -379,12 +439,15 @@ export default function ContractDetailsForm({
           errorMessage: null,
           isVerified: null,
         });
+
+        // Start polling for verification status
         pollVerificationStatus(
           response.data.txHash || response.data.response,
           data.network,
           data.contractAddress
         );
       } else {
+        // Handle submission failure
         const errorDetail =
           response.data.response ||
           response.message ||
@@ -402,6 +465,7 @@ export default function ContractDetailsForm({
         });
       }
     } catch (error: unknown) {
+      // Handle unexpected errors
       const errorDetail =
         typeof error === "object" && error !== null && "message" in error
           ? String((error as { message?: string }).message)
@@ -422,6 +486,10 @@ export default function ContractDetailsForm({
     }
   };
 
+  /**
+   * Triggers form validation and submission
+   * Only submits if all form fields are valid
+   */
   const triggerSubmitAndProceed = async () => {
     const isValidForm = await trigger();
     if (isValidForm) {
@@ -437,19 +505,28 @@ export default function ContractDetailsForm({
     }
   };
 
+  /**
+   * Handles navigation to the next step
+   * Validates current step fields before proceeding
+   */
   const next = async () => {
     let currentFieldsToValidate: (keyof VerificationDetails)[] = [];
+
+    // Define which fields to validate for each step
     if (currentStep === "address") {
       currentFieldsToValidate = ["network", "contractAddress"];
     } else if (currentStep === "source") {
       currentFieldsToValidate = ["sourceCode", "contractName"];
     } else if (currentStep === "compiler") {
+      // Final step - trigger form submission
       triggerSubmitAndProceed();
       return;
     }
 
+    // Validate current step fields
     const isValidStep = await trigger(currentFieldsToValidate);
     if (isValidStep) {
+      // Navigate to next step
       if (currentStep === "address") setCurrentStep("source");
       else if (currentStep === "source") setCurrentStep("compiler");
     } else {
@@ -460,16 +537,24 @@ export default function ContractDetailsForm({
     }
   };
 
+  /**
+   * Handles navigation to the previous step
+   */
   const prev = () => {
     if (currentStep === "source") setCurrentStep("address");
     else if (currentStep === "compiler") setCurrentStep("source");
   };
 
+  /**
+   * Renders the appropriate form step based on currentStep state
+   * @returns JSX for the current step
+   */
   const renderStep = () => {
     switch (currentStep) {
       case "address":
         return (
           <CardContent className="space-y-6 pt-6">
+            {/* Network Selection */}
             <div>
               <Label htmlFor="network" className="text-base">
                 Network
@@ -511,6 +596,8 @@ export default function ContractDetailsForm({
                 </p>
               )}
             </div>
+
+            {/* Contract Address Input */}
             <div>
               <Label htmlFor="contractAddress" className="text-base">
                 Contract Address
@@ -535,9 +622,11 @@ export default function ContractDetailsForm({
             </div>
           </CardContent>
         );
+
       case "source":
         return (
           <CardContent className="space-y-6 pt-6">
+            {/* Source Code Editor */}
             <Controller
               name="sourceCode"
               control={control}
@@ -550,6 +639,7 @@ export default function ContractDetailsForm({
                       sourceCode={value}
                       onSourceCodeChange={(newVal) => {
                         onChange(newVal);
+                        // Clear AI suggestions when source code changes
                         if (aiSuggestions) {
                           setAISuggestions(null);
                           onShowAISuggestions(null, false);
@@ -563,6 +653,8 @@ export default function ContractDetailsForm({
                 />
               )}
             />
+
+            {/* Form validation errors */}
             {errors.sourceCode && (
               <p className="text-sm text-destructive mt-1">
                 {errors.sourceCode.message}
@@ -573,6 +665,8 @@ export default function ContractDetailsForm({
                 {errors.contractName.message}
               </p>
             )}
+
+            {/* AI Suggestions Button */}
             <Button
               onClick={handleGetAISuggestions}
               disabled={isAISuggestionsLoading || !sourceCode}
@@ -588,10 +682,13 @@ export default function ContractDetailsForm({
             {/* AISuggestionsCard is rendered by parent */}
           </CardContent>
         );
+
       case "compiler":
         return (
           <CardContent className="space-y-6 pt-6">
+            {/* Compiler Settings Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Compiler Type */}
               <div>
                 <Label htmlFor="compilerType" className="text-base">
                   Compiler Type
@@ -631,6 +728,8 @@ export default function ContractDetailsForm({
                   </p>
                 )}
               </div>
+
+              {/* Compiler Version */}
               <div>
                 <Label htmlFor="compilerVersion" className="text-base">
                   Compiler Version
@@ -666,7 +765,10 @@ export default function ContractDetailsForm({
                 )}
               </div>
             </div>
+
+            {/* EVM Version and License Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* EVM Version */}
               <div>
                 <Label htmlFor="evmVersion" className="text-base">
                   EVM Version (Optional)
@@ -697,6 +799,8 @@ export default function ContractDetailsForm({
                   )}
                 />
               </div>
+
+              {/* License Type */}
               <div>
                 <Label htmlFor="licenseType" className="text-base">
                   License Type
@@ -737,7 +841,10 @@ export default function ContractDetailsForm({
                 )}
               </div>
             </div>
+
+            {/* Optimization Settings Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Optimization Used */}
               <div>
                 <Label htmlFor="optimizationUsed" className="text-base">
                   Optimization Used
@@ -770,6 +877,8 @@ export default function ContractDetailsForm({
                   )}
                 />
               </div>
+
+              {/* Optimization Runs */}
               <div>
                 <Label htmlFor="runs" className="text-base">
                   Optimization Runs
@@ -787,7 +896,7 @@ export default function ContractDetailsForm({
                       onChange={(e) =>
                         field.onChange(parseInt(e.target.value, 10) || 0)
                       }
-                      disabled={optimizationUsed === "0"}
+                      disabled={optimizationUsed === "0"} // Disable when optimization is off
                     />
                   )}
                 />
@@ -798,6 +907,8 @@ export default function ContractDetailsForm({
                 )}
               </div>
             </div>
+
+            {/* Constructor Arguments */}
             <div>
               <Label htmlFor="constructorArguments" className="text-base">
                 Constructor Arguments (ABI-encoded, Optional)
@@ -815,6 +926,8 @@ export default function ContractDetailsForm({
                 )}
               />
             </div>
+
+            {/* AI Suggestions Alert */}
             {aiSuggestions &&
               (aiSuggestions.compilerVersion || aiSuggestions.evmVersion) && (
                 <Alert
@@ -839,12 +952,20 @@ export default function ContractDetailsForm({
     }
   };
 
+  /**
+   * Step titles mapping for display
+   */
   const stepTitles: Record<Step, string> = {
     address: "Contract Address & Network",
     source: "Source Code & Details",
     compiler: "Compiler & License",
   };
 
+  /**
+   * Returns the step number for display
+   * @param step - Current step
+   * @returns Step number (1, 2, or 3)
+   */
   const getStepNumber = (step: Step) => {
     switch (step) {
       case "address":
@@ -862,6 +983,7 @@ export default function ContractDetailsForm({
     <div className="mx-auto max-w-4xl px-6">
       <FormProvider {...methods}>
         <Card className="w-full shadow-lg border-primary/20">
+          {/* Card Header with Step Information */}
           <CardHeader>
             <CardTitle className="text-xl font-headline text-primary">
               {`Step ${getStepNumber(currentStep)} of 3: ${
@@ -878,9 +1000,12 @@ export default function ContractDetailsForm({
             </CardDescription>
           </CardHeader>
 
+          {/* Dynamic Step Content */}
           {renderStep()}
 
+          {/* Navigation Footer */}
           <CardFooter className="flex justify-between pt-6 border-t">
+            {/* Previous Button */}
             <Button
               type="button"
               variant="outline"
@@ -891,6 +1016,8 @@ export default function ContractDetailsForm({
             >
               <ArrowLeft className="mr-2 h-4 w-4" /> Previous
             </Button>
+
+            {/* Next/Verify Button */}
             <Button
               type="button"
               onClick={next}

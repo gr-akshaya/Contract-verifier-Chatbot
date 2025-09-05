@@ -24,9 +24,13 @@ import {
 import { Loader2, Search } from "lucide-react";
 import { NETWORKS } from "@/lib/constants";
 import { getSourceCode, getAbi } from "@/lib/coredao";
-import type {GetSourceCodeResponse } from "@/types/coredao";
+import type { GetSourceCodeResponse } from "@/types/coredao";
 import { toast } from "sonner";
 
+/**
+ * Zod schema for validating contract lookup form data
+ * Validates network selection and contract address format
+ */
 const LookupSchema = z.object({
   network: z.enum(["mainnet", "testnet2"]).optional(),
   contractAddress: z
@@ -36,6 +40,10 @@ const LookupSchema = z.object({
 
 type LookupFormData = z.infer<typeof LookupSchema>;
 
+/**
+ * Props interface for ContractLookupForm component
+ * @param onCompletion - Callback function called when lookup operation completes
+ */
 interface ContractLookupFormProps {
   onCompletion: (
     error: string | null,
@@ -50,11 +58,30 @@ interface ContractLookupFormProps {
   ) => void;
 }
 
+/**
+ * ContractLookupForm Component
+ *
+ * A form component that allows users to lookup verified smart contracts
+ * by providing a contract address and selecting a network (Core Mainnet or Testnet).
+ *
+ * Features:
+ * - Form validation using Zod schema
+ * - Network selection (Mainnet/Testnet)
+ * - Contract address validation (40-character hex format)
+ * - Fetches both source code and ABI data
+ * - Loading states and error handling
+ * - Toast notifications for user feedback
+ *
+ * @param onCompletion - Callback function to handle lookup completion
+ * @returns JSX element containing the lookup form
+ */
 export default function ContractLookupForm({
   onCompletion,
 }: ContractLookupFormProps) {
+  // Local state for managing loading status
   const [isLoading, setIsLoading] = useState(false);
 
+  // React Hook Form setup with Zod validation
   const methods = useForm<LookupFormData>({
     resolver: zodResolver(LookupSchema),
     defaultValues: {
@@ -68,8 +95,15 @@ export default function ContractLookupForm({
     formState: { errors },
   } = methods;
 
+  /**
+   * Handles form submission and contract lookup
+   * Fetches both source code and ABI data in parallel
+   *
+   * @param data - Form data containing network and contract address
+   */
   const onSubmit: SubmitHandler<LookupFormData> = async (data) => {
     setIsLoading(true);
+    // Notify parent component that lookup has started
     onCompletion(null, {
       isLoading: true,
       statusMessage: "Fetching contract details...",
@@ -78,19 +112,25 @@ export default function ContractLookupForm({
     });
 
     try {
+      // Fetch both source code and ABI data in parallel for better performance
       const [sourceData, abiData] = await Promise.all([
         getSourceCode(data.network, data.contractAddress),
         getAbi(data.network, data.contractAddress),
       ]);
 
+      // Check if contract is verified (status "1" means success)
       if (sourceData.status === "1" && sourceData.result.length > 0) {
         const fetchedAbi = abiData.status === "1" ? abiData.result : null;
+
+        // Show warning if ABI couldn't be retrieved
         if (abiData.status !== "1") {
           toast("ABI Not Found", {
             description:
               abiData.message || "Could not retrieve ABI for this contract.",
           });
         }
+
+        // Notify parent component of successful lookup
         onCompletion(null, {
           isLoading: false,
           statusMessage: "Contract details retrieved successfully.",
@@ -99,10 +139,12 @@ export default function ContractLookupForm({
           verifiedSourceCode: sourceData.result[0],
           verifiedAbi: fetchedAbi,
         });
+
         toast("Contract Found", {
           description: "Verified source code and ABI retrieved.",
         });
       } else {
+        // Handle case where contract is not found or not verified
         const errorMsg =
           sourceData.message ||
           "Contract not found or not verified on the selected network.";
@@ -112,6 +154,7 @@ export default function ContractLookupForm({
           errorMessage: errorMsg,
           isVerified: false,
         });
+
         toast(
           <div>
             <div className="font-semibold">Not Found</div>
@@ -121,6 +164,7 @@ export default function ContractLookupForm({
         );
       }
     } catch (error: unknown) {
+      // Handle unexpected errors during lookup
       let errorMsg = "An unexpected error occurred during lookup.";
       if (
         error &&
@@ -130,12 +174,14 @@ export default function ContractLookupForm({
       ) {
         errorMsg = (error as { message: string }).message;
       }
+
       onCompletion(errorMsg, {
         isLoading: false,
         statusMessage: null,
         errorMessage: errorMsg,
         isVerified: false,
       });
+
       toast(
         <div>
           <div className="font-semibold">Lookup Error</div>
@@ -163,6 +209,7 @@ export default function ContractLookupForm({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6 pt-6">
+              {/* Network Selection */}
               <div>
                 <Label htmlFor="lookup-network" className="text-base">
                   Network
@@ -203,6 +250,8 @@ export default function ContractLookupForm({
                   </p>
                 )}
               </div>
+
+              {/* Contract Address Input */}
               <div>
                 <Label htmlFor="lookup-contractAddress" className="text-base">
                   Contract Address

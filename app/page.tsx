@@ -1,7 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+// React and Next.js imports
 import React, { useState, useRef, useEffect } from "react";
+
+// Component imports
 import Header from "@/components/layout/Header";
 import FooterInput from "@/components/layout/Footer";
 import NetworkSelector from "../components/layout/NetworkOption";
@@ -10,18 +13,24 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import MultiFileUploadComponent from "@/components/contract-verification/MultiFileUploadComponent";
+
+// Lucide React icons for UI elements
 import {
-  CheckCircle2,
-  XCircle,
-  ExternalLink,
-  Copy,
-  Code,
-  Loader2,
-  Upload,
-  FolderOpen,
-  ArrowLeft,
+  CheckCircle2, // Success/verified status
+  XCircle, // Error/unverified status
+  ExternalLink, // External links
+  Copy, // Copy to clipboard
+  Code, // Code-related actions
+  Loader2, // Loading spinner
+  Upload, // File upload
+  FolderOpen, // Multiple files
+  ArrowLeft, // Back navigation
 } from "lucide-react";
+
+// Core DAO API functions
 import { getSourceCode, verifyContract, getAbi } from "@/lib/coredao";
+
+// Constants and types
 import { NETWORKS, LICENSE_TYPES } from "@/lib/constants";
 import {
   type Network,
@@ -31,16 +40,23 @@ import {
 } from "@/types/coredao";
 import { toast } from "sonner";
 
+/**
+ * Message interface for chat messages
+ * Represents individual messages in the conversation
+ */
 interface Message {
-  id: string;
-  sender: "user" | "ai";
-  text?: string;
-  component?: React.ReactNode;
-  timestamp: Date;
-  isTyping?: boolean;
+  id: string; // Unique identifier for the message
+  sender: "user" | "ai"; // Who sent the message
+  text?: string; // Text content of the message
+  component?: React.ReactNode; // React component for rich content
+  timestamp: Date; // When the message was created
+  isTyping?: boolean; // Whether this is a typing indicator
 }
 
+// Regular expression to match Ethereum contract addresses (40 hex characters after 0x)
 const CONTRACT_ADDRESS_REGEX = /0x[a-fA-F0-9]{40}/g;
+
+// Available commands that users can type
 const AVAILABLE_COMMANDS = [
   { command: "verify", description: "Verify a new smart contract" },
   { command: "lookup", description: "Look up an existing contract" },
@@ -48,25 +64,42 @@ const AVAILABLE_COMMANDS = [
   { command: "clear", description: "Clear chat history" },
 ];
 
+/**
+ * Main Home component - Core Smart Contract Verifier Chatbot
+ *
+ * This component provides a conversational interface for:
+ * - Looking up existing smart contracts
+ * - Verifying new smart contracts on Core blockchain
+ * - Managing verification sessions with step-by-step guidance
+ */
 export default function Home() {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [userInput, setUserInput] = useState("");
-  const [isProcessing, setIsProcessing] = useState(false);
+  // State management
+  const [messages, setMessages] = useState<Message[]>([]); // Chat messages
+  const [userInput, setUserInput] = useState(""); // Current user input
+  const [isProcessing, setIsProcessing] = useState(false); // Loading state
   const [verificationSession, setVerificationSession] = useState<{
-    address: string;
-    network: Network;
-    step: number;
+    // Current verification session
+    address: string; // Contract address being verified
+    network: Network; // Network (mainnet/testnet)
+    step: number; // Current step in verification process
     data: Partial<
+      // Verification data
       VerificationDetails & {
-        compilerType: string;
-        sourceCode: string;
-        //sourceCodes?: { code: string; fileName: string }[];
+        compilerType: string; // Type of compiler (single/multi/json)
+        sourceCode: string; // Contract source code
+        //sourceCodes?: { code: string; fileName: string }[];       // Multi-file sources (commented out)
       }
     >;
   } | null>(null);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null); // Reference to scroll area for auto-scroll
 
-
+  /**
+   * Adds a new message to the chat
+   * @param sender - Who sent the message ("user" or "ai")
+   * @param text - Text content (optional)
+   * @param component - React component for rich content (optional)
+   * @param isTyping - Whether this is a typing indicator (default: false)
+   */
   const addMessage = (
     sender: "user" | "ai",
     text?: string,
@@ -76,7 +109,7 @@ export default function Home() {
     setMessages((prev) => [
       ...prev,
       {
-        id: Date.now().toString() + Math.random(),
+        id: Date.now().toString() + Math.random(), // Generate unique ID
         sender,
         text,
         component,
@@ -86,6 +119,10 @@ export default function Home() {
     ]);
   };
 
+  /**
+   * Adds a typing indicator message
+   * @returns The ID of the typing message for later removal
+   */
   const addTypingMessage = () => {
     const typingId = "typing-" + Date.now();
     setMessages((prev) => [
@@ -100,10 +137,18 @@ export default function Home() {
     return typingId;
   };
 
+  /**
+   * Removes a typing indicator message
+   * @param typingId - The ID of the typing message to remove
+   */
   const removeTypingMessage = (typingId: string) => {
     setMessages((prev) => prev.filter((msg) => msg.id !== typingId));
   };
 
+  /**
+   * Load cached messages from localStorage on component mount
+   * If no cached messages exist, show welcome message
+   */
   useEffect(() => {
     const cachedMessages = localStorage.getItem("core-chatbot-messages");
     if (cachedMessages) {
@@ -112,20 +157,25 @@ export default function Home() {
         setMessages(
           parsed.map((msg: any) => ({
             ...msg,
-            timestamp: new Date(msg.timestamp),
+            timestamp: new Date(msg.timestamp), // Convert timestamp back to Date object
           }))
         );
       } catch (error) {
         console.error("Failed to load cached messages:", error);
       }
     } else {
+      // Show welcome message for new users
       addMessage(
         "ai",
-        "**Welcome to Core Smart Contract Verifier!**\n\n** What I can do for you:**\n\n🔍 **Contract Lookup** - Drop any contract address & get instant insights!\n⚡ **Contract Verification** - I'll guide you through verification step-by-step\n🧠 **Smart Features** - Auto-detection of contracts and easy verification process\n\n**Try these:**\n  • Paste: `0x8C9d5AeA15C2A6eF94bC3C8317B889bED6E8Bf8d`\n  • Type: `verify 0x123...` \n  • Type: `help` for command list\n\n*Ready to verify your contracts? Let's go!* 🎊"
+        "**Welcome to Core Smart Contract Verifier!**\n\n** What I can do for you:**\n\n🔍 **Contract Lookup** - Drop any contract address & get instant insights!\n⚡ **Contract Verification** - I'll guide you through verification step-by-step\n🧠 **Smart Features** - Auto-detection of contracts and easy verification process\n\n**Try these:**\n  • Paste: `0x8C9d5AeA15C2A6eF94bC3C8317B889bED6E8Bf8d`\n  • Type: `verify 0x123...` \n  • Type: `help` for command list\n\n Ready to verify your contracts? Let's go!"
       );
     }
   }, []);
 
+  /**
+   * Save messages to localStorage whenever messages change
+   * Filters out components to avoid circular reference issues
+   */
   useEffect(() => {
     if (messages.length > 0) {
       // Filter out components before saving to localStorage since they contain circular references
@@ -140,6 +190,10 @@ export default function Home() {
     }
   }, [messages]);
 
+  /**
+   * Auto-scroll to bottom when new messages are added
+   * Uses multiple delayed scrolls for smooth animation
+   */
   useEffect(() => {
     const scrollToBottom = () => {
       if (scrollAreaRef.current) {
@@ -149,6 +203,7 @@ export default function Home() {
         if (scrollElement) {
           scrollElement.scrollTop = scrollElement.scrollHeight;
 
+          // Multiple delayed scrolls for smooth animation
           const delays = [50, 100, 200, 500];
 
           delays.forEach((delay) => {
@@ -170,11 +225,21 @@ export default function Home() {
     }
   }, [messages]);
 
+  /**
+   * Extracts contract address from user input using regex
+   * @param input - User input string
+   * @returns Contract address if found, null otherwise
+   */
   const extractContractAddress = (input: string): string | null => {
     const matches = input.match(CONTRACT_ADDRESS_REGEX);
     return matches ? matches[0] : null;
   };
 
+  /**
+   * Detects network from user input keywords
+   * @param input - User input string
+   * @returns Network type or undefined if not specified
+   */
   const detectNetwork = (input: string): Network | undefined => {
     const lowerInput = input.toLowerCase();
     if (lowerInput.includes("testnet") || lowerInput.includes("test")) {
@@ -183,10 +248,16 @@ export default function Home() {
     if (lowerInput.includes("mainnet") || lowerInput.includes("main")) {
       return "mainnet";
     }
-    return undefined; // 👈 nothing specified
+    return undefined; // Nothing specified
   };
-  
 
+  /**
+   * Formats contract information into a displayable component
+   * @param contractData - Contract data from API
+   * @param network - Network the contract is on
+   * @param address - Contract address
+   * @returns JSX component displaying contract information
+   */
   const formatContractInfo = (
     contractData: GetSourceCodeResponse["result"][0],
     network: Network,
@@ -198,224 +269,251 @@ export default function Home() {
     return (
       <div className="contract-cards-wrapper">
         <div className="contract-card">
-    {/* Header */}
-    <div className="flex items-start justify-between mb-6">
-      <h3 className="text-lg font-semibold flex items-center gap-2">
-        <Code className="w-5 h-5" /> Contract Information
-      </h3>
+          {/* Header with verification status */}
+          <div className="flex items-start justify-between mb-6">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <Code className="w-5 h-5" /> Contract Information
+            </h3>
 
-      <div
-        className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
-          isVerified ? "bg-black text-green-500" : "bg-black text-red-500"
-        }`}
-      >
-        {isVerified ? (
-          <>
-            <CheckCircle2 className="w-4 h-4" />
-            Verified
-          </>
-        ) : (
-          <>
-            <XCircle className="w-4 h-4" />
-            Not Verified
-          </>
-        )}
-      </div>
-    </div>
-
-    {/* Contract Info Grid */}
-    <div className="grid grid-cols-2 gap-6 mb-6">
-      <div className="flex flex-col">
-        <span className="text-xs text-muted-foreground">Network</span>
-        <span className="text-sm mt-1">
-          {networkInfo?.label || network}
-        </span>
-
-        {isVerified && (
-          <>
-            <span className="text-xs text-muted-foreground mt-4">
-              Compiler Version
-            </span>
-            <span className="text-sm mt-1">
-              {contractData.CompilerVersion || "Unknown"}
-            </span>
-          </>
-        )}
-      </div>
-
-      <div className="flex flex-col">
-        <span className="text-xs text-muted-foreground">Contract Name</span>
-        <span className="text-sm mt-1">
-          {contractData.ContractName || "Unknown"}
-        </span>
-
-        {isVerified && (
-          <>
-            <span className="text-xs text-muted-foreground mt-4">
-              Optimization
-            </span>
-            <span className="text-sm mt-1">
-              {contractData.OptimizationUsed === "1"
-                ? "Enabled"
-                : "Disabled"}
-            </span>
-          </>
-        )}
-      </div>
-    </div>
-
-    {/* Divider */}
-    <div className="border-t border-white/10 my-6"></div>
-
-    {/* Contract Address */}
-    <div className="mb-6">
-      <div className="text-xs text-muted-foreground mb-2">
-        Contract Address
-      </div>
-      <div className="relative">
-        <input
-          type="text"
-          readOnly
-          value={address}
-          className="w-full rounded-md bg-muted/60 px-3 py-2 text-sm pr-10 border-none outline-none"
-        />
-        <button
-          type="button"
-          className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-md hover:bg-foreground/5"
-          onClick={() => {
-            navigator.clipboard.writeText(address);
-            toast.success("Address copied to clipboard");
-          }}
-        >
-          <Copy className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
-
-    {/* Source Code */}
-    {isVerified && contractData.SourceCode && (
-      <div className="mb-6">
-        <div className="text-xs text-muted-foreground mb-2">Source Code</div>
-        <div className="rounded-md bg-muted/60 p-3">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-muted-foreground">
-              {contractData.ContractName || "Contract"}
-            </span>
-            <button
-              type="button"
-              className="p-2 rounded-md hover:bg-foreground/5"
-              onClick={() => {
-                navigator.clipboard.writeText(contractData.SourceCode || "");
-                toast.success("Source code copied to clipboard");
-              }}
+            {/* Verification status badge */}
+            <div
+              className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
+                isVerified ? "bg-black text-green-500" : "bg-black text-red-500"
+              }`}
             >
-              <Copy className="w-4 h-4" />
-            </button>
+              {isVerified ? (
+                <>
+                  <CheckCircle2 className="w-4 h-4" />
+                  Verified
+                </>
+              ) : (
+                <>
+                  <XCircle className="w-4 h-4" />
+                  Not Verified
+                </>
+              )}
+            </div>
           </div>
 
-          <div className="rounded-md bg-black text-white text-xs font-mono p-3 max-h-56 overflow-y-auto" 
-             style={{
-              fontFamily: "'DM Mono', monospace",
-              fontWeight: 500,
-              fontStyle: "normal", // "Light" = weight, not style
-              fontSize: "14px",
-              lineHeight: "140%",
-              letterSpacing: "0",
-              whiteSpace: "pre-wrap", // preserves code formatting
-            }}
-            >
-            {(() => {
-              let parsed: any = null;
-              try {
-                let code = contractData.SourceCode.trim();
-                if (
-                  (code.startsWith('"') && code.endsWith('"')) ||
-                  (code.startsWith("'") && code.endsWith("'"))
-                ) {
-                  code = code.slice(1, -1);
-                }
-                code = code
-                  .replace(/^\s*{\s*{+/, "{")
-                  .replace(/}+}\s*$/, "}");
-                parsed = JSON.parse(code);
-              } catch {
-                parsed = null;
-              }
+          {/* Contract details grid */}
+          <div className="grid grid-cols-2 gap-6 mb-6">
+            <div className="flex flex-col">
+              <span className="text-xs text-muted-foreground">Network</span>
+              <span className="text-sm mt-1">
+                {networkInfo?.label || network}
+              </span>
 
-              if (
-                parsed &&
-                typeof parsed === "object" &&
-                parsed.sources &&
-                typeof parsed.sources === "object"
-              ) {
-                return (
-                  <div>
-                    {Object.entries(parsed.sources).map(
-                      ([fileName, fileObj]: [string, any]) => (
-                        <div key={fileName} className="mb-4">
-                          <div className="font-bold text-xs mb-1">{fileName}</div>
-                          <pre className="whitespace-pre-wrap">
-                            {(fileObj as any).content?.substring(0, 600) || ""}
-                            {((fileObj as any).content?.length || 0) > 600
-                              ? "..."
-                              : ""}
-                          </pre>
+              {/* Show compiler version if verified */}
+              {isVerified && (
+                <>
+                  <span className="text-xs text-muted-foreground mt-4">
+                    Compiler Version
+                  </span>
+                  <span className="text-sm mt-1">
+                    {contractData.CompilerVersion || "Unknown"}
+                  </span>
+                </>
+              )}
+            </div>
+
+            <div className="flex flex-col">
+              <span className="text-xs text-muted-foreground">
+                Contract Name
+              </span>
+              <span className="text-sm mt-1">
+                {contractData.ContractName || "Unknown"}
+              </span>
+
+              {/* Show optimization settings if verified */}
+              {isVerified && (
+                <>
+                  <span className="text-xs text-muted-foreground mt-4">
+                    Optimization
+                  </span>
+                  <span className="text-sm mt-1">
+                    {contractData.OptimizationUsed === "1"
+                      ? "Enabled"
+                      : "Disabled"}
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-white/10 my-6"></div>
+
+          {/* Contract address with copy functionality */}
+          <div className="mb-6">
+            <div className="text-xs text-muted-foreground mb-2">
+              Contract Address
+            </div>
+            <div className="relative">
+              <input
+                type="text"
+                readOnly
+                value={address}
+                className="w-full rounded-md bg-muted/60 px-3 py-2 text-sm pr-10 border-none outline-none"
+              />
+              <button
+                type="button"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-md hover:bg-foreground/5"
+                onClick={() => {
+                  navigator.clipboard.writeText(address);
+                  toast.success("Address copied to clipboard");
+                }}
+              >
+                <Copy className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Source code display (only for verified contracts) */}
+          {isVerified && contractData.SourceCode && (
+            <div className="mb-6">
+              <div className="text-xs text-muted-foreground mb-2">
+                Source Code
+              </div>
+              <div className="rounded-md bg-muted/60 p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-muted-foreground">
+                    {contractData.ContractName || "Contract"}
+                  </span>
+                  <button
+                    type="button"
+                    className="p-2 rounded-md hover:bg-foreground/5"
+                    onClick={() => {
+                      navigator.clipboard.writeText(
+                        contractData.SourceCode || ""
+                      );
+                      toast.success("Source code copied to clipboard");
+                    }}
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Source code display with syntax highlighting */}
+                <div
+                  className="rounded-md bg-black text-white text-xs font-mono p-3 max-h-56 overflow-y-auto"
+                  style={{
+                    fontFamily: "'DM Mono', monospace",
+                    fontWeight: 500,
+                    fontStyle: "normal",
+                    fontSize: "14px",
+                    lineHeight: "140%",
+                    letterSpacing: "0",
+                    whiteSpace: "pre-wrap", // Preserves code formatting
+                  }}
+                >
+                  {(() => {
+                    // Parse and display source code
+                    let parsed: any = null;
+                    try {
+                      let code = contractData.SourceCode.trim();
+                      // Remove quotes if present
+                      if (
+                        (code.startsWith('"') && code.endsWith('"')) ||
+                        (code.startsWith("'") && code.endsWith("'"))
+                      ) {
+                        code = code.slice(1, -1);
+                      }
+                      // Clean up JSON formatting
+                      code = code
+                        .replace(/^\s*{\s*{+/, "{")
+                        .replace(/}+}\s*$/, "}");
+                      parsed = JSON.parse(code);
+                    } catch {
+                      parsed = null;
+                    }
+
+                    // Handle multi-file source code (Standard JSON Input)
+                    if (
+                      parsed &&
+                      typeof parsed === "object" &&
+                      parsed.sources &&
+                      typeof parsed.sources === "object"
+                    ) {
+                      return (
+                        <div>
+                          {Object.entries(parsed.sources).map(
+                            ([fileName, fileObj]: [string, any]) => (
+                              <div key={fileName} className="mb-4">
+                                <div className="font-bold text-xs mb-1">
+                                  {fileName}
+                                </div>
+                                <pre className="whitespace-pre-wrap">
+                                  {(fileObj as any).content?.substring(
+                                    0,
+                                    600
+                                  ) || ""}
+                                  {((fileObj as any).content?.length || 0) > 600
+                                    ? "..."
+                                    : ""}
+                                </pre>
+                              </div>
+                            )
+                          )}
                         </div>
-                      )
-                    )}
-                  </div>
-                );
-              } else {
-                return (
-                  <pre className="whitespace-pre-wrap">
-                    {contractData.SourceCode.substring(0, 600)}
-                    {contractData.SourceCode.length > 600 ? "..." : ""}
-                  </pre>
-                );
-              }
-            })()}
+                      );
+                    } else {
+                      // Handle single file source code
+                      return (
+                        <pre className="whitespace-pre-wrap">
+                          {contractData.SourceCode.substring(0, 600)}
+                          {contractData.SourceCode.length > 600 ? "..." : ""}
+                        </pre>
+                      );
+                    }
+                  })()}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Action buttons */}
+          <div className="grid grid-cols-2 gap-3">
+            {/* View on Explorer button */}
+            <button
+              type="button"
+              className="w-full rounded-full py-2 px-4 inline-flex items-center justify-center gap-2 bg-muted/60 hover:bg-muted/70"
+              onClick={() => {
+                const explorerUrl =
+                  network === "mainnet"
+                    ? `https://scan.coredao.org/address/${address}`
+                    : `https://scan.test2.btcs.network/address/${address}`;
+                window.open(explorerUrl, "_blank");
+              }}
+            >
+              <span className="text-sm">View on Explorer</span>
+              <ExternalLink className="w-4 h-4" />
+            </button>
+
+            {/* Copy ABI button (only for verified contracts) */}
+            {isVerified && (
+              <button
+                type="button"
+                className="w-full rounded-full py-2 px-4 inline-flex items-center justify-center gap-2 bg-muted/60 hover:bg-muted/70"
+                onClick={() => {
+                  navigator.clipboard.writeText(contractData.ABI || "");
+                  toast.success("ABI copied to clipboard");
+                }}
+              >
+                <span className="text-sm">Copy ABI</span>
+                <Copy className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       </div>
-    )}
-
-    {/* Action Buttons */}
-    <div className="grid grid-cols-2 gap-3">
-      <button
-        type="button"
-        className="w-full rounded-full py-2 px-4 inline-flex items-center justify-center gap-2 bg-muted/60 hover:bg-muted/70"
-        onClick={() => {
-          const explorerUrl =
-            network === "mainnet"
-              ? `https://scan.coredao.org/address/${address}`
-              : `https://scan.test2.btcs.network/address/${address}`;
-          window.open(explorerUrl, "_blank");
-        }}
-      >
-        <span className="text-sm">View on Explorer</span>
-        <ExternalLink className="w-4 h-4" />
-      </button>
-
-      {isVerified && (
-        <button
-          type="button"
-          className="w-full rounded-full py-2 px-4 inline-flex items-center justify-center gap-2 bg-muted/60 hover:bg-muted/70"
-          onClick={() => {
-            navigator.clipboard.writeText(contractData.ABI || "");
-            toast.success("ABI copied to clipboard");
-          }}
-        >
-          <span className="text-sm">Copy ABI</span>
-          <Copy className="w-4 h-4" />
-        </button>
-      )}
-    </div>
-    </div>
-    </div>
-
     );
   };
 
+  /**
+   * Handles contract lookup functionality
+   * @param address - Contract address to lookup
+   * @param network - Network to search on
+   */
   const handleContractLookup = async (address: string, network: Network) => {
     const typingId = addTypingMessage();
     setIsProcessing(true);
@@ -429,12 +527,14 @@ export default function Home() {
         const isVerified =
           contractData.ABI !== "Contract source code not verified";
 
+        // Display contract information
         addMessage(
           "ai",
           undefined,
           formatContractInfo(contractData, network, address)
         );
 
+        // Provide next steps based on verification status
         if (isVerified) {
           addMessage(
             "ai",
@@ -468,10 +568,17 @@ export default function Home() {
     }
   };
 
+  /**
+   * Creates verification step component for the multi-step verification process
+   * @param step - Current step number
+   * @param sessionData - Current session data
+   * @returns JSX component for the verification step
+   */
   const createVerificationStepComponent = (step: number, sessionData: any) => {
     const renderStepContent = () => {
       switch (step) {
         case 1:
+          // Step 1: Display contract address and network
           return (
             <div className="space-y-6 ">
               <div>
@@ -498,6 +605,7 @@ export default function Home() {
             </div>
           );
         case 2:
+          // Step 2: Compiler type selection
           return (
             <div className="space-y-4">
               <div>
@@ -518,10 +626,10 @@ export default function Home() {
                         compilerDescription = "Solidity Standard JSON Input";
                       }
 
-                      // First add the user message
+                      // Add user message
                       addMessage("user", `Selected: ${compilerDescription}`);
 
-                      // Then update the session state
+                      // Update session state and advance to next step
                       setVerificationSession((prev) =>
                         prev
                           ? {
@@ -538,7 +646,7 @@ export default function Home() {
                           : null
                       );
 
-                      // Finally add the AI response
+                      // Add AI response for next step
                       addMessage(
                         "ai",
                         `✅ **Compiler type set:** ${compilerDescription}\n\n**Step 3 of 6: Constructor Arguments**\nAre there any constructor arguments? If so, please provide them, otherwise, type 'no' or 'na' to continue.`
@@ -575,79 +683,87 @@ export default function Home() {
     return (
       <div className="contract-cards-wrapper">
         <Card className="contract-card no-background">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Code className="w-5 h-5" />
-              Contract Verification - Step {step} of 6
-            </CardTitle>
-            {step > 1 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  if (verificationSession) {
-                    setVerificationSession({
-                      ...verificationSession,
-                      step: step - 1,
-                    });
-                    // Add a message to indicate going back
-                    addMessage(
-                      "ai",
-                      `Going back to Step ${step - 1}...`,
-                      createVerificationStepComponent(
-                        step - 1,
-                        verificationSession
-                      )
-                    );
-                  }
-                }}
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
-              </Button>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          {renderStepContent()}
-          {step > 1 && (
-            <div className="flex justify-start mt-6">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  if (verificationSession) {
-                    setVerificationSession({
-                      ...verificationSession,
-                      step: step - 1,
-                    });
-                    addMessage(
-                      "ai",
-                      `Going back to Step ${step - 1}...`,
-                      createVerificationStepComponent(
-                        step - 1,
-                        verificationSession
-                      )
-                    );
-                  }
-                }}
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Previous Step
-              </Button>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Code className="w-5 h-5" />
+                Contract Verification - Step {step} of 6
+              </CardTitle>
+              {/* Back button for steps after 1 */}
+              {step > 1 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (verificationSession) {
+                      setVerificationSession({
+                        ...verificationSession,
+                        step: step - 1,
+                      });
+                      // Add message to indicate going back
+                      addMessage(
+                        "ai",
+                        `Going back to Step ${step - 1}...`,
+                        createVerificationStepComponent(
+                          step - 1,
+                          verificationSession
+                        )
+                      );
+                    }
+                  }}
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back
+                </Button>
+              )}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent>
+            {renderStepContent()}
+            {/* Additional back button at bottom */}
+            {step > 1 && (
+              <div className="flex justify-start mt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    if (verificationSession) {
+                      setVerificationSession({
+                        ...verificationSession,
+                        step: step - 1,
+                      });
+                      addMessage(
+                        "ai",
+                        `Going back to Step ${step - 1}...`,
+                        createVerificationStepComponent(
+                          step - 1,
+                          verificationSession
+                        )
+                      );
+                    }
+                  }}
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back to Previous Step
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     );
   };
 
+  /**
+   * Starts the verification flow for a contract
+   * @param address - Contract address to verify
+   * @param network - Network the contract is on
+   */
   const startVerificationFlow = async (address: string, network: Network) => {
-    console.log("Verifyy")
+    console.log("Verifyy");
     const typingId = addTypingMessage();
 
     try {
+      // Check if contract exists and get current status
       const sourceCodeResponse = await getSourceCode(network, address);
       removeTypingMessage(typingId);
 
@@ -656,6 +772,7 @@ export default function Home() {
         const isVerified =
           contractData.ABI !== "Contract source code not verified";
 
+        // If already verified, show contract info and exit
         if (isVerified) {
           addMessage(
             "ai",
@@ -678,6 +795,7 @@ export default function Home() {
           return;
         }
 
+        // Initialize verification session
         setVerificationSession({
           address,
           network,
@@ -692,6 +810,7 @@ export default function Home() {
           },
         });
 
+        // Start verification process
         addMessage(
           "ai",
           `**Starting verification for contract:** \`${address}\`\n\n**Network:** ${
@@ -705,275 +824,282 @@ export default function Home() {
           "ai",
           undefined,
           <div className="contract-cards-wrapper">
-          <Card className="contract-card no-background">
-            <CardHeader>
-              <CardTitle>Source Code Input</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Button
-                  variant="outline"
-                  className="h-20 flex flex-col items-center justify-center"
-                  style={{ backgroundColor: "rgba(255, 255, 255, 0.2)"}} 
-                  onClick={() => {
-                    addMessage("user", "I'll paste my source code");
-                    addMessage(
-                      "ai",
-                      "Perfect! Please paste your complete Solidity source code below. Make sure it includes all contracts, imports, and dependencies:",
-                      <div className="contract-cards-wrapper">
-                        <Card className="contract-card no-background">
-                        <CardContent className="p-4">
-                          <Textarea
-                            placeholder="Paste your Solidity source code here..."
-                            className="min-h-[300px] font-mono whitespace-pre preserve-whitespace"
-                            style={{ wordBreak: "normal", whiteSpace: "pre" }}
-                            onPaste={(e) => {
-                              const pastedText =
-                                e.clipboardData.getData("text");
-                              if (pastedText) {
-                                e.preventDefault();
-                                const textarea =
-                                  e.target as HTMLTextAreaElement;
-                                textarea.value = pastedText;
-                                // Don't auto-submit on paste to allow user to verify the code first
-                              }
-                            }}
-                            spellCheck={false}
-                            autoCorrect="off"
-                            autoCapitalize="off"
-                            // Removed auto-submission on change to prevent premature processing
-                          />
-                          <div className="mt-4 flex justify-end">
-                            <Button
-                              onClick={(
-                                e: React.MouseEvent<HTMLButtonElement>
-                              ) => {
-                                const textarea = e.currentTarget.parentElement
-                                  ?.previousElementSibling as HTMLTextAreaElement;
-
-                                if (textarea) {
-                                  const sourceCode = textarea.value;
-
-                                  if (sourceCode.trim().length > 50) {
-                                    // Add a user message to show the code is being processed
-                                    addMessage(
-                                      "user",
-                                      "Submitting contract source code..."
-                                    );
-                                    setVerificationSession({
-                                      address,
-                                      network,
-                                      step: 1,
-                                      data: {
-                                        network,
-                                        contractAddress: address,
-                                        evmVersion: "shanghai",
-                                        optimizationUsed: "0",
-                                        runs: 200,
-                                        licenseType: LicenseType.MIT,
-                                        sourceCode: sourceCode,
-                                      },
-                                    });
-                                    // Process directly without changing step (handleVerificationInput will update state)
-                                    setTimeout(() => {
-                                      // Don't set the session directly here, let the handleVerificationInput function do it
-                                      handleVerificationInput(sourceCode);
-                                    }, 100);
-                                  } else {
-                                    addMessage(
-                                      "ai",
-                                      "⚠️ **Source code seems too short**\n\nPlease provide the complete Solidity source code. It should typically be more than a few lines long."
-                                    );
+            <Card className="contract-card no-background">
+              <CardHeader>
+                <CardTitle>Source Code Input</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Paste Code Button */}
+                  <Button
+                    variant="outline"
+                    className="h-20 flex flex-col items-center justify-center"
+                    style={{ backgroundColor: "rgba(255, 255, 255, 0.2)" }}
+                    onClick={() => {
+                      addMessage("user", "I'll paste my source code");
+                      addMessage(
+                        "ai",
+                        "Perfect! Please paste your complete Solidity source code below. Make sure it includes all contracts, imports, and dependencies:",
+                        <div className="contract-cards-wrapper">
+                          <Card className="contract-card no-background">
+                            <CardContent className="p-4">
+                              <Textarea
+                                placeholder="Paste your Solidity source code here..."
+                                className="min-h-[300px] font-mono whitespace-pre preserve-whitespace"
+                                style={{
+                                  wordBreak: "normal",
+                                  whiteSpace: "pre",
+                                }}
+                                onPaste={(e) => {
+                                  const pastedText =
+                                    e.clipboardData.getData("text");
+                                  if (pastedText) {
+                                    e.preventDefault();
+                                    const textarea =
+                                      e.target as HTMLTextAreaElement;
+                                    textarea.value = pastedText;
+                                    // Don't auto-submit on paste to allow user to verify the code first
                                   }
-                                }
-                              }}
-                            >
-                              Submit Code
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      </div>
-                    );
-                  }}
-                >
-                  <Code className="w-6 h-6 mb-2" />
-                  Paste Code
-                </Button>
-                <Button
-                  variant="outline"
-                  className="h-20 flex flex-col items-center justify-center"
-                  style={{ backgroundColor: "rgba(255, 255, 255, 0.2)"}} 
-                  onClick={() => {
-                    const input = document.createElement("input");
-                    input.type = "file";
-                    // Only allow one file
-                    input.multiple = false;
-                    input.accept = ".sol,.json";
-                    input.onchange = (e) => {
-                      const files = (e.target as HTMLInputElement).files;
-                      if (files && files.length === 1) {
-                        const file = files[0];
-                        const reader = new FileReader();
-                        reader.onload = (e) => {
-                          const content = e.target?.result as string;
-                          addMessage("user", `📁 Uploaded file: ${file.name}`);
-                          // Process as single file
-                          setVerificationSession((prev: any) =>
-                            prev
-                              ? {
-                                  ...prev,
-                                  data: {
-                                    ...prev.data,
-                                    compilerType: file.name.endsWith(".json")
-                                      ? "solidity-json"
-                                      : "solidity-single",
-                                    sourceCode: content,
-                                  },
-                                }
-                              : null
-                          );
-                          handleVerificationInput(content);
-                        };
-                        reader.readAsText(file);
-                      } else {
-                        addMessage(
-                          "ai",
-                          "⚠️ Please select exactly one .sol or .json file."
-                        );
-                      }
-                    };
-                    input.click();
-                  }}
-                >
-                  <Upload className="w-6 h-6 mb-2" />
-                  Upload File
-                </Button>
-                <Button
-                  variant="outline"
-                  className="h-20 flex flex-col items-center justify-center"
-                  style={{ backgroundColor: "rgba(255, 255, 255, 0.2)"}} 
-                  onClick={() => {
-                    // Show a modal or card for multi-file upload
-                    addMessage("user", "📋 I'll use multiple files");
-                    // Show a custom component for multi-file upload
-                    addMessage(
-                      "ai",
-                      undefined,
-                      <MultiFileUploadComponent
-                        onConfirm={(files) => {
-                          // Store files and advance to the next step
-                          setVerificationSession((prev: any) =>
-                            prev
-                              ? {
-                                  ...prev,
-                                  step: 2, // Move to compiler type selection
-                                  data: {
-                                    ...prev.data,
-                                    compilerType: "solidity-json",
-                                    multiFileSources: files,
-                                  },
-                                }
-                              : null
-                          );
-                          addMessage(
-                            "ai",
-                            "✅ **Files uploaded!**\n\n**Step 2 of 6: Compiler Type**\nWhat type of source code are you providing?",
-                            <Card className="w-full max-w-3xl mx-auto mt-4">
-                              <CardHeader>
-                                <CardTitle>
-                                  📝 Compiler Type Selection
-                                </CardTitle>
-                              </CardHeader>
-                              <CardContent className="space-y-4">
-                                <div>
-                                  <label className="text-sm font-medium mb-2 block">
-                                    Select the compiler type that matches your
-                                    source code
-                                  </label>
-                                  <select
-                                    className="w-full p-3 border rounded-md bg-background text-sm"
-                                    onChange={(e) => {
-                                      if (e.target.value) {
-                                        let compilerDescription: string;
-                                        if (
-                                          e.target.value === "solidity-single"
-                                        ) {
-                                          compilerDescription =
-                                            "Single Solidity File";
-                                        } else if (
-                                          e.target.value === "solidity-multi"
-                                        ) {
-                                          compilerDescription =
-                                            "Multiple Solidity Files";
-                                        } else {
-                                          compilerDescription =
-                                            "Solidity Standard JSON Input";
-                                        }
+                                }}
+                                spellCheck={false}
+                                autoCorrect="off"
+                                autoCapitalize="off"
+                                // Removed auto-submission on change to prevent premature processing
+                              />
+                              <div className="mt-4 flex justify-end">
+                                <Button
+                                  onClick={(
+                                    e: React.MouseEvent<HTMLButtonElement>
+                                  ) => {
+                                    const textarea = e.currentTarget
+                                      .parentElement
+                                      ?.previousElementSibling as HTMLTextAreaElement;
 
-                                        setVerificationSession((prev) =>
-                                          prev
-                                            ? {
-                                                ...prev,
-                                                step: 3,
-                                                data: {
-                                                  ...prev.data,
-                                                  compilerType: e.target
-                                                    .value as
-                                                    | "solidity-single"
-                                                    | "solidity-multi"
-                                                    | "solidity-json",
-                                                },
-                                              }
-                                            : null
-                                        );
+                                    if (textarea) {
+                                      const sourceCode = textarea.value;
 
+                                      if (sourceCode.trim().length > 50) {
+                                        // Add user message
                                         addMessage(
                                           "user",
-                                          `Selected: ${compilerDescription}`
+                                          "Submitting contract source code..."
                                         );
-
+                                        setVerificationSession({
+                                          address,
+                                          network,
+                                          step: 1,
+                                          data: {
+                                            network,
+                                            contractAddress: address,
+                                            evmVersion: "shanghai",
+                                            optimizationUsed: "0",
+                                            runs: 200,
+                                            licenseType: LicenseType.MIT,
+                                            sourceCode: sourceCode,
+                                          },
+                                        });
+                                        // Process the input
+                                        setTimeout(() => {
+                                          handleVerificationInput(sourceCode);
+                                        }, 100);
+                                      } else {
                                         addMessage(
                                           "ai",
-                                          `✅ **Compiler type set:** ${compilerDescription}\n\n**Step 3 of 6: Constructor Arguments**\nAre there any constructor arguments? If so, please provide them; otherwise, type 'no' or 'na' to continue.`
+                                          "⚠️ **Source code seems too short**\n\nPlease provide the complete Solidity source code. It should typically be more than a few lines long."
                                         );
                                       }
-                                    }}
-                                    defaultValue="solidity-json"
-                                  >
-                                    <option value="solidity-single">
-                                      Single Solidity File (most common)
-                                    </option>
-                                    <option value="solidity-multi">
-                                      Multiple Solidity Files (with imports)
-                                    </option>
-                                    <option value="solidity-json">
-                                      Solidity Standard JSON Input (from
-                                      Hardhat/Truffle)
-                                    </option>
-                                  </select>
-                                </div>
-                                <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg">
-                                  <p className="text-sm text-blue-700 dark:text-blue-300">
-                                    💡 **Tip:** If you&apos;re not sure, choose
-                                    &quot;Single Solidity File&quot; - it&apos;s
-                                    the most common option.
-                                  </p>
-                                </div>
-                              </CardContent>
-                            </Card>
+                                    }
+                                  }}
+                                >
+                                  Submit Code
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      );
+                    }}
+                  >
+                    <Code className="w-6 h-6 mb-2" />
+                    Paste Code
+                  </Button>
+                  {/* Upload File Button */}
+                  <Button
+                    variant="outline"
+                    className="h-20 flex flex-col items-center justify-center"
+                    style={{ backgroundColor: "rgba(255, 255, 255, 0.2)" }}
+                    onClick={() => {
+                      const input = document.createElement("input");
+                      input.type = "file";
+                      input.multiple = false; // Only allow one file
+                      input.accept = ".sol,.json";
+                      input.onchange = (e) => {
+                        const files = (e.target as HTMLInputElement).files;
+                        if (files && files.length === 1) {
+                          const file = files[0];
+                          const reader = new FileReader();
+                          reader.onload = (e) => {
+                            const content = e.target?.result as string;
+                            addMessage(
+                              "user",
+                              `📁 Uploaded file: ${file.name}`
+                            );
+                            // Process as single file
+                            setVerificationSession((prev: any) =>
+                              prev
+                                ? {
+                                    ...prev,
+                                    data: {
+                                      ...prev.data,
+                                      compilerType: file.name.endsWith(".json")
+                                        ? "solidity-json"
+                                        : "solidity-single",
+                                      sourceCode: content,
+                                    },
+                                  }
+                                : null
+                            );
+                            handleVerificationInput(content);
+                          };
+                          reader.readAsText(file);
+                        } else {
+                          addMessage(
+                            "ai",
+                            "⚠️ Please select exactly one .sol or .json file."
                           );
-                        }}
-                      />
-                    );
-                  }}
-                >
-                  <FolderOpen className="w-6 h-6 mb-2" />
-                  Multiple Files
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                        }
+                      };
+                      input.click();
+                    }}
+                  >
+                    <Upload className="w-6 h-6 mb-2" />
+                    Upload File
+                  </Button>
+                  {/* Multiple Files Button */}
+                  <Button
+                    variant="outline"
+                    className="h-20 flex flex-col items-center justify-center"
+                    style={{ backgroundColor: "rgba(255, 255, 255, 0.2)" }}
+                    onClick={() => {
+                      // Show multi-file upload component
+                      addMessage("user", "📋 I'll use multiple files");
+                      addMessage(
+                        "ai",
+                        undefined,
+                        <MultiFileUploadComponent
+                          onConfirm={(files) => {
+                            // Store files and advance to next step
+                            setVerificationSession((prev: any) =>
+                              prev
+                                ? {
+                                    ...prev,
+                                    step: 2, // Move to compiler type selection
+                                    data: {
+                                      ...prev.data,
+                                      compilerType: "solidity-json",
+                                      multiFileSources: files,
+                                    },
+                                  }
+                                : null
+                            );
+                            addMessage(
+                              "ai",
+                              "✅ **Files uploaded!**\n\n**Step 2 of 6: Compiler Type**\nWhat type of source code are you providing?",
+                              <Card className="w-full max-w-3xl mx-auto mt-4">
+                                <CardHeader>
+                                  <CardTitle>
+                                    📝 Compiler Type Selection
+                                  </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                  <div>
+                                    <label className="text-sm font-medium mb-2 block">
+                                      Select the compiler type that matches your
+                                      source code
+                                    </label>
+                                    <select
+                                      className="w-full p-3 border rounded-md bg-background text-sm"
+                                      onChange={(e) => {
+                                        if (e.target.value) {
+                                          let compilerDescription: string;
+                                          if (
+                                            e.target.value === "solidity-single"
+                                          ) {
+                                            compilerDescription =
+                                              "Single Solidity File";
+                                          } else if (
+                                            e.target.value === "solidity-multi"
+                                          ) {
+                                            compilerDescription =
+                                              "Multiple Solidity Files";
+                                          } else {
+                                            compilerDescription =
+                                              "Solidity Standard JSON Input";
+                                          }
+
+                                          setVerificationSession((prev) =>
+                                            prev
+                                              ? {
+                                                  ...prev,
+                                                  step: 3,
+                                                  data: {
+                                                    ...prev.data,
+                                                    compilerType: e.target
+                                                      .value as
+                                                      | "solidity-single"
+                                                      | "solidity-multi"
+                                                      | "solidity-json",
+                                                  },
+                                                }
+                                              : null
+                                          );
+
+                                          addMessage(
+                                            "user",
+                                            `Selected: ${compilerDescription}`
+                                          );
+
+                                          addMessage(
+                                            "ai",
+                                            `✅ **Compiler type set:** ${compilerDescription}\n\n**Step 3 of 6: Constructor Arguments**\nAre there any constructor arguments? If so, please provide them; otherwise, type 'no' or 'na' to continue.`
+                                          );
+                                        }
+                                      }}
+                                      defaultValue="solidity-json"
+                                    >
+                                      <option value="solidity-single">
+                                        Single Solidity File (most common)
+                                      </option>
+                                      <option value="solidity-multi">
+                                        Multiple Solidity Files (with imports)
+                                      </option>
+                                      <option value="solidity-json">
+                                        Solidity Standard JSON Input (from
+                                        Hardhat/Truffle)
+                                      </option>
+                                    </select>
+                                  </div>
+                                  <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg">
+                                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                                      💡 **Tip:** If you&apos;re not sure,
+                                      choose &quot;Single Solidity File&quot; -
+                                      it&apos;s the most common option.
+                                    </p>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            );
+                          }}
+                        />
+                      );
+                    }}
+                  >
+                    <FolderOpen className="w-6 h-6 mb-2" />
+                    Multiple Files
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         );
       } else {
@@ -995,10 +1121,14 @@ export default function Home() {
     }
   };
 
+  /**
+   * Handles verification input for each step of the verification process
+   * @param input - User input for the current step
+   */
   const handleVerificationInput = async (input: string) => {
     const step = verificationSession?.step || 1;
 
-    // Add back button handling
+    // Handle back navigation
     if (input.toLowerCase() === "back" && step > 1) {
       setVerificationSession((prev) =>
         prev
@@ -1018,6 +1148,7 @@ export default function Home() {
 
     switch (step) {
       case 1:
+        // Step 1: Source code validation
         if (input.trim().length < 50) {
           addMessage(
             "ai",
@@ -1026,6 +1157,7 @@ export default function Home() {
           return;
         }
 
+        // Update session and move to step 2
         setVerificationSession((prev) =>
           prev
             ? {
@@ -1036,6 +1168,7 @@ export default function Home() {
             : null
         );
 
+        // Show compiler type selection
         addMessage(
           "ai",
           "✅ **Source code received!**\n\n**Step 2 of 6: Compiler Type**\nWhat type of source code are you providing?",
@@ -1050,7 +1183,7 @@ export default function Home() {
                 </label>
                 <select
                   className="w-full p-3 border rounded-md bg-background text-sm"
-                  // style={{ backgroundColor: "rgba(255, 255, 255, 0.2)" }} 
+                  // style={{ backgroundColor: "rgba(255, 255, 255, 0.2)" }}
                   onChange={(e) => {
                     // console.log("target value", e.target.value);
                     // console.log("verificationSession", verificationSession);
@@ -1064,7 +1197,7 @@ export default function Home() {
                         compilerDescription = "Solidity Standard JSON Input";
                       }
 
-                      // Then update the session state
+                      // Update session state
                       setVerificationSession((prev) =>
                         prev
                           ? {
@@ -1081,10 +1214,10 @@ export default function Home() {
                           : null
                       );
 
-                      // First add the user message
+                      // Add user message
                       addMessage("user", `Selected: ${compilerDescription}`);
 
-                      // Finally add the AI response
+                      // Add AI response for next step
                       addMessage(
                         "ai",
                         `✅ **Compiler type set:** ${compilerDescription}\n\n**Step 3 of 6: Constructor Arguments**\nAre there any constructor arguments? If so, please provide them; otherwise, type no' or 'na' to continue.`
@@ -1119,6 +1252,7 @@ export default function Home() {
         break;
 
       case 3:
+        // Step 3: Constructor arguments
         if (!input.trim()) {
           addMessage(
             "ai",
@@ -1127,6 +1261,7 @@ export default function Home() {
           return;
         }
 
+        // Update session and move to step 4
         setVerificationSession((prev) =>
           prev
             ? {
@@ -1137,6 +1272,7 @@ export default function Home() {
             : null
         );
 
+        // Show compiler version selection
         addMessage(
           "ai",
           "✅ **Constructor Arguments set!**\n\n**Step 4 of 6: Compiler Version**\nWhich Solidity compiler version did you use?\n\nPlease select from the dropdown below:",
@@ -1150,8 +1286,7 @@ export default function Home() {
                   className="w-full p-3 border rounded-md bg-background text-sm"
                   onChange={(e) => {
                     if (verificationSession && e.target.value) {
-                      // Update the session with the compiler version
-                      //console.log("Previous data:", verificationSession.data);
+                      // Update session with compiler version
                       setVerificationSession((prev) => {
                         if (!prev) return null;
 
@@ -1163,13 +1298,12 @@ export default function Home() {
                             compilerVersion: e.target.value,
                           },
                         };
-                        //console.log("After update - New state:", newState);
                         return newState;
                       });
 
                       addMessage("user", `Selected: ${e.target.value}`);
 
-                      // Add AI response for EVM version selection
+                      // Show EVM version selection
                       addMessage(
                         "ai",
                         "✅ **Compiler version set!**\n\n**Step 5 of 6: EVM Version**\nPlease select the EVM version used during compilation:",
@@ -1610,6 +1744,10 @@ export default function Home() {
     }
   };
 
+  /**
+   * Main handler for user input processing
+   * Routes input to appropriate handlers based on context and content
+   */
   const handleUserInput = async (): Promise<void> => {
     if (!userInput.trim() || isProcessing) return;
 
@@ -1635,6 +1773,11 @@ export default function Home() {
     showHelpMessage();
   };
 
+  /**
+   * Determines if the current input should continue a verification session
+   * @param lowerInput - Lowercase user input
+   * @returns True if should continue verification, false otherwise
+   */
   const shouldContinueVerificationSession = (
     lowerInput: string
   ): boolean | null => {
@@ -1645,6 +1788,12 @@ export default function Home() {
     );
   };
 
+  /**
+   * Handles command processing for user input
+   * @param lowerInput - Lowercase user input
+   * @param originalInput - Original user input
+   * @returns True if command was handled, false otherwise
+   */
   const handleCommand = async (
     lowerInput: string,
     originalInput: string
@@ -1672,6 +1821,9 @@ export default function Home() {
     return false;
   };
 
+  /**
+   * Clears the chat session and resets state
+   */
   const clearChatSession = (): void => {
     setMessages([]);
     setVerificationSession(null);
@@ -1682,6 +1834,9 @@ export default function Home() {
     );
   };
 
+  /**
+   * Shows available commands to the user
+   */
   const showAvailableCommands = (): void => {
     const commandList = AVAILABLE_COMMANDS.map(
       (cmd) => `• \`${cmd.command}\` - ${cmd.description}`
@@ -1709,6 +1864,9 @@ export default function Home() {
     );
   };
 
+  /**
+   * Shows verification help and troubleshooting information
+   */
   const handleVerificationHelp = () => {
     addMessage(
       "ai",
@@ -1718,13 +1876,15 @@ export default function Home() {
         <h3 className="font-semibold flex items-center gap-2 mb-6">
           <span>🔍</span> Troubleshooting Verification
         </h3>
-  
-        {/* Writeup */}
+
+        {/* Troubleshooting information */}
         <p className="mb-3">
           Verify the compiler version is <strong>0.8.24</strong> and the EVM
           version used is <strong>Shanghai</strong>, and then proceed with
-          verification.<br/>
-          If you are still facing issues, reach out to us <br/>on{" "}
+          verification.
+          <br />
+          If you are still facing issues, reach out to us <br />
+          on{" "}
           <a
             href="https://discord.com/invite/coredaoofficial"
             target="_blank"
@@ -1744,7 +1904,7 @@ export default function Home() {
           </a>
         </p>
 
-        {/* Button */}
+        {/* Action button */}
         <div className="mt-7">
           <Button
             variant="outline"
@@ -1763,17 +1923,21 @@ export default function Home() {
       </div>
     );
   };
-  
+
+  /**
+   * Handles the verify command
+   * @param input - User input containing verify command
+   */
   const handleVerifyCommand = async (input: string): Promise<void> => {
     const address = extractContractAddress(input);
-  
+
     if (!address) {
       showVerifyUsageMessage();
       return;
     }
-  
+
     const network = detectNetwork(input);
-  
+
     if (network === undefined) {
       addMessage(
         "ai",
@@ -1783,35 +1947,36 @@ export default function Home() {
           onSelect={(chosenNetwork) => {
             const networkName =
               chosenNetwork === "mainnet" ? "Core Mainnet" : "Core Testnet";
-  
+
             addMessage(
               "ai",
               `🔍 **Starting verification for:** \`${address}\`\n\n` +
                 `Checking contract status on **${networkName}**...`
             );
-  
+
             startVerificationFlow(address, chosenNetwork);
           }}
         />
       );
-  
+
       return;
     }
-  
-    // case where network was auto-detected
+
+    // Network was auto-detected from input
     const networkName = network === "mainnet" ? "Core Mainnet" : "Core Testnet";
-  
+
     addMessage(
       "ai",
       `🔍 **Starting verification for:** \`${address}\`\n\n` +
         `Checking contract status on **${networkName}**...`
     );
-  
+
     await startVerificationFlow(address, network);
   };
-  
-  
 
+  /**
+   * Shows usage message for verify command
+   */
   const showVerifyUsageMessage = (): void => {
     addMessage(
       "ai",
@@ -1824,6 +1989,10 @@ export default function Home() {
     );
   };
 
+  /**
+   * Handles the lookup command
+   * @param input - User input containing lookup command
+   */
   const handleLookupCommand = async (input: string): Promise<void> => {
     const address = extractContractAddress(input);
 
@@ -1835,6 +2004,9 @@ export default function Home() {
     await performContractLookup(address, input);
   };
 
+  /**
+   * Shows usage message for lookup command
+   */
   const showLookupUsageMessage = (): void => {
     addMessage(
       "ai",
@@ -1848,6 +2020,11 @@ export default function Home() {
     );
   };
 
+  /**
+   * Handles direct contract address input (without commands)
+   * @param input - User input that may contain a contract address
+   * @returns True if contract address was found and processed, false otherwise
+   */
   const handleContractAddressInput = async (
     input: string
   ): Promise<boolean> => {
@@ -1861,6 +2038,11 @@ export default function Home() {
     return true;
   };
 
+  /**
+   * Performs contract lookup with network detection
+   * @param address - Contract address to lookup
+   * @param input - Original user input for network detection
+   */
   const performContractLookup = async (
     address: string,
     input: string
@@ -1876,21 +2058,21 @@ export default function Home() {
           onSelect={(chosenNetwork) => {
             const networkName =
               chosenNetwork === "mainnet" ? "Core Mainnet" : "Core Testnet";
-  
-              addMessage(
-                "ai",
-                `🔍 **Looking up contract...**\n\n` +
-                  `Searching for \`${address}\` on **${networkName}**`
-              );
-  
-              handleContractLookup(address, chosenNetwork);
+
+            addMessage(
+              "ai",
+              `🔍 **Looking up contract...**\n\n` +
+                `Searching for \`${address}\` on **${networkName}**`
+            );
+
+            handleContractLookup(address, chosenNetwork);
           }}
         />
       );
-  
+
       return;
     }
-    
+
     const networkName = network === "mainnet" ? "Core Mainnet" : "Core Testnet";
 
     addMessage(
@@ -1902,6 +2084,9 @@ export default function Home() {
     await handleContractLookup(address, network);
   };
 
+  /**
+   * Shows general help message when input is not recognized
+   */
   const showHelpMessage = (): void => {
     addMessage(
       "ai",
@@ -1916,6 +2101,10 @@ export default function Home() {
     );
   };
 
+  /**
+   * Executes the final contract verification with all collected data
+   * @param sessionData - Complete verification session data
+   */
   const executeVerification = async (sessionData: any) => {
     if (!sessionData) return;
 
@@ -1928,8 +2117,8 @@ export default function Home() {
         "ai",
         "**Starting verification process...**\n\nThis may take a few moments. Please wait..."
       );
-    
-      // Map compilerType to API value
+
+      // Map compiler type to API value
       let compilerType: "solidity-single" | "solidity-multi" | "solidity-json";
       switch (data.compilerType) {
         case "solidity-single":
@@ -1942,13 +2131,13 @@ export default function Home() {
         default:
           compilerType = "solidity-single";
       }
-    
+
       // Map license type to API value
       const licenseTypeMapping = LICENSE_TYPES.find(
         (lt) => lt.value === data.licenseType
       );
       const licenseTypeApiValue = licenseTypeMapping?.apiValue || 3; // Default to MIT (3)
-    
+
       // Format constructor arguments as a quoted, comma-separated string
       let constructorArguments = data.constructorArguments || "";
       if (
@@ -1961,17 +2150,19 @@ export default function Home() {
           .split(",")
           .map((arg: string) => arg.trim())
           .filter((arg: string) => arg.length > 0);
-    
+
         if (args.length === 1) {
           constructorArguments = args[0];
         } else if (args.length > 1) {
-          constructorArguments = args.map((arg: string) => `"${arg}"`).join(",");
+          constructorArguments = args
+            .map((arg: string) => `"${arg}"`)
+            .join(",");
         } else {
           constructorArguments = null;
         }
       }
-    
-      // --- Build Standard JSON Input for multi-file upload with latest optimizer settings ---
+
+      // Build Standard JSON Input for multi-file upload with latest optimizer settings
       let sourceCode = data.sourceCode || "";
       if (compilerType === "solidity-json" && data.multiFileSources) {
         const sources: Record<string, { content: string }> = {};
@@ -1991,32 +2182,40 @@ export default function Home() {
             },
             outputSelection: {
               "*": {
-                "*": ["abi", "evm.bytecode", "evm.deployedBytecode", "metadata"],
+                "*": [
+                  "abi",
+                  "evm.bytecode",
+                  "evm.deployedBytecode",
+                  "metadata",
+                ],
               },
             },
           },
         };
         sourceCode = JSON.stringify(standardJsonInput, null, 2);
       }
-    
-      // --- Ensure contractName is set ---
+
+      // Ensure contract name is set
       let contractName = data.contractName;
-    
+
       if (!contractName) {
         // Try to extract from source code (first "contract X {" match)
         const match = sourceCode.match(/contract\s+(\w+)/);
         if (match) {
           contractName = match[1];
         } else if (data.multiFileSources && data.multiFileSources.length > 0) {
-          // fallback: use first file name
-          contractName = data.multiFileSources[0].fileName.replace(/\.sol$/, "");
+          // Fallback: use first file name
+          contractName = data.multiFileSources[0].fileName.replace(
+            /\.sol$/,
+            ""
+          );
         } else {
           contractName = "UnknownContract";
         }
       }
-    
+
       console.log("Final contractName:", contractName);
-    
+
       const verificationData = {
         contractAddress: address,
         compilerType,
@@ -2029,18 +2228,20 @@ export default function Home() {
         licenseType: licenseTypeApiValue,
         constructorArguments,
       };
-    
+
       console.log("Final verificationData:", verificationData);
-    
+
       const result = await verifyContract(network, verificationData);
-    
+
       removeTypingMessage(typingId);
-    
+
       if (result.message === "OK") {
+        // Wait a moment for verification to process
         await new Promise((r) => setTimeout(r, 3000));
         const abiResponse = await getAbi(network, address);
-    
+
         if (abiResponse.status === "1") {
+          // Verification successful, show contract info
           handleContractLookup(address, network);
         } else {
           addMessage(
@@ -2048,124 +2249,148 @@ export default function Home() {
             undefined,
             <div className="contract-cards-wrapper">
               <div className="contract-card">
-              <div className="flex items-start justify-between mb-6">
-                <h3 className="text-lg font-semibold"><Code className="w-5 h-5" /> Contract information</h3>
-                <div className="flex items-center gap-2 bg-black text-green-500 px-3 py-1 rounded-full text-sm font-medium">
-                  <CheckCircle2 className="w-4 h-4" />
-                  Verified
+                <div className="flex items-start justify-between mb-6">
+                  <h3 className="text-lg font-semibold">
+                    <Code className="w-5 h-5" /> Contract information
+                  </h3>
+                  <div className="flex items-center gap-2 bg-black text-green-500 px-3 py-1 rounded-full text-sm font-medium">
+                    <CheckCircle2 className="w-4 h-4" />
+                    Verified
+                  </div>
                 </div>
-              </div>
-    
-              <div className="grid grid-cols-2 gap-6 mb-6">
-                <div className="flex flex-col">
-                  <span className="text-xs text-muted-foreground">Network</span>
-                  <span className="text-sm mt-1">
-                    {network === "mainnet" ? "Core Mainnet" : "Core Testnet"}
-                  </span>
-    
-                  <span className="text-xs text-muted-foreground mt-4">Compiler version</span>
-                  <span className="text-sm mt-1">{data.compilerVersion}</span>
-                </div>
-    
-                <div className="flex flex-col">
-                  <span className="text-xs text-muted-foreground">Contract name</span>
-                  <span className="text-sm mt-1">{contractName}</span>
-    
-                  <span className="text-xs text-muted-foreground mt-4">Optimization</span>
-                  <span className="text-sm mt-1">
-                    {data.optimizationUsed === "1" ? "Enabled" : "Disabled"}
-                  </span>
-                </div>
-              </div>
-              {/* Divider line before contract address */}
-              <div className="border-t border-white/10 my-6"></div>
 
-              {/* Contract address */}
-              <div className="mb-6">
-                <div className="text-xs text-muted-foreground mb-2">Contract address</div>
-                <div className="relative">
-                  <input
-                    type="text"
-                    readOnly
-                    value={address}
-                    className="w-full rounded-md bg-muted/60 px-3 py-2 text-sm pr-10 border-none outline-none"
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-md hover:bg-foreground/5"
-                    onClick={() => navigator.clipboard.writeText(address)}
-                    aria-label="Copy contract address"
-                    title="Copy"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </button>
+                <div className="grid grid-cols-2 gap-6 mb-6">
+                  <div className="flex flex-col">
+                    <span className="text-xs text-muted-foreground">
+                      Network
+                    </span>
+                    <span className="text-sm mt-1">
+                      {network === "mainnet" ? "Core Mainnet" : "Core Testnet"}
+                    </span>
+
+                    <span className="text-xs text-muted-foreground mt-4">
+                      Compiler version
+                    </span>
+                    <span className="text-sm mt-1">{data.compilerVersion}</span>
+                  </div>
+
+                  <div className="flex flex-col">
+                    <span className="text-xs text-muted-foreground">
+                      Contract name
+                    </span>
+                    <span className="text-sm mt-1">{contractName}</span>
+
+                    <span className="text-xs text-muted-foreground mt-4">
+                      Optimization
+                    </span>
+                    <span className="text-sm mt-1">
+                      {data.optimizationUsed === "1" ? "Enabled" : "Disabled"}
+                    </span>
+                  </div>
                 </div>
-              </div>
+                {/* Divider line before contract address */}
+                <div className="border-t border-white/10 my-6"></div>
 
-              {/* Source code */}
-              <div className="mb-6">
-                <div className="text-xs text-muted-foreground mb-2">Source code</div>
-
-                <div className="rounded-md bg-muted/60 p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs text-muted-foreground">{contractName}</span>
+                {/* Contract address with copy functionality */}
+                <div className="mb-6">
+                  <div className="text-xs text-muted-foreground mb-2">
+                    Contract address
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      readOnly
+                      value={address}
+                      className="w-full rounded-md bg-muted/60 px-3 py-2 text-sm pr-10 border-none outline-none"
+                    />
                     <button
                       type="button"
-                      className="font-dm-mono p-2 rounded-md hover:bg-foreground/5"
-                      onClick={() => navigator.clipboard.writeText(data.sourceCode)}
-                      aria-label="Copy source code"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-md hover:bg-foreground/5"
+                      onClick={() => navigator.clipboard.writeText(address)}
+                      aria-label="Copy contract address"
                       title="Copy"
                     >
                       <Copy className="w-4 h-4" />
                     </button>
                   </div>
+                </div>
 
-                  <div className="rounded-md bg-black text-white text-xs font-mono p-3 max-h-56 overflow-y-auto"
-                        style={{
-                          fontFamily: "'DM Mono', monospace",
-                          fontWeight: 500,
-                          fontStyle: "normal", // "Light" = weight, not style
-                          fontSize: "14px",
-                          lineHeight: "140%",
-                          letterSpacing: "0",
-                          whiteSpace: "pre-wrap", // preserves code formatting
-                        }}>
-                    <pre className="whitespace-pre-wrap">
-                      {data.sourceCode.slice(0, 600)}
-                      {data.sourceCode.length > 600 ? "..." : ""}
-                    </pre>
+                {/* Source code display */}
+                <div className="mb-6">
+                  <div className="text-xs text-muted-foreground mb-2">
+                    Source code
+                  </div>
+
+                  <div className="rounded-md bg-muted/60 p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-muted-foreground">
+                        {contractName}
+                      </span>
+                      <button
+                        type="button"
+                        className="font-dm-mono p-2 rounded-md hover:bg-foreground/5"
+                        onClick={() =>
+                          navigator.clipboard.writeText(data.sourceCode)
+                        }
+                        aria-label="Copy source code"
+                        title="Copy"
+                      >
+                        <Copy className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div
+                      className="rounded-md bg-black text-white text-xs font-mono p-3 max-h-56 overflow-y-auto"
+                      style={{
+                        fontFamily: "'DM Mono', monospace",
+                        fontWeight: 500,
+                        fontStyle: "normal", // "Light" = weight, not style
+                        fontSize: "14px",
+                        lineHeight: "140%",
+                        letterSpacing: "0",
+                        whiteSpace: "pre-wrap", // preserves code formatting
+                      }}
+                    >
+                      <pre className="whitespace-pre-wrap">
+                        {data.sourceCode.slice(0, 600)}
+                        {data.sourceCode.length > 600 ? "..." : ""}
+                      </pre>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Action buttons */}
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  className="w-full rounded-full py-2 px-4 inline-flex items-center justify-center gap-2 bg-muted/60 hover:bg-muted/70"
-                  onClick={() => {
-                    const explorerUrl =
-                      network === "mainnet"
-                        ? `https://scan.coredao.org/address/${address}`
-                        : `https://scan.test2.btcs.network/address/${address}`;
-                    window.open(explorerUrl, "_blank");
-                  }}
-                >
-                  <span className="text-sm">View on explorer</span>
-                  <ExternalLink className="w-4 h-4" />
-                </button>
+                {/* Action buttons */}
+                <div className="grid grid-cols-2 gap-3">
+                  {/* View on Explorer button */}
+                  <button
+                    type="button"
+                    className="w-full rounded-full py-2 px-4 inline-flex items-center justify-center gap-2 bg-muted/60 hover:bg-muted/70"
+                    onClick={() => {
+                      const explorerUrl =
+                        network === "mainnet"
+                          ? `https://scan.coredao.org/address/${address}`
+                          : `https://scan.test2.btcs.network/address/${address}`;
+                      window.open(explorerUrl, "_blank");
+                    }}
+                  >
+                    <span className="text-sm">View on explorer</span>
+                    <ExternalLink className="w-4 h-4" />
+                  </button>
 
-                <button
-                  type="button"
-                  className="w-full rounded-full py-2 px-4 inline-flex items-center justify-center gap-2 bg-muted/60 hover:bg-muted/70"
-                  onClick={() => navigator.clipboard.writeText("ABI JSON HERE")}
-                >
-                  <span className="text-sm">Copy ABI</span>
-                  <Copy className="w-4 h-4" />
-                </button>
+                  {/* Copy ABI button */}
+                  <button
+                    type="button"
+                    className="w-full rounded-full py-2 px-4 inline-flex items-center justify-center gap-2 bg-muted/60 hover:bg-muted/70"
+                    onClick={() =>
+                      navigator.clipboard.writeText("ABI JSON HERE")
+                    }
+                  >
+                    <span className="text-sm">Copy ABI</span>
+                    <Copy className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-              </div>
-              </div>
+            </div>
           );
         }
       } else {
@@ -2174,7 +2399,7 @@ export default function Home() {
           `❌ **Verification failed**\n\n**Error:** ${result.result}\n\nPlease check your contract details and try again.`
         );
       }
-    
+
       setVerificationSession(null);
     } catch (error) {
       removeTypingMessage(typingId);
@@ -2191,6 +2416,9 @@ export default function Home() {
     }
   };
 
+  /**
+   * Typing indicator component for showing AI is processing
+   */
   const TypingIndicator = () => (
     <div className="flex items-center gap-1 p-2">
       <Loader2 className="w-4 h-4 animate-spin" />
@@ -2198,21 +2426,27 @@ export default function Home() {
     </div>
   );
 
-  // Add an effect to monitor verification session step changes
+  /**
+   * Monitor verification session step changes
+   * This effect can be used for additional session management if needed
+   */
   useEffect(() => {
     if (!verificationSession) return;
   }, [verificationSession]);
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
+      {/* Header component */}
       <Header />
       <main className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        {/* Chat messages area */}
         <div className="flex-1 overflow-hidden px-6 md:px-12 pt-4">
           <ScrollArea
             className="h-full max-w-6xl mx-auto overflow-y-auto chat-scroll-area"
             ref={scrollAreaRef}
           >
             <div className="space-y-6 pb-4 px-4 md:px-8">
+              {/* Render all messages */}
               {messages.map((msg) => (
                 <div
                   key={msg.id}
@@ -2232,12 +2466,14 @@ export default function Home() {
                         <TypingIndicator />
                       ) : (
                         <>
+                          {/* Render text content with markdown-like formatting */}
                           {msg.text && (
                             <div className="text-sm whitespace-pre-wrap markdown-content">
                               {msg.text.split("\n").map((line, i) => {
                                 const parts = [];
                                 const boldParts = line.split("**");
 
+                                // Process bold text and inline code
                                 for (let j = 0; j < boldParts.length; j++) {
                                   if (j % 2 === 0) {
                                     const codeParts = boldParts[j].split("`");
@@ -2275,6 +2511,7 @@ export default function Home() {
                               })}
                             </div>
                           )}
+                          {/* Render React components */}
                           {msg.component && (
                             <div className="mt-3">
                               {React.isValidElement(msg.component)
@@ -2284,6 +2521,7 @@ export default function Home() {
                           )}
                         </>
                       )}
+                      {/* Show timestamp for non-typing messages */}
                       {!msg.isTyping && (
                         <p className="text-xs opacity-60 mt-2 text-right">
                           {msg.timestamp.toLocaleTimeString([], {
@@ -2300,6 +2538,7 @@ export default function Home() {
           </ScrollArea>
         </div>
 
+        {/* Footer input component */}
         <FooterInput
           userInput={userInput}
           setUserInput={setUserInput}
@@ -2310,4 +2549,3 @@ export default function Home() {
     </div>
   );
 }
-

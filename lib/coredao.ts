@@ -10,10 +10,21 @@ import type {
   GetAbiResponse,
 } from "@/types/coredao";
 
+/**
+ * Encodes source code content to base64 for API transmission
+ * @param content - Source code content as string
+ * @returns Base64 encoded string
+ */
 const encodeSourceCodeForApi = (content: string): string => {
   return Buffer.from(content, "utf-8").toString("base64");
 };
 
+/**
+ * Submits contract source code for verification
+ * @param network - Target network (mainnet/testnet2)
+ * @param params - Verification parameters including source code and compiler settings
+ * @returns Promise resolving to verification response with GUID
+ */
 export async function verifySourceCode(
   network: Network,
   params: VerifySourceCodeParams
@@ -33,6 +44,12 @@ export async function verifySourceCode(
   return response.json() as Promise<VerifySourceCodeResponse>;
 }
 
+/**
+ * Checks the status of a verification submission using GUID
+ * @param network - Target network (mainnet/testnet2)
+ * @param guid - Verification transaction GUID
+ * @returns Promise resolving to verification status response
+ */
 export async function checkVerificationStatus(
   network: Network,
   guid: string
@@ -51,6 +68,12 @@ export async function checkVerificationStatus(
   return response.json() as Promise<CheckVerificationStatusResponse>;
 }
 
+/**
+ * Retrieves verified source code for a contract address
+ * @param network - Target network (mainnet/testnet2)
+ * @param address - Contract address
+ * @returns Promise resolving to source code response
+ */
 export async function getSourceCode(
   network: Network,
   address: string
@@ -69,6 +92,12 @@ export async function getSourceCode(
   return response.json() as Promise<GetSourceCodeResponse>;
 }
 
+/**
+ * Retrieves verified ABI for a contract address
+ * @param network - Target network (mainnet/testnet2)
+ * @param address - Contract address
+ * @returns Promise resolving to ABI response
+ */
 export async function getAbi(
   network: Network,
   address: string
@@ -87,6 +116,12 @@ export async function getAbi(
   return response.json() as Promise<GetAbiResponse>;
 }
 
+/**
+ * Verifies a proxy contract
+ * @param network - Target network (mainnet/testnet2)
+ * @param params - Proxy contract verification parameters
+ * @returns Promise resolving to proxy verification response
+ */
 export async function verifyProxyContract(
   network: Network,
   params: VerifyProxyContractParams
@@ -106,6 +141,12 @@ export async function verifyProxyContract(
   return response.json() as Promise<VerifyProxyContractResponse>;
 }
 
+/**
+ * Checks the status of a proxy contract verification
+ * @param network - Target network (mainnet/testnet2)
+ * @param guid - Proxy verification transaction GUID
+ * @returns Promise resolving to proxy verification status response
+ */
 export async function checkProxyVerificationStatus(
   network: Network,
   guid: string
@@ -124,6 +165,13 @@ export async function checkProxyVerificationStatus(
   return response.json() as Promise<CheckProxyVerificationStatusResponse>;
 }
 
+/**
+ * High-level function to verify a contract with simplified parameters
+ * Handles parameter mapping and calls the appropriate verification endpoint
+ * @param network - Target network (mainnet/testnet2)
+ * @param verificationDetails - Contract verification details
+ * @returns Promise resolving to verification response
+ */
 export async function verifyContract(
   network: Network,
   verificationDetails: {
@@ -141,12 +189,14 @@ export async function verifyContract(
     libraryAddress1?: string;
   }
 ): Promise<VerifySourceCodeResponse> {
+  // Map compiler types to API format
   const codeFormatMap = {
     "solidity-single": "solidity-single-file",
     "solidity-multi": "solidity-multi-part-files",
     "solidity-json": "solidity-standard-json-input",
   };
 
+  // Build request body with mapped parameters
   const requestBody: VerifySourceCodeParams = {
     contractaddress: verificationDetails.contractAddress,
     sourceCode: verificationDetails.sourceCode,
@@ -160,6 +210,7 @@ export async function verifyContract(
     constructorArguements: verificationDetails.constructorArguments || "",
   };
 
+  // Add library information if provided
   if (verificationDetails.libraryName1 && verificationDetails.libraryAddress1) {
     requestBody.libraryname1 = verificationDetails.libraryName1;
     requestBody.libraryaddress1 = verificationDetails.libraryAddress1;
@@ -169,7 +220,10 @@ export async function verifyContract(
 }
 
 /**
- * Check verification status by GUID
+ * Alias for checkVerificationStatus for backward compatibility
+ * @param network - Target network (mainnet/testnet2)
+ * @param guid - Verification transaction GUID
+ * @returns Promise resolving to verification status response
  */
 export async function checkVerificationStatusByGuid(
   network: Network,
@@ -179,7 +233,10 @@ export async function checkVerificationStatusByGuid(
 }
 
 /**
- * Extract contract name from source code using regex pattern matching
+ * Extracts contract name from Solidity source code using regex pattern matching
+ * Handles various contract declaration types (contract, interface, abstract)
+ * @param sourceCode - Solidity source code as string
+ * @returns Contract name if found, null otherwise
  */
 export function extractContractName(sourceCode: string): string | null {
   // Normalize line endings and remove comments first

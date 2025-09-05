@@ -5,17 +5,30 @@ import type {
   VerificationDetails,
 } from "@/types/coredao";
 
+/**
+ * Available CoreDAO networks for contract verification
+ * Maps network values to their display labels
+ */
 export const NETWORKS: { value: Network; label: string }[] = [
   { value: "mainnet", label: "Core Mainnet" },
   { value: "testnet2", label: "Core Testnet" },
 ];
 
+/**
+ * Available Solidity compiler types for contract verification
+ * Different formats for submitting source code
+ */
 export const COMPILER_TYPES: { value: CompilerType; label: string }[] = [
   { value: "solidity-single", label: "Solidity (Single file)" },
   { value: "solidity-multi", label: "Solidity (Multi-Part files)" },
   { value: "solidity-json", label: "Solidity (Standard-Json-Input)" },
 ];
 
+/**
+ * Available license types for contract verification
+ * Maps license names to their API values and display labels
+ * Includes common open-source licenses used in smart contracts
+ */
 export const LICENSE_TYPES: {
   value: LicenseType;
   label: string;
@@ -93,6 +106,11 @@ export const LICENSE_TYPES: {
   },
 ];
 
+/**
+ * Available Solidity compiler versions
+ * Ordered from newest to oldest versions
+ * Includes versions from v0.8.28 down to v0.5.10
+ */
 export const COMPILER_VERSIONS: string[] = [
   "v0.8.28+commit.7893614a",
   "v0.8.27+commit.40a35a09",
@@ -153,6 +171,11 @@ export const COMPILER_VERSIONS: string[] = [
   "v0.5.10+commit.5a6ea5b1",
 ];
 
+/**
+ * Available EVM versions for contract compilation
+ * Ordered from newest to oldest EVM versions
+ * "default" uses the compiler's default EVM version
+ */
 export const EVM_VERSIONS: string[] = [
   "default",
   "homestead",
@@ -169,36 +192,60 @@ export const EVM_VERSIONS: string[] = [
   "shanghai",
 ];
 
+/**
+ * Optimization options for contract compilation
+ * Maps boolean values to user-friendly labels
+ */
 export const OPTIMIZATION_OPTIONS: { value: "0" | "1"; label: string }[] = [
   { value: "0", label: "No" },
   { value: "1", label: "Yes" },
 ];
 
-export const COREDAO_API_ENDPOINTS: { [key in Exclude<Network, undefined>]?: string } = {
+/**
+ * CoreDAO API endpoints for different networks
+ * Maps network types to their respective API base URLs
+ */
+export const COREDAO_API_ENDPOINTS: {
+  [key in Exclude<Network, undefined>]?: string;
+} = {
   mainnet: "https://openapi.coredao.org/api",
   testnet2: "https://api.test2.btcs.network/api",
 };
 
+/**
+ * CoreDAO API endpoint paths for contract operations
+ * Provides URL builders for different contract-related API calls
+ */
 export const COREDAO_CONTRACT_ENDPOINTS = {
+  /** Get ABI for a verified contract */
   getAbi: (address: string) => `/contracts/abi_of_verified_contract/${address}`,
+  /** Get source code for a verified contract */
   getSourceCode: (address: string) =>
     `/contracts/source_code_of_verified_contract/${address}`,
+  /** Verify contract source code */
   verifySourceCode: "/contracts/verify_source_code",
+  /** Verify proxy contract */
   verifyProxyContract: "/contracts/verify_proxy_contract",
+  /** Verify proxy contract using cURL */
   verifyProxyContractCurl: "/contracts/verify_proxy_contract_using_cURL",
+  /** Check proxy contract verification status using cURL */
   checkProxyVerificationStatus:
     "/contracts/check_proxy_contract_verification_submission_status_using_cURL",
 };
 
+/**
+ * Default values for contract verification form
+ * Provides sensible defaults for all verification parameters
+ */
 export const DEFAULT_VERIFICATION_DETAILS: VerificationDetails = {
   network: "mainnet",
   contractAddress: "",
   compilerType: "solidity-single",
   sourceCode: "",
   contractName: "",
-  compilerVersion: COMPILER_VERSIONS[0],
-  evmVersion: "shanghai",
-  optimizationUsed: "0",
-  runs: 200,
-  licenseType: 3,
+  compilerVersion: COMPILER_VERSIONS[0], // Latest version
+  evmVersion: "shanghai", // Latest EVM version
+  optimizationUsed: "0", // No optimization by default
+  runs: 200, // Default optimization runs
+  licenseType: 3, // MIT License by default
 };
