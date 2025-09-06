@@ -9,29 +9,33 @@ type NetworkSelectorProps = {
 
 const NetworkSelector: React.FC<NetworkSelectorProps> = ({ address, onSelect }) => {
   return (
-    <div className="w-full max-w-md bg-[#1c1c1c] border border-white/10 rounded-xl p-8 shadow-md">
-      <p className="text-sm text-gray-300 mb-3">
-        Please choose a network to verify:
-      </p>
-
-      <div className="bg-black/60 text-gray-200 font-mono text-xs p-3 rounded-lg mb-4 overflow-hidden text-ellipsis">
-        {address}
+    <div className="flex flex-col gap-4">
+    {/* Heading */}
+    <p className="text-gray-300 text-sm leading-[140%] px-4 py-2">
+      Please choose a network to proceed with verification:
+    </p>
+    <div className="w-full max-w-md bg-transparent p-6 flex flex-col gap-6">
+      {/* Address display */}
+      <div className="bg-transparent text-gray-200 font-mono text-xs px-4 py-3 rounded-lg border border-white/10 overflow-hidden text-ellipsis">
+        {address} :
       </div>
 
-      <div className="flex gap-3">
+      {/* Network buttons */}
+      <div className="flex gap-4">
         <Button
           onClick={() => onSelect("mainnet")}
-          className="flex-1 py-2 px-4 bg-muted/100 hover:bg-muted/70 text-white rounded-lg"
+          className="flex-1 h-12 bg-muted/100 hover:bg-muted/70 text-white rounded-lg font-medium"
         >
           Core Mainnet
         </Button>
         <Button
           onClick={() => onSelect("testnet2")}
-          className="flex-1 py-2 px-4 bg-muted/100 hover:bg-muted/70 text-white rounded-lg"
+          className="flex-1 h-12 bg-muted/100 hover:bg-muted/70 text-white rounded-lg font-medium"
         >
           Core Testnet
         </Button>
       </div>
+    </div>
     </div>
   );
 };
