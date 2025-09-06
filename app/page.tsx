@@ -595,8 +595,8 @@ export default function Home() {
                     : "Core Testnet"}
                 </p>
               </div>
-              <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg">
-                <p className="text-sm text-blue-700 dark:text-blue-300">
+              <div className="bg-[rgba(177,229,254,0.2)] p-3 rounded-lg">
+                <p className="text-sm text-white">
                   💡 **Tip:** Make sure your source code is the exact same code
                   that was used to deploy the contract. Any differences will
                   cause verification to fail.
@@ -1085,8 +1085,8 @@ export default function Home() {
                                       </option>
                                     </select>
                                   </div>
-                                  <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg">
-                                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                                  <div className="bg-[rgba(177,229,254,0.2)] p-3 rounded-lg">
+                                    <p className="text-sm text-white">
                                       💡 **Tip:** If you&apos;re not sure,
                                       choose &quot;Single Solidity File&quot; -
                                       it&apos;s the most common option.
@@ -1246,8 +1246,8 @@ export default function Home() {
                   </option>
                 </select>
               </div>
-              <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg">
-                <p className="text-sm text-blue-700 dark:text-blue-300">
+              <div className="bg-[rgba(177,229,254,0.2)] p-3 rounded-lg">
+                <p className="text-sm text-white">
                   💡 **Tip:** If you&apos;re not sure, choose &quot;Single
                   Solidity File&quot; - it&apos;s the most common option.
                 </p>
@@ -1495,8 +1495,8 @@ export default function Home() {
                                                                       addMessage(
                                                                         "ai",
                                                                         undefined, // Don't pass text separately, include it inside the component
-                                                                        <div className="contract-card w-[584px] h-[465px] flex flex-col gap-4 p-6 bg-transparent">
-                                                                          <p className="text-white text-sm leading-[1.4]">
+                                                                        <div className="contract-card w-[584px] h-[465px] flex flex-col gap-6 p-6 bg-transparent">
+                                                                          <p className="text-white text-xl leading-[1.4]">
                                                                             Perfect! I have all the information needed:
                                                                           </p>
                                                                     
@@ -1517,17 +1517,16 @@ export default function Home() {
                                                                           {/* Divider */}
                                                                           <hr className="border-gray-600" />
                                                                     
-                                                                          <p className="text-white">
+                                                                          <p className="text-white text-sm">
                                                                             Click the button below to start the verification process!
                                                                           </p>
                                                                     
                                                                           {/* Button wrapper */}
-                                                                          <div className="flex justify-center mt-auto">
+                                                                          <div className="flex justify-center mt-4">
                                                                             <Button
                                                                               onClick={() => executeVerification(finalSession)}
                                                                               className="
-                                                                                w-[536px] h-[40px] 
-                                                                                px-6 py-4 
+                                                                                w-full max-w-[536px] h-[40px] 
                                                                                 rounded-full 
                                                                                 text-black bg-white font-medium
                                                                                 hover:bg-gray-200 transition
@@ -1761,7 +1760,7 @@ export default function Home() {
                   </option>
                 </select>
                 <div className="text-sm text-muted-foreground">
-                  💡 Recommended versions: v0.8.24+commit.e11b9ed9
+                  💡 Recommended versions: v0.8.26+commit.8a97fa7a
                 </div>
               </div>
             </CardContent>
@@ -1968,8 +1967,9 @@ export default function Home() {
     if (network === undefined) {
       addMessage(
         "ai",
-        undefined,
-        <NetworkSelector
+        "Please choose a network to proceed with verification:",
+        <div className="flex justify-center items-center mt-5">
+          <NetworkSelector
           address={address}
           onSelect={(chosenNetwork) => {
             const networkName =
@@ -1984,6 +1984,7 @@ export default function Home() {
             startVerificationFlow(address, chosenNetwork);
           }}
         />
+        </div>
       );
 
       return;
@@ -2079,8 +2080,9 @@ export default function Home() {
     if (network === undefined) {
       addMessage(
         "ai",
-        undefined,
-        <NetworkSelector
+        "Please choose a network to proceed with verification:",
+        <div className="flex justify-center items-center mt-5">
+          <NetworkSelector
           address={address}
           onSelect={(chosenNetwork) => {
             const networkName =
@@ -2095,6 +2097,7 @@ export default function Home() {
             handleContractLookup(address, chosenNetwork);
           }}
         />
+        </div>
       );
 
       return;

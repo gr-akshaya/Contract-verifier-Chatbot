@@ -5,6 +5,9 @@ import { Toaster } from "@/components/ui/sonner";
 export const metadata: Metadata = {
   title: "Smart Contract Verification Bot",
   description: "Core Blockchain's Smart Contract Verification Assistant",
+  icons: {
+    icon: "/coree.ico", // you can also use "/favicon.png" or "/favicon.svg"
+  },
 };
 
 // const ThemeInitializer = () => {
