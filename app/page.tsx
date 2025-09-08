@@ -1932,9 +1932,12 @@ export default function Home() {
 
         <p className="text-white text-sm leading-[1.4]">Quick Tips:</p>
         <ul className="list-disc list-inside text-sm leading-[1.4] text-white space-y-2">
-          <li>Just paste any contract address and I'll look it up</li>
+          <li>Just paste any contract address and I&apos;ll look it up</li>
           <li>Use {`verify <address>`} to start contract verification</li>
-          <li>Specify network with keywords like 'testnet' or 'mainnet'</li>
+          <li>
+            Specify network with keywords like &apos;testnet&apos; or
+            &apos;mainnet&apos;
+          </li>
           <li>Example: {`verify 0x123...`}</li>
         </ul>
 
