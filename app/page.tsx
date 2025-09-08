@@ -2407,8 +2407,8 @@ export default function Home() {
                     <div
                       className={`p-3 rounded-xl shadow-md ${
                         msg.sender === "user"
-                          ? "user-chat-bubble rounded-br-none"
-                          : "bg-card text-card-foreground rounded-bl-none border p-3 rounded-xl"
+                          ? "user-chat-bubble rounded-br-none break-words overflow-wrap-anywhere"
+                          : "bg-card text-card-foreground rounded-bl-none border p-3 rounded-xl break-words overflow-wrap-anywhere"
                       }`}
                     >
                       {msg.isTyping ? (
