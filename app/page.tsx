@@ -15,7 +15,8 @@ import { Textarea } from "@/components/ui/textarea";
 import MultiFileUploadComponent from "@/components/contract-verification/MultiFileUploadComponent";
 
 // Lucide React icons for UI elements
-import { // Success/verified status
+import {
+  // Success/verified status
   XCircle, // Error/unverified status
   ExternalLink, // External links
   Copy, // Copy to clipboard
@@ -288,7 +289,7 @@ export default function Home() {
                 </>
               ) : (
                 <>
-                  <XCircle className="w-4 h-4 text-red-500"/>
+                  <XCircle className="w-4 h-4 text-red-500" />
                   Not Verified
                 </>
               )}
@@ -759,7 +760,6 @@ export default function Home() {
    * @param network - Network the contract is on
    */
   const startVerificationFlow = async (address: string, network: Network) => {
-    console.log("Verifyy");
     const typingId = addTypingMessage();
 
     try {
@@ -840,88 +840,90 @@ export default function Home() {
                       addMessage(
                         "ai",
                         undefined,
-                        <div className="px-6 py-4 space-y-4 bg-transparent rounded-xl">
-                        <p className="text-white">
-                          Perfect! Please paste your complete Solidity source code below. Make sure it includes all contracts, imports, and dependencies:
-                        </p>
-                        <div className="contract-cards-wrapper" >
-                          <Card className="contract-card no-background">
-                            <CardContent className="p-4">
-                              <Textarea
-                                placeholder="Paste your Solidity source code here..."
-                                className="min-h-[300px] font-mono whitespace-pre preserve-whitespace"
-                                style={{
-                                  wordBreak: "normal",
-                                  whiteSpace: "pre",
-                                  padding: "16px"
-                                }}
-                                onPaste={(e) => {
-                                  const pastedText =
-                                    e.clipboardData.getData("text");
-                                  if (pastedText) {
-                                    e.preventDefault();
-                                    const textarea =
-                                      e.target as HTMLTextAreaElement;
-                                    textarea.value = pastedText;
-                                    // Don't auto-submit on paste to allow user to verify the code first
-                                  }
-                                }}
-                                spellCheck={false}
-                                autoCorrect="off"
-                                autoCapitalize="off"
-                                // Removed auto-submission on change to prevent premature processing
-                              />
-                              <div className="mt-4 flex justify-end">
-                                <Button
-                                  onClick={(
-                                    e: React.MouseEvent<HTMLButtonElement>
-                                  ) => {
-                                    const textarea = e.currentTarget
-                                      .parentElement
-                                      ?.previousElementSibling as HTMLTextAreaElement;
-
-                                    if (textarea) {
-                                      const sourceCode = textarea.value;
-
-                                      if (sourceCode.trim().length > 50) {
-                                        // Add user message
-                                        addMessage(
-                                          "user",
-                                          "Submitting contract source code..."
-                                        );
-                                        setVerificationSession({
-                                          address,
-                                          network,
-                                          step: 1,
-                                          data: {
-                                            network,
-                                            contractAddress: address,
-                                            evmVersion: "shanghai",
-                                            optimizationUsed: "0",
-                                            runs: 200,
-                                            licenseType: LicenseType.MIT,
-                                            sourceCode: sourceCode,
-                                          },
-                                        });
-                                        // Process the input
-                                        setTimeout(() => {
-                                          handleVerificationInput(sourceCode);
-                                        }, 100);
-                                      } else {
-                                        addMessage(
-                                          "ai",
-                                          "⚠️ **Source code seems too short**\n\nPlease provide the complete Solidity source code. It should typically be more than a few lines long."
-                                        );
-                                      }
+                        <div className="px-4 py-2 space-y-4 bg-transparent rounded-xl">
+                          <p className="text-white text-sm">
+                            Perfect! Please paste your complete Solidity source
+                            code below. Make sure it includes all contracts,
+                            imports, and dependencies:
+                          </p>
+                          <div className="contract-cards-wrapper">
+                            <Card className="contract-card no-background">
+                              <CardContent className="p-2">
+                                <Textarea
+                                  placeholder="Paste your Solidity source code here..."
+                                  className="min-h-[300px] font-mono whitespace-pre preserve-whitespace"
+                                  style={{
+                                    wordBreak: "normal",
+                                    whiteSpace: "pre",
+                                    //padding: "8px",
+                                  }}
+                                  onPaste={(e) => {
+                                    const pastedText =
+                                      e.clipboardData.getData("text");
+                                    if (pastedText) {
+                                      e.preventDefault();
+                                      const textarea =
+                                        e.target as HTMLTextAreaElement;
+                                      textarea.value = pastedText;
+                                      // Don't auto-submit on paste to allow user to verify the code first
                                     }
                                   }}
-                                >
-                                  Submit Code
-                                </Button>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </div>
+                                  spellCheck={false}
+                                  autoCorrect="off"
+                                  autoCapitalize="off"
+                                  // Removed auto-submission on change to prevent premature processing
+                                />
+                                <div className="mt-4 flex justify-end">
+                                  <Button
+                                    onClick={(
+                                      e: React.MouseEvent<HTMLButtonElement>
+                                    ) => {
+                                      const textarea = e.currentTarget
+                                        .parentElement
+                                        ?.previousElementSibling as HTMLTextAreaElement;
+
+                                      if (textarea) {
+                                        const sourceCode = textarea.value;
+
+                                        if (sourceCode.trim().length > 50) {
+                                          // Add user message
+                                          addMessage(
+                                            "user",
+                                            "Submitting contract source code..."
+                                          );
+                                          setVerificationSession({
+                                            address,
+                                            network,
+                                            step: 1,
+                                            data: {
+                                              network,
+                                              contractAddress: address,
+                                              evmVersion: "shanghai",
+                                              optimizationUsed: "0",
+                                              runs: 200,
+                                              licenseType: LicenseType.MIT,
+                                              sourceCode: sourceCode,
+                                            },
+                                          });
+                                          // Process the input
+                                          setTimeout(() => {
+                                            handleVerificationInput(sourceCode);
+                                          }, 100);
+                                        } else {
+                                          addMessage(
+                                            "ai",
+                                            "⚠️ **Source code seems too short**\n\nPlease provide the complete Solidity source code. It should typically be more than a few lines long."
+                                          );
+                                        }
+                                      }
+                                    }}
+                                  >
+                                    Submit Code
+                                  </Button>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </div>
                         </div>
                       );
                     }}
@@ -1191,8 +1193,6 @@ export default function Home() {
                   className="w-full p-3 border rounded-md bg-background text-sm"
                   // style={{ backgroundColor: "rgba(255, 255, 255, 0.2)" }}
                   onChange={(e) => {
-                    // console.log("target value", e.target.value);
-                    // console.log("verificationSession", verificationSession);
                     if (e.target.value) {
                       let compilerDescription: string;
                       if (e.target.value === "solidity-single") {
@@ -1326,7 +1326,6 @@ export default function Home() {
                                     setVerificationSession((prev) => {
                                       if (!prev) return null;
 
-                                      //console.log("Previous data:", prev.data);
                                       return {
                                         ...prev,
                                         step: 6, // Move to optimization step
@@ -1491,62 +1490,110 @@ export default function Home() {
 
                                                                     // Final step - show verification ready message with callback
                                                                     // Only add this message once to prevent duplicates
-                                                                    setTimeout(() => {
-                                                                      addMessage(
-                                                                        "ai",
-                                                                        undefined, // Don't pass text separately, include it inside the component
-                                                                        <div className="contract-card w-[584px] h-[465px] flex flex-col gap-6 p-6 bg-transparent">
-                                                                          <p className="text-white text-xl leading-[1.4]">
-                                                                            Perfect! I have all the information needed:
-                                                                          </p>
-                                                                    
-                                                                          {/* Divider */}
-                                                                          <hr className="border-gray-600" />
-                                                                    
-                                                                          {/* Info list */}
-                                                                          <ul className="list-disc list-inside text-sm leading-[1.4] text-white space-y-2">
-                                                                            <li>Source Code</li>
-                                                                            <li>Compiler Type</li>
-                                                                            <li>Constructor Arguments</li>
-                                                                            <li>Compiler Version</li>
-                                                                            <li>EVM Version</li>
-                                                                            <li>Optimization ({isEnabled ? "Enabled" : "Disabled"})</li>
-                                                                            <li>License</li>
-                                                                          </ul>
-                                                                    
-                                                                          {/* Divider */}
-                                                                          <hr className="border-gray-600" />
-                                                                    
-                                                                          <p className="text-white text-sm">
-                                                                            Click the button below to start the verification process!
-                                                                          </p>
-                                                                    
-                                                                          {/* Button wrapper */}
-                                                                          <div className="flex justify-center mt-4">
-                                                                            <Button
-                                                                              onClick={() => executeVerification(finalSession)}
-                                                                              className="
+                                                                    setTimeout(
+                                                                      () => {
+                                                                        addMessage(
+                                                                          "ai",
+                                                                          undefined, // Don't pass text separately, include it inside the component
+                                                                          <div className="contract-card w-[584px] h-[465px] flex flex-col gap-6 p-6 bg-transparent">
+                                                                            <p className="text-white text-sm leading-[1.4]">
+                                                                              Perfect!
+                                                                              I
+                                                                              have
+                                                                              all
+                                                                              the
+                                                                              information
+                                                                              needed:
+                                                                            </p>
+
+                                                                            {/* Divider */}
+                                                                            <hr className="border-gray-600" />
+
+                                                                            {/* Info list */}
+                                                                            <ul className="list-disc list-inside text-sm leading-[1.4] text-white space-y-2">
+                                                                              <li>
+                                                                                Source
+                                                                                Code
+                                                                              </li>
+                                                                              <li>
+                                                                                Compiler
+                                                                                Type
+                                                                              </li>
+                                                                              <li>
+                                                                                Constructor
+                                                                                Arguments
+                                                                              </li>
+                                                                              <li>
+                                                                                Compiler
+                                                                                Version
+                                                                              </li>
+                                                                              <li>
+                                                                                EVM
+                                                                                Version
+                                                                              </li>
+                                                                              <li>
+                                                                                Optimization
+                                                                                (
+                                                                                {isEnabled
+                                                                                  ? "Enabled"
+                                                                                  : "Disabled"}
+
+                                                                                )
+                                                                              </li>
+                                                                              <li>
+                                                                                License
+                                                                              </li>
+                                                                            </ul>
+
+                                                                            {/* Divider */}
+                                                                            <hr className="border-gray-600" />
+
+                                                                            <p className="text-white text-sm">
+                                                                              Click
+                                                                              the
+                                                                              button
+                                                                              below
+                                                                              to
+                                                                              start
+                                                                              the
+                                                                              verification
+                                                                              process!
+                                                                            </p>
+
+                                                                            {/* Button wrapper */}
+                                                                            <div className="flex justify-center mt-4">
+                                                                              <Button
+                                                                                onClick={() =>
+                                                                                  executeVerification(
+                                                                                    finalSession
+                                                                                  )
+                                                                                }
+                                                                                className="
                                                                                 w-full max-w-[536px] h-[40px] 
                                                                                 rounded-full 
                                                                                 text-black bg-white font-medium
                                                                                 hover:bg-gray-200 transition
                                                                                 text-sm leading-[1.4]
                                                                               "
-                                                                              disabled={isProcessing}
-                                                                            >
-                                                                              {isProcessing ? (
-                                                                                <>
-                                                                                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                                                                  Verifying...
-                                                                                </>
-                                                                              ) : (
-                                                                                "Start verification"
-                                                                              )}
-                                                                            </Button>
+                                                                                disabled={
+                                                                                  isProcessing
+                                                                                }
+                                                                              >
+                                                                                {isProcessing ? (
+                                                                                  <>
+                                                                                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                                                                    Verifying...
+                                                                                  </>
+                                                                                ) : (
+                                                                                  "Start verification"
+                                                                                )}
+                                                                              </Button>
+                                                                            </div>
                                                                           </div>
-                                                                        </div>
-                                                                      );
-                                                                    }, 0);                                                                    
+                                                                        );
+                                                                      },
+                                                                      0
+                                                                    );
 
                                                                     return updatedSession;
                                                                   }
@@ -1970,20 +2017,20 @@ export default function Home() {
         "Please choose a network to proceed with verification:",
         <div className="flex justify-center items-center mt-5">
           <NetworkSelector
-          address={address}
-          onSelect={(chosenNetwork) => {
-            const networkName =
-              chosenNetwork === "mainnet" ? "Core Mainnet" : "Core Testnet";
+            address={address}
+            onSelect={(chosenNetwork) => {
+              const networkName =
+                chosenNetwork === "mainnet" ? "Core Mainnet" : "Core Testnet";
 
-            addMessage(
-              "ai",
-              `**Starting verification for:** \`${address}\`\n\n` +
-                `Checking contract status on **${networkName}**...`
-            );
+              addMessage(
+                "ai",
+                `**Starting verification for:** \`${address}\`\n\n` +
+                  `Checking contract status on **${networkName}**...`
+              );
 
-            startVerificationFlow(address, chosenNetwork);
-          }}
-        />
+              startVerificationFlow(address, chosenNetwork);
+            }}
+          />
         </div>
       );
 
@@ -2083,20 +2130,20 @@ export default function Home() {
         "Please choose a network to proceed with verification:",
         <div className="flex justify-center items-center mt-5">
           <NetworkSelector
-          address={address}
-          onSelect={(chosenNetwork) => {
-            const networkName =
-              chosenNetwork === "mainnet" ? "Core Mainnet" : "Core Testnet";
+            address={address}
+            onSelect={(chosenNetwork) => {
+              const networkName =
+                chosenNetwork === "mainnet" ? "Core Mainnet" : "Core Testnet";
 
-            addMessage(
-              "ai",
-              `🔍 **Looking up contract...**\n\n` +
-                `Searching for \`${address}\` on **${networkName}**`
-            );
+              addMessage(
+                "ai",
+                `🔍 **Looking up contract...**\n\n` +
+                  `Searching for \`${address}\` on **${networkName}**`
+              );
 
-            handleContractLookup(address, chosenNetwork);
-          }}
-        />
+              handleContractLookup(address, chosenNetwork);
+            }}
+          />
         </div>
       );
 
@@ -2244,8 +2291,6 @@ export default function Home() {
         }
       }
 
-      console.log("Final contractName:", contractName);
-
       const verificationData = {
         contractAddress: address,
         compilerType,
@@ -2258,8 +2303,6 @@ export default function Home() {
         licenseType: licenseTypeApiValue,
         constructorArguments,
       };
-
-      console.log("Final verificationData:", verificationData);
 
       const result = await verifyContract(network, verificationData);
 

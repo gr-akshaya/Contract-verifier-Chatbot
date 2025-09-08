@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     const baseUrl = COREDAO_API_ENDPOINTS[selectedNetwork];
     const url = `${baseUrl}/contracts/verify_source_code?apikey=${apiKey}`;
-    console.log("Request Payload:", JSON.stringify(params));
+
     //add source code to params
     // params.sourceCode =
     //  "// SPDX-License-Identifier: GPL-3.0\npragma solidity ^0.8.24;\ncontract Testing2 {\n    uint256 number;\n    function tstore(uint256 num) public { number = num; }\n    function store(uint256 num) public { number = num; }\n    function Testretrieve() public view returns (uint256){ return number; }\n}";
@@ -37,8 +37,6 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify(params),
     });
-
-    console.log("Request URL:", url);
 
     if (!response.ok) {
       const errorText = await response.text();
