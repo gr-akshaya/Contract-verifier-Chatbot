@@ -1903,7 +1903,7 @@ export default function Home() {
     localStorage.removeItem("core-chatbot-messages");
     addMessage(
       "ai",
-      "🧹 **Chat cleared!**\n\nHow can I help you with smart contract verification today?"
+      " **Chat cleared!**\n\nHow can I help you with smart contract verification today?"
     );
   };
 
@@ -1911,28 +1911,49 @@ export default function Home() {
    * Shows available commands to the user
    */
   const showAvailableCommands = (): void => {
-    const commandList = AVAILABLE_COMMANDS.map(
-      (cmd) => `• \`${cmd.command}\` - ${cmd.description}`
-    ).join("\n");
-
     addMessage(
       "ai",
-      `📚 **Available Commands:**\n\n${commandList}\n\n` +
-        "**Quick Tips:**\n" +
-        "• Just paste any contract address and I'll look it up\n" +
-        "• Use `verify <address>` to start contract verification\n" +
-        "• Specify network with keywords like 'testnet' or 'mainnet'\n" +
-        "• Example: `verify 0x123...`\n\n" +
-        "Are you facing issues while verifying a contract?",
-      <div className="mt-4 ">
-        <Button
-          variant="outline"
-          onClick={handleVerificationHelp}
-          className="w-full px-6 py-2 rounded-full text-black hover:text-black"
-          style={{ background: "white" }}
-        >
-          Yes
-        </Button>
+      undefined,
+      <div className="contract-card w-[584px] flex flex-col gap-6 p-6 bg-transparent">
+        <p className="text-white text-sm leading-[1.4]">Available Commands:</p>
+
+        <ul className="list-disc list-inside text-sm leading-[1.4] text-white space-y-2">
+          {AVAILABLE_COMMANDS.map((cmd) => (
+            <li key={cmd.command}>
+              <code className="bg-gray-600 px-2 py-1 rounded text-xs font-mono">
+                {cmd.command}
+              </code>{" "}
+              - {cmd.description}
+            </li>
+          ))}
+        </ul>
+
+        <hr className="border-gray-600" />
+
+        <p className="text-white text-sm leading-[1.4]">Quick Tips:</p>
+        <ul className="list-disc list-inside text-sm leading-[1.4] text-white space-y-2">
+          <li>Just paste any contract address and I'll look it up</li>
+          <li>Use {`verify <address>`} to start contract verification</li>
+          <li>Specify network with keywords like 'testnet' or 'mainnet'</li>
+          <li>Example: {`verify 0x123...`}</li>
+        </ul>
+
+        <hr className="border-gray-600" />
+
+        <p className="text-white text-sm leading-[1.4]">
+          Are you facing issues while verifying a contract?
+        </p>
+
+        <div className="mt-4 ">
+          <Button
+            variant="outline"
+            onClick={handleVerificationHelp}
+            className="w-full px-6 py-2 rounded-full text-black hover:text-black"
+            style={{ background: "white" }}
+          >
+            Yes
+          </Button>
+        </div>
       </div>
     );
   };
@@ -1944,10 +1965,10 @@ export default function Home() {
     addMessage(
       "ai",
       undefined,
-      <div className="bg-card text-card-foreground rounded-xl p-4 max-w-md mx-auto">
+      <div className="contract-card w-[584px] flex flex-col gap-6 p-6 bg-transparent">
         {/* Heading */}
-        <h3 className="text-sm flex items-center gap-2 mb-6">
-          <span>🔍</span> Troubleshooting Verification
+        <h3 className="text-sm flex gap-2 mb-6">
+          Troubleshooting Verification
         </h3>
 
         {/* Troubleshooting information */}
@@ -2055,7 +2076,7 @@ export default function Home() {
   const showVerifyUsageMessage = (): void => {
     addMessage(
       "ai",
-      "⚡ **Contract Verification**\n\n" +
+      " **Contract Verification**\n\n" +
         "To verify a contract, please provide the contract address:\n\n" +
         "**Usage:** `verify 0x1234...`\n" +
         "**With network:** `verify 0x1234... on testnet`\n\n" +
@@ -2085,7 +2106,7 @@ export default function Home() {
   const showLookupUsageMessage = (): void => {
     addMessage(
       "ai",
-      "🔍 **Contract Lookup**\n\n" +
+      " **Contract Lookup**\n\n" +
         "To look up a contract, please provide the contract address. You can:\n\n" +
         "• Type: `lookup 0x1234...`\n" +
         "• Just paste the address directly\n" +
@@ -2167,7 +2188,7 @@ export default function Home() {
   const showHelpMessage = (): void => {
     addMessage(
       "ai",
-      "🤔 **I'm not sure how to help with that.**\n\n" +
+      " **I'm not sure how to help with that.**\n\n" +
         "Here's what I can do:\n\n" +
         "• **Look up contracts**: Just paste a contract address\n" +
         "• **Verify contracts**: Type `verify <address>`\n" +
