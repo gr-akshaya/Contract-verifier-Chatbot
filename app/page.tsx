@@ -598,9 +598,9 @@ export default function Home() {
               </div>
               <div className="bg-[rgba(177,229,254,0.2)] p-3 rounded-lg">
                 <p className="text-sm text-white">
-                  💡 **Tip:** Make sure your source code is the exact same code
-                  that was used to deploy the contract. Any differences will
-                  cause verification to fail.
+                  💡 <span>Tip:</span> Make sure your source code is the exact
+                  same code that was used to deploy the contract. Any
+                  differences will cause verification to fail.
                 </p>
               </div>
             </div>
@@ -1089,8 +1089,8 @@ export default function Home() {
                                   </div>
                                   <div className="bg-[rgba(177,229,254,0.2)] p-3 rounded-lg">
                                     <p className="text-sm text-white">
-                                      💡 **Tip:** If you&apos;re not sure,
-                                      choose &quot;Single Solidity File&quot; -
+                                      💡 Tip: If you&apos;re not sure, choose
+                                      &quot;Single Solidity File&quot; -
                                       it&apos;s the most common option.
                                     </p>
                                   </div>
@@ -1248,8 +1248,8 @@ export default function Home() {
               </div>
               <div className="bg-[rgba(177,229,254,0.2)] p-3 rounded-lg">
                 <p className="text-sm text-white">
-                  💡 **Tip:** If you&apos;re not sure, choose &quot;Single
-                  Solidity File&quot; - it&apos;s the most common option.
+                  💡 Tip: If you&apos;re not sure, choose &quot;Single Solidity
+                  File&quot; - it&apos;s the most common option.
                 </p>
               </div>
             </CardContent>
@@ -1946,15 +1946,15 @@ export default function Home() {
       undefined,
       <div className="bg-card text-card-foreground rounded-xl p-4 max-w-md mx-auto">
         {/* Heading */}
-        <h3 className="font-semibold flex items-center gap-2 mb-6">
+        <h3 className="text-sm flex items-center gap-2 mb-6">
           <span>🔍</span> Troubleshooting Verification
         </h3>
 
         {/* Troubleshooting information */}
-        <p className="mb-3">
+        <p className="mb-3 text-sm">
           Recommended compiler version is <strong>0.8.24</strong> and the EVM
-          version used is <strong>Shanghai</strong>. Please verify EVM and
-          compiler version and then proceed with verification.
+          version is <strong>Shanghai</strong>. Please verify EVM and compiler
+          version and then proceed with verification.
           <br />
           If you are still facing issues, reach out to us <br />
           on{" "}
@@ -2321,6 +2321,7 @@ export default function Home() {
             "ai",
             ` **Verification failed**\n\n**Error:** ${result.result}\n\nPlease check your contract details and try again.`
           );
+          handleVerificationHelp();
         }
       }
 

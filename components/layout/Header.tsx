@@ -3,7 +3,7 @@ import Image from "next/image";
 
 export default function Header() {
   return (
-    <header className="py-4 px-6 h-[88px] backdrop-blur-[40px] shadow-md sticky top-0 bg-background z-50">
+    <header className="py-4 px-6 h-[88px] backdrop-blur-[40px] shadow-md sticky top-0">
       <div className="container mx-auto flex items-center justify-between relative">
         <Link href="/" className="flex items-center gap-2">
           <Image
@@ -15,7 +15,7 @@ export default function Header() {
           />
         </Link>
 
-        <h1 className="absolute left-1/2 transform -translate-x-1/2 text-xl font-semibold font-lexend items-center">
+        <h1 className="absolute left-1/2 transform -translate-x-1/2 text-base font-semibold font-lexend items-center">
           <span className="text-white">Smart Contract Verifier</span>
         </h1>
       </div>
