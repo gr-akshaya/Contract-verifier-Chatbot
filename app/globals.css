@@ -55,7 +55,7 @@
 .user-chat-bubble {
   font-family: var(--font-lexend);
   width: 486px;
-  height: 85px;
+  /* height: 85px; */
   border-radius: 16px;
   border-width: 1px;
   border-style: solid;
